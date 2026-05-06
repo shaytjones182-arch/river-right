@@ -11,6 +11,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import { WebView } from "react-native-webview";
+import MapView from "../src/MapView";
 import { COLORS } from "../src/theme";
 
 type Pt = { lat: number; lon: number; t: number };
@@ -180,19 +181,9 @@ export default function Track() {
         />
       </View>
 
-      <View style={styles.mapWrap}>
+      <View style={styles.mapWrap} testID="track-map">
         {html ? (
-          <WebView
-            ref={webRef}
-            originWhitelist={["*"]}
-            source={{ html }}
-            style={styles.map}
-            javaScriptEnabled
-            domStorageEnabled
-            scalesPageToFit={false}
-            mixedContentMode="always"
-            testID="track-map"
-          />
+          <MapView webViewRef={webRef} html={html} style={styles.map} />
         ) : (
           <View style={[styles.map, { alignItems: "center", justifyContent: "center" }]}>
             <Text style={{ color: COLORS.textMuted }}>Locating…</Text>

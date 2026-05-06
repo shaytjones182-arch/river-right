@@ -10,7 +10,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { WebView } from "react-native-webview";
+import MapView from "../../src/MapView";
 import { COLORS, STATUS_COLORS, API } from "../../src/theme";
 
 type SiteData = {
@@ -122,14 +122,8 @@ export default function GaugeDetail() {
           </View>
 
           <Text style={styles.h3}>Location</Text>
-          <View style={styles.mapWrap}>
-            <WebView
-              originWhitelist={["*"]}
-              source={{ html: buildHtml(site.lat, site.lon, site.name || "Gauge") }}
-              style={{ flex: 1 }}
-              javaScriptEnabled
-              testID="gauge-detail-map"
-            />
+          <View style={styles.mapWrap} testID="gauge-detail-map">
+            <MapView html={buildHtml(site.lat, site.lon, site.name || "Gauge")} />
           </View>
           <Text style={styles.subtle}>
             {site.lat.toFixed(4)}, {site.lon.toFixed(4)}

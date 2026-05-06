@@ -139,7 +139,7 @@ export default function Rivers() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.background },
-  header: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 8 },
+  header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8 },
   h1: { fontSize: 28, fontWeight: "900", color: COLORS.textMain, letterSpacing: -0.5 },
   sub: { color: COLORS.textMuted, marginTop: 2, fontSize: 14 },
   filterRow: { paddingHorizontal: 20, paddingVertical: 12, gap: 8 },

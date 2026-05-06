@@ -182,7 +182,7 @@ export default function Gauges() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.background },
-  header: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12 },
+  header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12 },
   h1: { fontSize: 28, fontWeight: "900", color: COLORS.textMain, letterSpacing: -0.5 },
   sub: { color: COLORS.textMuted, marginTop: 2, fontSize: 14 },
   toggleRow: { flexDirection: "row", paddingHorizontal: 20, gap: 8, marginBottom: 8 },
