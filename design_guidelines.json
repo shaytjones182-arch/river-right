@@ -1,0 +1,93 @@
+{
+  "theme": "Light",
+  "archetype": "Archetype 2 (Performance Pro) / Outdoor Tactical",
+  "reasoning": "Outdoor tracking apps demand extreme visibility. In direct sunlight, dark mode reflects glare; a tactical light theme with 'bone-white' backgrounds reduces eye strain compared to pure white. Deep obsidian text and high-contrast alert colors (Red/Teal) ensure safety-critical data (like USGS flood levels) is instantly glanceable on the water. Large touch targets are critical for cold or wet hands.",
+  "colors": {
+    "background": "#F5F5F3",
+    "surface": "#FFFFFF",
+    "surface_glass": "rgba(255, 255, 255, 0.8)",
+    "primary": "#0077B6",
+    "primary_hover": "#03045E",
+    "text_main": "#0A1128",
+    "text_muted": "#5C6B73",
+    "border": "#E0E1DD",
+    "status": {
+      "safe": "#2A9D8F",
+      "warning": "#F4A261",
+      "danger": "#D62828",
+      "info": "#457B9D"
+    }
+  },
+  "typography": {
+    "fonts": {
+      "heading": "Manrope, sans-serif",
+      "body": "IBM Plex Sans, sans-serif"
+    },
+    "hierarchy": {
+      "h1": "text-4xl font-black tracking-tight leading-none",
+      "h2": "text-2xl font-bold tracking-tight",
+      "h3": "text-xl font-semibold tracking-tight",
+      "h4": "text-lg font-medium",
+      "body": "text-base leading-relaxed",
+      "overline": "text-xs font-bold uppercase tracking-[0.2em] text-[#5C6B73]",
+      "data_large": "text-5xl sm:text-6xl font-black tracking-tighter tabular-nums"
+    }
+  },
+  "layout": {
+    "spacing_system": "Generous internal padding (p-4 to p-6). Tight grid gaps (gap-3) for data dashboards. Every tap target MUST be at least 48px tall.",
+    "container_max_width": "max-w-md mx-auto sm:h-screen sm:overflow-hidden relative bg-white shadow-2xl sm:border sm:border-[#E0E1DD]",
+    "grid_mode": "MODE B: The Control Room Grid (for tracking dashboards)",
+    "surfaces": {
+      "cards": "bg-white border border-[#E0E1DD] rounded-2xl shadow-sm overflow-hidden",
+      "floating_panel": "backdrop-blur-xl bg-white/95 border border-[#E0E1DD]/50 shadow-xl rounded-t-3xl",
+      "bottom_nav": "absolute bottom-0 w-full bg-white border-t border-[#E0E1DD] pb-safe pt-2 px-4 flex justify-between items-center z-50 h-20"
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-[#0077B6] active:bg-[#03045E] text-white font-bold h-14 px-6 rounded-2xl transition-colors w-full flex items-center justify-center gap-2 shadow-[0_4px_14px_0_rgba(0,119,182,0.39)]",
+      "secondary": "bg-white border-2 border-[#0A1128] text-[#0A1128] font-bold h-14 px-6 rounded-2xl transition-colors w-full flex items-center justify-center gap-2",
+      "danger": "bg-[#D62828] text-white font-bold h-14 px-6 rounded-2xl flex items-center justify-center"
+    },
+    "map_container": "relative w-full h-full bg-[#E0E1DD] overflow-hidden",
+    "data_widget": "flex flex-col p-4 bg-white border border-[#E0E1DD] rounded-2xl",
+    "pill_badge": "inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"
+  },
+  "icons": {
+    "library": "lucide-react",
+    "style": "stroke-[2.5px] crisp and technical"
+  },
+  "media": {
+    "images": [
+      {
+        "category": "hero_featured_river",
+        "url": "https://images.unsplash.com/photo-1729906003626-c867d5dd4b19?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NjZ8MHwxfHNlYXJjaHwyfHx3aGl0ZXdhdGVyJTIwa2F5YWtpbmclMjByaXZlcnxlbnwwfHx8fDE3NzgxMDkyMzR8MA&ixlib=rb-4.1.0&q=85",
+        "description": "Kayaker on whitewater river, use for featured intense river"
+      },
+      {
+        "category": "hero_calm_river",
+        "url": "https://images.unsplash.com/photo-1695918431205-b70d3d43b332?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODh8MHwxfHNlYXJjaHwyfHxjYWxtJTIwcml2ZXIlMjBjYW5vZSUyMFBPVnxlbnwwfHx8fDE3NzgxMDkyMzR8MA&ixlib=rb-4.1.0&q=85",
+        "description": "Calm river POV, use for serene river featured section"
+      },
+      {
+        "category": "map_background_placeholder",
+        "url": "https://images.unsplash.com/photo-1736117704452-46670dd0c81f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzB8MHwxfHNlYXJjaHwxfHx0b3BvZ3JhcGhpYyUyMG1hcCUyMG91dGRvb3J8ZW58MHx8fHwxNzc4MTA5MjY2fDA&ixlib=rb-4.1.0&q=85",
+        "description": "Topographic map placeholder for map components"
+      }
+    ]
+  },
+  "animations": {
+    "hover": "transition-all duration-200 ease-in-out",
+    "active": "active:scale-[0.98]",
+    "page_transition": "animate-in fade-in slide-in-from-bottom-4 duration-500"
+  },
+  "instructions_to_main_agent": [
+    "MOBILE-FIRST APP SHELL: Treat this strictly as a mobile app interface. Wrap the entire app in `max-w-md mx-auto sm:h-screen sm:border` so it looks like a phone screen on desktop, and native full-screen on mobile devices. All heights should be constrained to `h-full` within this shell.",
+    "BOTTOM NAVIGATION: Implement a fixed bottom navigation bar inside the mobile shell container with 3-4 icons (e.g., Home, Track, Gauges).",
+    "GPS TRACKING VIEW: The map should take up the upper 50-60% of the screen. The lower half should be a 'bottom sheet' style floating panel (`rounded-t-3xl border-t shadow-xl`) housing the 'Control Room' grid with massive, highly legible tracking metrics (Speed, Distance).",
+    "USGS RIVER DATA VIEW: Treat CFS (Cubic Feet per Second) as critical data. Use `IBM Plex Sans` and `tabular-nums` for these numbers so they align perfectly. Bind the flow status to the exact colors defined: Teal for Safe, Orange for High, Red for Flood.",
+    "INTERACTIVITY: No soft drop shadows for buttons; rely on crisp borders, strong background colors, and scale down slightly on active states (`active:scale-[0.98]`). Touch targets MUST be at least 48px high.",
+    "FONTS: Install 'Manrope' for headings and 'IBM Plex Sans' for body text via Google Fonts.",
+    "TESTING: Every single interactive element, form input, and key data point MUST have a `data-testid` attribute."
+  ]
+}
