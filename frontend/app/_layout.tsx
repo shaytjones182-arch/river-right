@@ -1,0 +1,81 @@
+import { Tabs } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { StatusBar } from "expo-status-bar";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+
+export default function RootLayout() {
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <StatusBar style="dark" />
+        <Tabs
+          screenOptions={{
+            headerShown: false,
+            tabBarActiveTintColor: "#0077B6",
+            tabBarInactiveTintColor: "#5C6B73",
+            tabBarStyle: {
+              backgroundColor: "#FFFFFF",
+              borderTopColor: "#E0E1DD",
+              borderTopWidth: 1,
+              height: 84,
+              paddingBottom: 26,
+              paddingTop: 8,
+            },
+            tabBarLabelStyle: {
+              fontSize: 11,
+              fontWeight: "700",
+              letterSpacing: 0.4,
+              textTransform: "uppercase",
+            },
+          }}
+        >
+          <Tabs.Screen
+            name="index"
+            options={{
+              title: "Home",
+              tabBarIcon: ({ color, size }) => (
+                <Ionicons name="home" size={size} color={color} />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="track"
+            options={{
+              title: "Track",
+              tabBarIcon: ({ color, size }) => (
+                <Ionicons name="navigate" size={size} color={color} />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="gauges"
+            options={{
+              title: "Gauges",
+              tabBarIcon: ({ color, size }) => (
+                <Ionicons name="water" size={size} color={color} />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="rivers"
+            options={{
+              title: "Rivers",
+              tabBarIcon: ({ color, size }) => (
+                <Ionicons name="map" size={size} color={color} />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="river/[id]"
+            options={{ href: null }}
+          />
+          <Tabs.Screen
+            name="gauge/[id]"
+            options={{ href: null }}
+          />
+        </Tabs>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
+  );
+}

@@ -1,0 +1,251 @@
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  ActivityIndicator,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { COLORS, STATUS_COLORS, API } from "../../src/theme";
+
+type RiverDetail = {
+  river: {
+    id: string;
+    name: string;
+    state: string;
+    class_rating: string;
+    type: string;
+    description: string;
+    hazards: string[];
+    put_in: { name: string; lat: number; lon: number };
+    take_out: { name: string; lat: number; lon: number };
+    usgs_site_id: string;
+    image: string;
+  };
+  flow: {
+    cfs: number | null;
+    gauge_height_ft: number | null;
+    status: string;
+    label: string;
+    updated_at?: string;
+  } | null;
+};
+
+export default function RiverDetail() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
+  const [data, setData] = useState<RiverDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await fetch(`${API}/rivers/${id}`);
+        const j = await r.json();
+        setData(j);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <ActivityIndicator color={COLORS.primary} style={{ marginTop: 60 }} />
+      </SafeAreaView>
+    );
+  }
+
+  if (!data?.river) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <Text style={{ textAlign: "center", marginTop: 40, color: COLORS.danger }}>River not found.</Text>
+      </SafeAreaView>
+    );
+  }
+
+  const r = data.river;
+  const flow = data.flow;
+  const statusColor = flow ? STATUS_COLORS[flow.status] || COLORS.textMuted : COLORS.textMuted;
+
+  return (
+    <SafeAreaView style={styles.safe} edges={["top"]} testID="river-detail-screen">
+      <ScrollView contentContainerStyle={{ paddingBottom: 32 }}>
+        <View style={styles.heroWrap}>
+          <Image source={{ uri: r.image }} style={styles.hero} />
+          <View style={styles.heroOverlay} />
+          <TouchableOpacity
+            testID="river-detail-back"
+            onPress={() => router.back()}
+            style={styles.backBtn}
+          >
+            <Ionicons name="arrow-back" size={22} color="#fff" />
+          </TouchableOpacity>
+          <View style={styles.heroContent}>
+            <View style={styles.row}>
+              <View
+                style={[
+                  styles.classBadge,
+                  {
+                    backgroundColor:
+                      r.type === "whitewater"
+                        ? COLORS.danger
+                        : r.type === "calm"
+                        ? COLORS.safe
+                        : COLORS.warning,
+                  },
+                ]}
+              >
+                <Text style={styles.classText}>CLASS {r.class_rating}</Text>
+              </View>
+              <Text style={styles.state}>{r.state}</Text>
+            </View>
+            <Text style={styles.name}>{r.name}</Text>
+          </View>
+        </View>
+
+        <View style={styles.body}>
+          <View style={styles.flowCard} testID="river-detail-flow-card">
+            <Text style={styles.overline}>Current flow</Text>
+            <View style={styles.flowRow}>
+              <View>
+                <Text style={styles.bigCfs}>
+                  {flow?.cfs !== null && flow?.cfs !== undefined ? Math.round(flow.cfs).toLocaleString() : "—"}
+                </Text>
+                <Text style={styles.cfsUnit}>CFS</Text>
+              </View>
+              <View style={[styles.statusPill, { backgroundColor: statusColor }]}>
+                <Text style={styles.statusText}>{flow?.label?.toUpperCase() || "NO DATA"}</Text>
+              </View>
+            </View>
+            {flow?.gauge_height_ft !== null && flow?.gauge_height_ft !== undefined && (
+              <Text style={styles.subtle}>Gauge height: {flow.gauge_height_ft.toFixed(2)} ft</Text>
+            )}
+            {flow?.updated_at && (
+              <Text style={styles.subtle}>Updated {new Date(flow.updated_at).toLocaleString()}</Text>
+            )}
+          </View>
+
+          <Text style={styles.h3}>About this run</Text>
+          <Text style={styles.body1}>{r.description}</Text>
+
+          <Text style={styles.h3}>Hazards</Text>
+          {r.hazards.map((h, i) => (
+            <View key={i} style={styles.hazard}>
+              <Ionicons name="warning" size={16} color={COLORS.danger} />
+              <Text style={styles.hazardText}>{h}</Text>
+            </View>
+          ))}
+
+          <Text style={styles.h3}>Logistics</Text>
+          <View style={styles.logCard}>
+            <View style={styles.logRow}>
+              <Ionicons name="location" size={18} color={COLORS.safe} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.logLabel}>PUT-IN</Text>
+                <Text style={styles.logName}>{r.put_in.name}</Text>
+                <Text style={styles.subtle}>
+                  {r.put_in.lat.toFixed(4)}, {r.put_in.lon.toFixed(4)}
+                </Text>
+              </View>
+            </View>
+            <View style={styles.divider} />
+            <View style={styles.logRow}>
+              <Ionicons name="flag" size={18} color={COLORS.danger} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.logLabel}>TAKE-OUT</Text>
+                <Text style={styles.logName}>{r.take_out.name}</Text>
+                <Text style={styles.subtle}>
+                  {r.take_out.lat.toFixed(4)}, {r.take_out.lon.toFixed(4)}
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          <TouchableOpacity
+            testID="river-detail-track-btn"
+            style={styles.cta}
+            onPress={() => router.push("/track")}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="navigate" size={22} color="#fff" />
+            <Text style={styles.ctaText}>START GPS TRIP</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: COLORS.background },
+  heroWrap: { height: 280, position: "relative" },
+  hero: { ...StyleSheet.absoluteFillObject, width: "100%", height: "100%" },
+  heroOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(10,17,40,0.5)" },
+  backBtn: {
+    position: "absolute",
+    top: 12,
+    left: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  heroContent: { flex: 1, justifyContent: "flex-end", padding: 20 },
+  row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
+  classBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 },
+  classText: { color: "#fff", fontSize: 11, fontWeight: "800", letterSpacing: 1 },
+  state: { color: "#fff", fontWeight: "800", letterSpacing: 1 },
+  name: { color: "#fff", fontSize: 28, fontWeight: "900", letterSpacing: -0.6 },
+  body: { padding: 20 },
+  flowCard: {
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 20,
+    padding: 18,
+    marginBottom: 24,
+  },
+  overline: { fontSize: 11, fontWeight: "800", letterSpacing: 2, color: COLORS.textMuted, marginBottom: 8 },
+  flowRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
+  bigCfs: { fontSize: 44, fontWeight: "900", color: COLORS.textMain, letterSpacing: -2 },
+  cfsUnit: { fontSize: 12, fontWeight: "800", color: COLORS.textMuted, letterSpacing: 2 },
+  statusPill: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999 },
+  statusText: { color: "#fff", fontWeight: "900", letterSpacing: 1, fontSize: 13 },
+  subtle: { color: COLORS.textMuted, fontSize: 12, marginTop: 4 },
+  h3: { fontSize: 18, fontWeight: "900", color: COLORS.textMain, marginBottom: 8, marginTop: 8, letterSpacing: -0.3 },
+  body1: { color: COLORS.textMain, lineHeight: 22, marginBottom: 16, fontSize: 15 },
+  hazard: { flexDirection: "row", gap: 10, alignItems: "flex-start", paddingVertical: 6 },
+  hazardText: { flex: 1, color: COLORS.textMain, lineHeight: 20, fontSize: 14 },
+  logCard: {
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 24,
+  },
+  logRow: { flexDirection: "row", gap: 12, alignItems: "flex-start" },
+  divider: { height: 1, backgroundColor: COLORS.border, marginVertical: 12 },
+  logLabel: { fontSize: 10, letterSpacing: 2, fontWeight: "900", color: COLORS.textMuted, marginBottom: 2 },
+  logName: { fontWeight: "800", color: COLORS.textMain, fontSize: 15 },
+  cta: {
+    flexDirection: "row",
+    gap: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    height: 56,
+    backgroundColor: COLORS.primary,
+    borderRadius: 16,
+    marginTop: 8,
+  },
+  ctaText: { color: "#fff", fontWeight: "900", letterSpacing: 2, fontSize: 16 },
+});

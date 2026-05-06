@@ -1,0 +1,37 @@
+{
+  "summary": "Tested RiverRunner MVP backend (10/10 pytest passing) and frontend mobile web preview. All API endpoints work end-to-end with live USGS data: /api/, /api/rivers/featured (8 rivers), /api/rivers/{id} with live flow, /api/usgs/sites/nearby, /api/usgs/sites/search?q=CO, /api/usgs/site/{id}, plus 400/404/422 error paths. Frontend home, rivers, river-detail, track, gauges, gauge-detail screens render correctly with proper testIDs and bottom-tab navigation works. Two minor map rendering issues on web (WebView fallback) — see below.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "track.tsx (map)", "issue": "On web, react-native-webview renders fallback text 'React Native WebView does not support this platform' instead of map. The testID 'track-map' is on the WebView so it never appears in the DOM on web. Wrap the map in a parent <View testID='track-map'> with a Platform.OS==='web' fallback (iframe with Leaflet/OSM) so the map both works on web and the testID is queryable.", "testID": "track-map", "priority": "MEDIUM"},
+      {"component": "gauge/[id].tsx (map)", "issue": "Same as above — WebView fallback text shown on web; testID 'gauge-detail-map' missing in DOM. Add a web-safe map fallback wrapped in a View carrying the testID.", "testID": "gauge-detail-map", "priority": "MEDIUM"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "rivers", "issues": ["Filter chip row partially clipped under header on small viewport (390x844) — top of 'All' chip is cut off in screenshot. Add top padding or SafeAreaView edges=['top']."]}
+    ],
+    "react_native_issues": [
+      {"component": "global", "issue": "Console warning: 'props.pointerEvents is deprecated. Use style.pointerEvents' — non-blocking but should migrate."},
+      {"component": "package.json", "issue": "expo-location@55.1.9 mismatched with installed Expo (expected ~19.0.8). Expo CLI flags it; non-blocking but worth aligning."}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_riverrunner.py", "/app/test_reports/pytest/pytest_results.xml"],
+  "action_items": [
+    "Add web fallback for the two map components so testID is queryable on web and users on web preview see an actual map (Leaflet via iframe or react-leaflet on Platform.OS==='web').",
+    "Fix top padding on /rivers screen so filter chips aren't clipped.",
+    "(Optional) align expo-location version with Expo SDK; replace deprecated pointerEvents prop usage."
+  ],
+  "critical_code_review_comments": [
+    "server.py is single-file (~360 lines) — fine for MVP; consider splitting USGS client into a module if it grows.",
+    "MongoDB is not used at all (no DB calls) — that's fine since user opted out of auth/persistence; just note that MONGO_URL/DB_NAME from .env are currently unused.",
+    "USGS calls have 15–20s timeouts and proper 502 mapping on failure — good.",
+    "Featured rivers data is hard-coded; acceptable for MVP."
+  ],
+  "updated_files": ["/app/backend/tests/test_riverrunner.py (new)"],
+  "success_rate": {"backend": "100% (10/10)", "frontend": "~88% (15/17 testID checks passed; both failures are web-only WebView fallback)"},
+  "seed_data_creation": "None — backend is stateless and uses live USGS API.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Backend pytest at /app/backend/tests/test_riverrunner.py covers all endpoints incl. error paths and is fully green against the public preview URL. Frontend testIDs verified: home-screen, home-{start-trip,gauges,rivers}-btn, rivers-filter-{all,whitewater,mixed,calm}, track-metric-{speed,distance,time,max}, track-start-btn, gauges-tab-{nearby,browse}, gauges-state-* (19 chips). Map testIDs (track-map, gauge-detail-map) only resolvable once a web map fallback is added.",
+  "rca_of_issue": "track-map / gauge-detail-map not found: react-native-webview renders nothing useful on web (only the placeholder text). The testID is attached to the WebView component which on web renders a div without that testID forwarded. Fix: render <View testID='track-map'>{Platform.OS==='web' ? <iframe srcDoc=leafletHtml/> : <WebView .../>}</View>."
+}
