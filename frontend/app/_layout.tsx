@@ -40,15 +40,6 @@ export default function RootLayout() {
             }}
           />
           <Tabs.Screen
-            name="rivers"
-            options={{
-              title: "Rivers",
-              tabBarIcon: ({ color, size }) => (
-                <Ionicons name="water" size={size} color={color} />
-              ),
-            }}
-          />
-          <Tabs.Screen
             name="map"
             options={{
               title: "Map",

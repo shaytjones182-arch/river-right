@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -8,27 +8,42 @@ import {
   Image,
   RefreshControl,
   ActivityIndicator,
+  TextInput,
+  Platform,
+  Keyboard,
+  KeyboardAvoidingView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { COLORS, STATUS_COLORS, API } from "../src/theme";
+import { COLORS, API } from "../src/theme";
 
 type River = {
   id: string;
   name: string;
   state: string;
   class_rating: string;
-  type: string;
+  type: "whitewater" | "calm" | "mixed" | string;
   description: string;
   image: string;
 };
+
+const FILTERS = [
+  { key: "all", label: "All" },
+  { key: "whitewater", label: "Whitewater" },
+  { key: "mixed", label: "Mixed" },
+  { key: "calm", label: "Calm" },
+] as const;
+
+type FilterKey = (typeof FILTERS)[number]["key"];
 
 export default function Home() {
   const router = useRouter();
   const [rivers, setRivers] = useState<River[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [filter, setFilter] = useState<FilterKey>("all");
+  const [query, setQuery] = useState("");
 
   const load = useCallback(async () => {
     try {
@@ -52,115 +67,166 @@ export default function Home() {
     load();
   };
 
+  const visible = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return rivers.filter((r) => {
+      const typeOk = filter === "all" ? true : r.type === filter;
+      if (!typeOk) return false;
+      if (!q) return true;
+      return (
+        r.name.toLowerCase().includes(q) ||
+        r.state.toLowerCase().includes(q) ||
+        r.description.toLowerCase().includes(q)
+      );
+    });
+  }, [rivers, filter, query]);
+
   return (
     <SafeAreaView style={styles.safe} edges={["top"]} testID="home-screen">
-      <ScrollView
-        contentContainerStyle={styles.container}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.primary} />
-        }
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={{ flex: 1 }}
       >
-        <View style={styles.header}>
-          <Text style={styles.overline}>RIVERRIGHT</Text>
-          <Text style={styles.h1}>Read the river.{"\n"}Run it right.</Text>
-          <Text style={styles.subtitle}>
-            Live USGS flow data, GPS tracking, and curated American rivers — from glassy floats to gnarly whitewater.
-          </Text>
-        </View>
+        <ScrollView
+          contentContainerStyle={styles.container}
+          keyboardShouldPersistTaps="handled"
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={COLORS.primary}
+            />
+          }
+        >
+          <View style={styles.header}>
+            <Text style={styles.overline}>RIVERRIGHT</Text>
+            <Text style={styles.h1}>Read the river.{"\n"}Run it right.</Text>
+            <Text style={styles.subtitle}>
+              Live USGS flow data, GPS tracking, and curated American rivers — from
+              glassy floats to gnarly whitewater.
+            </Text>
+          </View>
 
-        <View style={styles.quickRow}>
-          <TouchableOpacity
-            testID="home-start-trip-btn"
-            style={[styles.quickCard, { backgroundColor: COLORS.primary }]}
-            onPress={() => router.push("/track")}
-            activeOpacity={0.85}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filterRow}
+            keyboardShouldPersistTaps="handled"
           >
-            <Ionicons name="navigate" size={26} color="#fff" />
-            <Text style={[styles.quickTitle, { color: "#fff" }]}>Start Trip</Text>
-            <Text style={[styles.quickSub, { color: "rgba(255,255,255,0.8)" }]}>GPS track</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            testID="home-map-btn"
-            style={styles.quickCard}
-            onPress={() => router.push("/map")}
-            activeOpacity={0.85}
-          >
-            <Ionicons name="map" size={26} color={COLORS.primary} />
-            <Text style={styles.quickTitle}>Map</Text>
-            <Text style={styles.quickSub}>USA rivers</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            testID="home-rivers-btn"
-            style={styles.quickCard}
-            onPress={() => router.push("/rivers")}
-            activeOpacity={0.85}
-          >
-            <Ionicons name="water" size={26} color={COLORS.primary} />
-            <Text style={styles.quickTitle}>Rivers</Text>
-            <Text style={styles.quickSub}>Guidebook</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.sectionHeader}>
-          <Text style={styles.h3}>Featured rivers</Text>
-          <Text style={styles.muted}>{rivers.length} runs</Text>
-        </View>
-
-        {loading ? (
-          <ActivityIndicator color={COLORS.primary} style={{ marginVertical: 32 }} />
-        ) : (
-          rivers.slice(0, 4).map((r) => (
-            <TouchableOpacity
-              key={r.id}
-              testID={`home-river-card-${r.id}`}
-              style={styles.riverCard}
-              onPress={() => router.push(`/river/${r.id}`)}
-              activeOpacity={0.9}
-            >
-              <Image source={{ uri: r.image }} style={styles.riverImg} />
-              <View style={styles.riverOverlay} />
-              <View style={styles.riverContent}>
-                <View style={styles.riverBadgeRow}>
-                  <View
-                    style={[
-                      styles.classBadge,
-                      { backgroundColor: r.type === "whitewater" ? COLORS.danger : r.type === "calm" ? COLORS.safe : COLORS.warning },
-                    ]}
-                  >
-                    <Text style={styles.classBadgeText}>CLASS {r.class_rating}</Text>
-                  </View>
-                  <Text style={styles.riverState}>{r.state}</Text>
-                </View>
-                <Text style={styles.riverName}>{r.name}</Text>
-                <Text style={styles.riverDesc} numberOfLines={2}>
-                  {r.description}
+            {FILTERS.map((f) => (
+              <TouchableOpacity
+                key={f.key}
+                testID={`home-filter-${f.key}`}
+                onPress={() => setFilter(f.key)}
+                style={[styles.filter, filter === f.key && styles.filterActive]}
+                activeOpacity={0.85}
+              >
+                <Text
+                  style={[
+                    styles.filterText,
+                    filter === f.key && { color: "#fff" },
+                  ]}
+                >
+                  {f.label}
                 </Text>
-              </View>
-            </TouchableOpacity>
-          ))
-        )}
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
 
-        {!loading && rivers.length > 4 && (
-          <TouchableOpacity
-            testID="home-see-all-rivers"
-            style={styles.seeAllBtn}
-            onPress={() => router.push("/rivers")}
-          >
-            <Text style={styles.seeAllText}>See all rivers</Text>
-            <Ionicons name="arrow-forward" size={18} color={COLORS.primary} />
-          </TouchableOpacity>
-        )}
+          <View style={styles.searchWrap} testID="home-search-wrap">
+            <Ionicons
+              name="search"
+              size={18}
+              color={COLORS.textMuted}
+              style={{ marginRight: 8 }}
+            />
+            <TextInput
+              testID="home-search-input"
+              style={styles.searchInput}
+              placeholder="Search rivers by name…"
+              placeholderTextColor={COLORS.textMuted}
+              value={query}
+              onChangeText={setQuery}
+              returnKeyType="search"
+              onSubmitEditing={() => Keyboard.dismiss()}
+              autoCorrect={false}
+              autoCapitalize="none"
+            />
+            {query.length > 0 && (
+              <TouchableOpacity
+                testID="home-search-clear"
+                onPress={() => setQuery("")}
+                hitSlop={8}
+                style={styles.clearBtn}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="close-circle" size={18} color={COLORS.textMuted} />
+              </TouchableOpacity>
+            )}
+          </View>
 
-        <View style={{ height: 24 }} />
-      </ScrollView>
+          {loading ? (
+            <ActivityIndicator color={COLORS.primary} style={{ marginVertical: 40 }} />
+          ) : visible.length === 0 ? (
+            <View style={styles.emptyWrap}>
+              <Ionicons name="water-outline" size={36} color={COLORS.textMuted} />
+              <Text style={styles.emptyTitle}>No rivers found</Text>
+              <Text style={styles.emptySub}>
+                Try a different filter or clear your search.
+              </Text>
+            </View>
+          ) : (
+            visible.map((r) => (
+              <TouchableOpacity
+                key={r.id}
+                testID={`home-river-card-${r.id}`}
+                style={styles.riverCard}
+                onPress={() => router.push(`/river/${r.id}`)}
+                activeOpacity={0.9}
+              >
+                <Image source={{ uri: r.image }} style={styles.riverImg} />
+                <View style={styles.riverOverlay} />
+                <View style={styles.riverContent}>
+                  <View style={styles.riverBadgeRow}>
+                    <View
+                      style={[
+                        styles.classBadge,
+                        {
+                          backgroundColor:
+                            r.type === "whitewater"
+                              ? COLORS.danger
+                              : r.type === "calm"
+                              ? COLORS.safe
+                              : COLORS.warning,
+                        },
+                      ]}
+                    >
+                      <Text style={styles.classBadgeText}>
+                        CLASS {r.class_rating}
+                      </Text>
+                    </View>
+                    <Text style={styles.riverState}>{r.state}</Text>
+                  </View>
+                  <Text style={styles.riverName}>{r.name}</Text>
+                  <Text style={styles.riverDesc} numberOfLines={2}>
+                    {r.description}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ))
+          )}
+
+          <View style={{ height: 32 }} />
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.background },
-  container: { padding: 20, paddingBottom: 40 },
-  header: { marginBottom: 24 },
+  container: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 40 },
+  header: { marginBottom: 8 },
   overline: {
     fontSize: 11,
     fontWeight: "800",
@@ -175,33 +241,57 @@ const styles = StyleSheet.create({
     lineHeight: 38,
     letterSpacing: -1,
   },
-  h3: { fontSize: 20, fontWeight: "800", color: COLORS.textMain, letterSpacing: -0.3 },
   subtitle: {
     marginTop: 12,
     fontSize: 15,
     color: COLORS.textMuted,
     lineHeight: 22,
   },
-  quickRow: { flexDirection: "row", gap: 10, marginBottom: 28 },
-  quickCard: {
-    flex: 1,
+  filterRow: { paddingVertical: 16, gap: 10 },
+  filter: {
+    paddingHorizontal: 22,
+    paddingVertical: 12,
+    borderRadius: 999,
     backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderRadius: 18,
-    padding: 16,
-    minHeight: 110,
-    justifyContent: "space-between",
+    marginRight: 10,
+    minHeight: 46,
+    minWidth: 88,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  quickTitle: { fontSize: 15, fontWeight: "800", color: COLORS.textMain, marginTop: 8 },
-  quickSub: { fontSize: 12, color: COLORS.textMuted, marginTop: 2 },
-  sectionHeader: {
+  filterActive: { backgroundColor: COLORS.textMain, borderColor: COLORS.textMain },
+  filterText: {
+    fontWeight: "800",
+    color: COLORS.textMain,
+    letterSpacing: 0.3,
+    fontSize: 14,
+  },
+  searchWrap: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-end",
-    marginBottom: 14,
+    alignItems: "center",
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    height: 48,
+    marginBottom: 18,
   },
-  muted: { color: COLORS.textMuted, fontSize: 13, fontWeight: "600" },
+  searchInput: {
+    flex: 1,
+    fontSize: 15,
+    color: COLORS.textMain,
+    paddingVertical: 0,
+    ...Platform.select({
+      web: {
+        // @ts-ignore
+        outlineWidth: 0,
+      },
+    }),
+  },
+  clearBtn: { paddingLeft: 6 },
   riverCard: {
     height: 200,
     borderRadius: 20,
@@ -211,33 +301,56 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border,
   },
-  riverImg: { ...StyleSheet.absoluteFillObject, width: "100%", height: "100%" },
+  riverImg: {
+    ...StyleSheet.absoluteFillObject,
+    width: "100%",
+    height: "100%",
+  },
   riverOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(10,17,40,0.45)",
   },
-  riverContent: {
-    flex: 1,
-    justifyContent: "flex-end",
-    padding: 18,
-  },
-  riverBadgeRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
-  classBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
-  },
-  classBadgeText: { color: "#fff", fontSize: 11, fontWeight: "800", letterSpacing: 1 },
-  riverState: { color: "#fff", fontWeight: "800", fontSize: 13, letterSpacing: 1 },
-  riverName: { color: "#fff", fontSize: 22, fontWeight: "900", letterSpacing: -0.5 },
-  riverDesc: { color: "rgba(255,255,255,0.85)", fontSize: 13, marginTop: 4 },
-  seeAllBtn: {
+  riverContent: { flex: 1, justifyContent: "flex-end", padding: 18 },
+  riverBadgeRow: {
     flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    paddingVertical: 14,
+    marginBottom: 8,
+  },
+  classBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 },
+  classBadgeText: {
+    color: "#fff",
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 1,
+  },
+  riverState: {
+    color: "#fff",
+    fontWeight: "800",
+    letterSpacing: 1,
+    fontSize: 13,
+  },
+  riverName: {
+    color: "#fff",
+    fontSize: 22,
+    fontWeight: "900",
+    letterSpacing: -0.5,
+  },
+  riverDesc: {
+    color: "rgba(255,255,255,0.85)",
+    fontSize: 13,
     marginTop: 4,
   },
-  seeAllText: { color: COLORS.primary, fontSize: 15, fontWeight: "800" },
+  emptyWrap: {
+    alignItems: "center",
+    paddingVertical: 48,
+    gap: 8,
+  },
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: COLORS.textMain,
+    marginTop: 4,
+  },
+  emptySub: { fontSize: 13, color: COLORS.textMuted, textAlign: "center" },
 });
