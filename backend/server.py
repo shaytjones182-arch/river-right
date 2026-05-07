@@ -5,6 +5,7 @@ import os
 import logging
 from pathlib import Path
 from typing import List, Optional, Any, Dict
+import asyncio
 import httpx
 import math
 import time
@@ -199,8 +200,8 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
             "Number 5 (IV+): tight slot move; scout river-right",
             "Number 6–7 (III+): final wave trains to Railroad Bridge take-out",
         ],
-        "put_in": {"name": "Numbers Put-in", "lat": 39.0193, "lon": -106.2671},
-        "take_out": {"name": "Railroad Bridge", "lat": 38.9505, "lon": -106.2920},
+        "put_in": {"name": "Numbers Put-in", "lat": 39.0220, "lon": -106.2425},
+        "take_out": {"name": "Railroad Bridge", "lat": 38.9450, "lon": -106.1815},
         "usgs_site_id": "07091200",
         "image": "https://images.unsplash.com/photo-1729906003626-c867d5dd4b19?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
     },
@@ -518,6 +519,333 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "take_out": {"name": "The Forks", "lat": 45.3625, "lon": -69.9728},
         "usgs_site_id": "01042500",
         "image": "https://images.unsplash.com/photo-1432888622747-4eb9a8f2c293?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+    },
+    {
+        "id": "salt-river-upper",
+        "name": "Salt River — Upper",
+        "state": "AZ",
+        "class_rating": "III–IV",
+        "type": "whitewater",
+        "osm_names": ["Salt River"],
+        "description": "Sonoran Desert wilderness run through saguaro-studded canyons. Spring-only flow window with classic technical rapids.",
+        "hazards": ["Flash flooding from desert storms", "Limited bail-out options"],
+        "points_of_interest": [
+            "Mother Rock (III): warm-up below the put-in",
+            "Maytag (III+): named for its washing-machine action",
+            "Quartzite Falls (was IV; now portage after blasting)",
+            "Eye of the Needle (III+): tight slot through volcanic rock",
+            "Black Rock (IV): the crux — scout left",
+        ],
+        "put_in": {"name": "US-60 Bridge", "lat": 33.7906, "lon": -110.5006},
+        "take_out": {"name": "Highway 288", "lat": 33.7944, "lon": -110.9119},
+        "usgs_site_id": "09498500",
+        "image": "https://images.unsplash.com/photo-1537905569824-f89f14cceb68?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+    },
+    {
+        "id": "animas-lower",
+        "name": "Animas River — Lower",
+        "state": "CO",
+        "class_rating": "II–III",
+        "type": "mixed",
+        "osm_names": ["Animas River"],
+        "description": "Durango town run. Big-volume Class II–III with reliable summer snowmelt and easy roadside access.",
+        "hazards": ["Cold snowmelt in spring", "Smelter Rapid at high water"],
+        "points_of_interest": [
+            "Smelter Rapid (III+): river-wide hole at high water",
+            "Sawmill (II+): wave train through old mill site",
+            "Santa Rita Hole: surfable wave at moderate flows",
+        ],
+        "put_in": {"name": "33rd Street", "lat": 37.2939, "lon": -107.8769},
+        "take_out": {"name": "Dallabetta Park", "lat": 37.2208, "lon": -107.8736},
+        "usgs_site_id": "09361500",
+        "image": "https://images.unsplash.com/photo-1512238701577-f182d9ef8af1?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+    },
+    {
+        "id": "selway-river",
+        "name": "Selway River",
+        "state": "ID",
+        "class_rating": "III–IV",
+        "type": "whitewater",
+        "osm_names": ["Selway River"],
+        "description": "Permitted wilderness river through the Selway-Bitterroot. One of the most coveted permits in the West — pristine forested canyon.",
+        "hazards": ["Permit required (lottery)", "Long shuttle and remote canyon"],
+        "points_of_interest": [
+            "Goat Creek (III): warm-up rapid",
+            "Ham (IV): big drop with hidden hole",
+            "Wolf Creek (IV): boulder garden",
+            "Ladle (IV+): the crux — scout right",
+            "Pinball (III+): final big rapid",
+        ],
+        "put_in": {"name": "Paradise", "lat": 46.0900, "lon": -114.7917},
+        "take_out": {"name": "Selway Falls", "lat": 46.0772, "lon": -115.2986},
+        "usgs_site_id": "13336500",
+        "image": "https://images.unsplash.com/photo-1496147539398-37bdcb14b00e?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+    },
+    {
+        "id": "rio-grande-taos-box",
+        "name": "Rio Grande — Taos Box",
+        "state": "NM",
+        "class_rating": "IV",
+        "type": "whitewater",
+        "osm_names": ["Rio Grande"],
+        "description": "Steep basalt gorge run on the Rio Grande. Big-water Class IV with classic Western desert scenery.",
+        "hazards": ["Powerful hydraulics at high spring flows", "Long carry to put-in"],
+        "points_of_interest": [
+            "Ski Jump (III+): big wave train at the entrance",
+            "Boat Reamer (IV): rocky maze",
+            "Powerline (IV): river-wide hole",
+            "Rock Garden (III+): boulder slalom",
+            "Sunset (IV): final big drop before take-out",
+        ],
+        "put_in": {"name": "Taos Junction Bridge", "lat": 36.3192, "lon": -105.7544},
+        "take_out": {"name": "Taos Box Take-out", "lat": 36.4167, "lon": -105.7242},
+        "usgs_site_id": "08276500",
+        "image": "https://images.unsplash.com/photo-1547036967-23d11aacaee0?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+    },
+    {
+        "id": "white-salmon-river",
+        "name": "White Salmon River",
+        "state": "WA",
+        "class_rating": "IV–V",
+        "type": "whitewater",
+        "osm_names": ["White Salmon River"],
+        "description": "Steep, spring-fed Pacific Northwest classic. Pool-drop Class IV–V through a basalt slot canyon — runnable nearly year-round.",
+        "hazards": ["Husum Falls — scout/portage", "Cold spring-fed water"],
+        "points_of_interest": [
+            "Top Drop (IV): warm-up boof",
+            "Husum Falls (V): the crux; portage-able river-left",
+            "Rattlesnake (IV): tight slot through volcanic rock",
+            "BZ Falls (above) requires scout",
+        ],
+        "put_in": {"name": "BZ Corner", "lat": 45.8014, "lon": -121.5292},
+        "take_out": {"name": "Northwestern Lake", "lat": 45.7714, "lon": -121.4933},
+        "usgs_site_id": "14123500",
+        "image": "https://images.unsplash.com/photo-1473773508845-188df298d2d1?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+    },
+    {
+        "id": "klamath-upper",
+        "name": "Klamath River — Upper",
+        "state": "CA",
+        "class_rating": "II–III",
+        "type": "mixed",
+        "osm_names": ["Klamath River"],
+        "description": "Big-volume run through Northern California's redwood country. Fun Class II–III with great fishing and overnight camping options.",
+        "hazards": ["Hydraulic at Hamburg", "Water quality varies seasonally"],
+        "points_of_interest": [
+            "Caldera (II+): warm-up wave train",
+            "Dragon's Tooth (III): pointed rock mid-river",
+            "Hamburg Hole (III+): keeper at high water",
+            "Big Foot (II+): final rapid before take-out",
+        ],
+        "put_in": {"name": "Sarah Totten", "lat": 41.7825, "lon": -123.0306},
+        "take_out": {"name": "Happy Camp", "lat": 41.7989, "lon": -123.3789},
+        "usgs_site_id": "11530500",
+        "image": "https://images.unsplash.com/photo-1500964757637-c85e8a162699?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+    },
+    {
+        "id": "lochsa-river",
+        "name": "Lochsa River",
+        "state": "ID",
+        "class_rating": "III–IV",
+        "type": "whitewater",
+        "osm_names": ["Lochsa River"],
+        "description": "Highway-side Idaho big-water classic. Continuous Class IV wave-trains alongside US-12 — easy access, demanding paddling.",
+        "hazards": ["Continuous gradient — limited eddies", "Cold snowmelt water"],
+        "points_of_interest": [
+            "Fish Creek (III+): warm-up rapid",
+            "Pipeline (IV): river-wide wave-hole combo",
+            "Grim Reaper (IV+): the crux at high water",
+            "Lochsa Falls (IV): big drop with massive wave",
+            "House Wave: surfable highway-side wave",
+        ],
+        "put_in": {"name": "Wilderness Gateway", "lat": 46.5375, "lon": -115.3267},
+        "take_out": {"name": "Split Creek", "lat": 46.4400, "lon": -115.7050},
+        "usgs_site_id": "13337000",
+        "image": "https://images.unsplash.com/photo-1502786129293-79981df4e689?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+    },
+    {
+        "id": "south-fork-payette",
+        "name": "South Fork Payette — Canyon",
+        "state": "ID",
+        "class_rating": "IV",
+        "type": "whitewater",
+        "osm_names": ["South Fork Payette River"],
+        "description": "Classic Idaho Class IV run through granite canyon walls. Fun, surf-friendly, and surprisingly accessible from Boise.",
+        "hazards": ["Big Falls — mandatory portage", "Continuous Class III between named drops"],
+        "points_of_interest": [
+            "Slalom (III+): wave-train opener",
+            "Surprise (IV): blind drop with a hole",
+            "Bronco Billy (IV): big drop with kicker wave",
+            "Big Falls (V+): mandatory portage",
+            "Staircase (IV): the namesake drop",
+        ],
+        "put_in": {"name": "Deer Creek", "lat": 44.0894, "lon": -115.6533},
+        "take_out": {"name": "Banks", "lat": 44.0789, "lon": -116.1183},
+        "usgs_site_id": "13235000",
+        "image": "https://images.unsplash.com/photo-1432888622747-4eb9a8f2c293?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+    },
+    {
+        "id": "green-river-desolation",
+        "name": "Green River — Desolation Canyon",
+        "state": "UT",
+        "class_rating": "II–III",
+        "type": "mixed",
+        "osm_names": ["Green River"],
+        "description": "84-mile permitted multi-day through one of the deepest canyons in Utah. Class II–III with side-canyon hikes and stunning desert camping.",
+        "hazards": ["Permit required", "Long shuttle from Sand Wash to Swasey's Beach"],
+        "points_of_interest": [
+            "Jack Creek Rapid (II+): first named drop",
+            "Three Fords (III): biggest rapid in Desolation",
+            "Coal Creek (II+): playful wave train",
+            "Rock Creek (II+): named rapid above Florence Creek",
+            "Joe Hutch Canyon (II+): final big rapid",
+        ],
+        "put_in": {"name": "Sand Wash", "lat": 39.7969, "lon": -109.9847},
+        "take_out": {"name": "Swasey's Beach", "lat": 39.0686, "lon": -110.1322},
+        "usgs_site_id": "09315000",
+        "image": "https://images.unsplash.com/photo-1473773508845-188df298d2d1?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+    },
+    {
+        "id": "merced-river",
+        "name": "Merced River",
+        "state": "CA",
+        "class_rating": "III–IV",
+        "type": "whitewater",
+        "osm_names": ["Merced River"],
+        "description": "Sierra Nevada snowmelt classic. Continuous Class III–IV through gold-rush country below Yosemite.",
+        "hazards": ["Cold snowmelt water", "North Fork Falls — scout"],
+        "points_of_interest": [
+            "Nightmare Island (III+): braided channel — go right",
+            "Quarter Mile (IV): long boulder garden",
+            "Ned's Gulch (III+): final wave train",
+            "Split Rock (III+): named for the boulder mid-river",
+        ],
+        "put_in": {"name": "Red Bud", "lat": 37.6372, "lon": -119.8694},
+        "take_out": {"name": "Briceburg", "lat": 37.6072, "lon": -120.0264},
+        "usgs_site_id": "11264500",
+        "image": "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+    },
+    {
+        "id": "yampa-river",
+        "name": "Yampa River — Dinosaur",
+        "state": "CO",
+        "class_rating": "III–IV",
+        "type": "mixed",
+        "osm_names": ["Yampa River"],
+        "description": "Last major undammed tributary of the Colorado. Permitted multi-day through Dinosaur National Monument with stunning red-rock canyons.",
+        "hazards": ["Permit required (lottery)", "Warm Springs Rapid at high water"],
+        "points_of_interest": [
+            "Tepee Rapid (III): warm-up wave train",
+            "Big Joe (III+): named for the boulder",
+            "Warm Springs (IV+): the crux — scout river-right",
+            "Echo Park: confluence with the Green River",
+        ],
+        "put_in": {"name": "Deerlodge Park", "lat": 40.4581, "lon": -108.5067},
+        "take_out": {"name": "Echo Park", "lat": 40.5183, "lon": -108.9928},
+        "usgs_site_id": "09251000",
+        "image": "https://images.unsplash.com/photo-1547036967-23d11aacaee0?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+    },
+    {
+        "id": "russell-fork",
+        "name": "Russell Fork",
+        "state": "VA/KY",
+        "class_rating": "IV–V",
+        "type": "whitewater",
+        "osm_names": ["Russell Fork"],
+        "description": "Steep, technical Appalachian gorge with October dam releases. Class IV–V boofs and slides through Breaks Interstate Park.",
+        "hazards": ["Triple Drop and El Horrendo at high water", "Limited bail-out in the gorge"],
+        "points_of_interest": [
+            "Tower Falls (IV): the warm-up boof",
+            "Triple Drop (IV+): three-tiered staircase",
+            "El Horrendo (V): the crux — scout/portage",
+            "Climax (IV+): final big rapid",
+            "Fist (IV): boulder slot",
+        ],
+        "put_in": {"name": "Bartlick", "lat": 37.2856, "lon": -82.3369},
+        "take_out": {"name": "Garden Hole", "lat": 37.2950, "lon": -82.4233},
+        "usgs_site_id": "03208500",
+        "image": "https://images.unsplash.com/photo-1551632436-cbf8dd35adfa?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+    },
+    {
+        "id": "truckee-river",
+        "name": "Truckee River",
+        "state": "NV/CA",
+        "class_rating": "III–IV",
+        "type": "mixed",
+        "osm_names": ["Truckee River"],
+        "description": "Sierra-to-Nevada-desert run. Fun Class III–IV with reliable summer flows from Lake Tahoe releases.",
+        "hazards": ["Diversion dams — portage required", "Strainers at low water"],
+        "points_of_interest": [
+            "Bronco Rapid (III+): warm-up wave train",
+            "Jaws (IV): tight slot — biggest rapid",
+            "Floriston (III+): final wave train",
+        ],
+        "put_in": {"name": "Boca", "lat": 39.3892, "lon": -120.0894},
+        "take_out": {"name": "Floriston", "lat": 39.4042, "lon": -120.0214},
+        "usgs_site_id": "10346000",
+        "image": "https://images.unsplash.com/photo-1547036967-23d11aacaee0?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+    },
+    {
+        "id": "hudson-gorge",
+        "name": "Hudson Gorge",
+        "state": "NY",
+        "class_rating": "III–IV",
+        "type": "whitewater",
+        "osm_names": ["Hudson River"],
+        "description": "Adirondack wilderness run on the upper Hudson. Spring snowmelt and dam-release Class III–IV with stunning fall foliage.",
+        "hazards": ["Cold spring water", "Bus Stop Hole at high water"],
+        "points_of_interest": [
+            "OK Slip Falls confluence (III+)",
+            "Black Hole (IV): river-wide keeper",
+            "Bus Stop (III+): big wave train",
+            "Mile-Long Rapid (III+): continuous Class III",
+            "Harris (III+): final rapid before take-out",
+        ],
+        "put_in": {"name": "Indian River", "lat": 43.7619, "lon": -74.1700},
+        "take_out": {"name": "North River", "lat": 43.7100, "lon": -74.0033},
+        "usgs_site_id": "01315500",
+        "image": "https://images.unsplash.com/photo-1565992441121-4367c2967103?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+    },
+    {
+        "id": "pigeon-river",
+        "name": "Pigeon River",
+        "state": "NC/TN",
+        "class_rating": "III",
+        "type": "mixed",
+        "osm_names": ["Pigeon River"],
+        "description": "Dam-controlled Class III in the Smokies. Reliable summer flows make it one of the most-rafted rivers in the Southeast.",
+        "hazards": ["Power releases create sudden flow spikes", "Strainers along forested banks"],
+        "points_of_interest": [
+            "Powerhouse (III): wave train at the put-in",
+            "Vegamatic (III): named for its slicing action",
+            "Lost Guide (III): tight S-bend",
+            "Accelerator (III): final big drop",
+        ],
+        "put_in": {"name": "Powerhouse", "lat": 35.7836, "lon": -83.0931},
+        "take_out": {"name": "Hartford", "lat": 35.8225, "lon": -83.1597},
+        "usgs_site_id": "03460795",
+        "image": "https://images.unsplash.com/photo-1502082553048-f009c37129b9?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+    },
+    {
+        "id": "colorado-westwater",
+        "name": "Colorado River — Westwater Canyon",
+        "state": "UT",
+        "class_rating": "III–IV",
+        "type": "whitewater",
+        "osm_names": ["Colorado River"],
+        "description": "17-mile permitted run through the Black Granite of Westwater. Pool-drop Class III–IV with iconic Skull Rapid in the heart of Utah's red-rock country.",
+        "hazards": ["Skull Rapid — Room of Doom undercut", "Permit required"],
+        "points_of_interest": [
+            "Little Dolores (III): warm-up rapid",
+            "Marble Canyon (III+): wave train",
+            "Funnel Falls (III+): tight slot",
+            "Skull Rapid (IV): the crux — Room of Doom on river-right",
+            "Sock-it-to-Me (III+): final named rapid",
+        ],
+        "put_in": {"name": "Westwater Ranger Station", "lat": 39.0214, "lon": -109.1467},
+        "take_out": {"name": "Cisco", "lat": 38.9603, "lon": -109.3267},
+        "usgs_site_id": "09180500",
+        "image": "https://images.unsplash.com/photo-1473773508845-188df298d2d1?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
     }
 ]
 
@@ -794,6 +1122,8 @@ def _classify_osm(tags: Dict[str, str]) -> Optional[Dict[str, str]]:
         return {"category": "Dam", "kind": "hazard"}
     if wway == "weir":
         return {"category": "Weir", "kind": "hazard"}
+    if tags.get("tourism") in ("camp_site", "camp_pitch") or tags.get("leisure") == "campground":
+        return {"category": "Campground", "kind": "camp"}
     return None
 
 
@@ -834,8 +1164,12 @@ async def get_river_osm_pois(river_id: str):
           node(around.river:300)["waterway"="dam"];
           way(around.river:300)["waterway"="dam"];
           node(around.river:300)["waterway"="weir"];
+          node(around.river:400)["tourism"="camp_site"];
+          node(around.river:400)["tourism"="camp_pitch"];
+          node(around.river:400)["leisure"="campground"];
+          way(around.river:400)["leisure"="campground"];
         );
-        out tags center 80;
+        out tags center 120;
         """.strip()
     else:
         # Fallback: bbox-only (no name filter available)
@@ -850,8 +1184,12 @@ async def get_river_osm_pois(river_id: str):
           node["waterway"="dam"]({bbox});
           way["waterway"="dam"]({bbox});
           node["waterway"="weir"]({bbox});
+          node["tourism"="camp_site"]({bbox});
+          node["tourism"="camp_pitch"]({bbox});
+          node["leisure"="campground"]({bbox});
+          way["leisure"="campground"]({bbox});
         );
-        out tags center 60;
+        out tags center 80;
         """.strip()
 
     payload = None
@@ -912,6 +1250,23 @@ async def get_river_osm_pois(river_id: str):
 
 
 app.include_router(api_router)
+
+
+# Pre-warm the OSM POI cache on startup so users see results instantly.
+# Staggered + low-priority to avoid hammering Overpass.
+@app.on_event("startup")
+async def warm_osm_poi_cache():
+    async def warm():
+        # Wait a few seconds so the app is responsive first
+        await asyncio.sleep(3)
+        for r in FEATURED_RIVERS:
+            try:
+                await get_river_osm_pois(r["id"])
+            except Exception as e:
+                logging.warning(f"warm fail {r['id']}: {e}")
+            await asyncio.sleep(0.8)
+        logging.info("OSM POI cache warm-up complete")
+    asyncio.create_task(warm())
 
 app.add_middleware(
     CORSMiddleware,

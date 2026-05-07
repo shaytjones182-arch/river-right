@@ -49,6 +49,8 @@ const SVG_ICONS = {
     '<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 10c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/><path d="M2 16c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/></svg>',
   steps:
     '<svg viewBox="0 0 24 24" fill="white"><circle cx="8" cy="8" r="3"/><circle cx="16" cy="14" r="3"/><circle cx="9" cy="18" r="2"/></svg>',
+  tent:
+    '<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M12 4L3 20"/><path d="M12 4l9 16"/><path d="M12 11l-3 9"/><path d="M12 11l3 9"/></svg>',
 };
 
 const buildMapHtml = () => `<!DOCTYPE html>
@@ -79,6 +81,7 @@ const buildMapHtml = () => `<!DOCTYPE html>
   .pin.hazard{background:#D62828;}
   .pin.portage{background:#F4A261;}
   .pin.play{background:#2A9D8F;}
+  .pin.camp{background:#8B5E34;}
   .pin-tri{
     width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;
     border-bottom:24px solid #D62828;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.4));
@@ -208,6 +211,9 @@ const buildMapHtml = () => `<!DOCTYPE html>
       } else if (p.kind === 'play'){
         marker = L.marker([p.lat, p.lon], { icon: pin('play', SVG.wave) })
           .bindPopup(popupHtml(p.name, 'Play spot' + (p.grade ? ' · Class ' + p.grade : '')));
+      } else if (p.kind === 'camp'){
+        marker = L.marker([p.lat, p.lon], { icon: pin('camp', SVG.tent) })
+          .bindPopup(popupHtml(p.name || 'Campground', 'Campground'));
       } else if (p.kind === 'putin' || p.kind === 'takeout'){
         return;
       } else {
@@ -523,6 +529,7 @@ export default function MapScreen() {
             />
             <LegendDot color={COLORS.danger} label="Hazard / falls" />
             <LegendDot color={COLORS.warning} label="Portage" />
+            <LegendDot color="#8B5E34" label="Campground" />
           </View>
         )}
       </View>

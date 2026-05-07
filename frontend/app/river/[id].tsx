@@ -216,11 +216,16 @@ export default function RiverDetail() {
                 .map((p, i) => {
                   let name = p.name;
                   if (!name || /^rapids?$/i.test(name)) name = "Unnamed rapid";
+                  const cat = p.category || "";
+                  const nameLower = name.toLowerCase();
+                  // Skip the category if it's redundant (e.g., name="Summersville Dam"
+                  // already contains "Dam") or generic "Rapids/Rapid".
                   const showCat =
-                    p.category &&
-                    !/^rapids?$/i.test(p.category);
+                    cat &&
+                    !/^rapids?$/i.test(cat) &&
+                    !nameLower.includes(cat.toLowerCase());
                   const parts: string[] = [];
-                  if (showCat) parts.push(p.category);
+                  if (showCat) parts.push(cat);
                   if (p.grade) parts.push(`Class ${p.grade}`);
                   const bulletColor =
                     p.kind === "hazard" || p.kind === "waterfall"
@@ -229,6 +234,8 @@ export default function RiverDetail() {
                       ? COLORS.warning
                       : p.kind === "play"
                       ? COLORS.safe
+                      : p.kind === "camp"
+                      ? "#8B5E34"
                       : COLORS.primary;
                   return (
                     <View key={`${p.lat}-${p.lon}-${i}`} style={styles.hazard}>
