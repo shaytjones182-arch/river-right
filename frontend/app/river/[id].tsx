@@ -227,6 +227,9 @@ export default function RiverDetail() {
                   const parts: string[] = [];
                   if (showCat) parts.push(cat);
                   if (p.grade) parts.push(`Class ${p.grade}`);
+                  if (typeof p.distance_from_putin_mi === "number" && p.distance_from_putin_mi > 0) {
+                    parts.push(`${p.distance_from_putin_mi.toFixed(1)} river-mi`);
+                  }
                   const bulletColor =
                     p.kind === "hazard" || p.kind === "waterfall"
                       ? COLORS.danger

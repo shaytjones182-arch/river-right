@@ -527,10 +527,11 @@ export default function MapScreen() {
         {legendOpen && selectedRiver && (
           <View style={styles.legend} testID="map-legend-focused">
             <Text style={styles.legendTitle}>ON THIS RUN</Text>
-            <LegendDot color={COLORS.safe} label="Put-in" />
-            <LegendDot color={COLORS.textMain} label="Take-out" />
-            <LegendDot
-              color={
+            <LegendIcon kind="start" label="Put-in" />
+            <LegendIcon kind="finish" label="Take-out" />
+            <LegendIcon
+              kind="rapid"
+              rapidColor={
                 /V|IV/.test((selectedRiver.class_rating || "").toUpperCase())
                   ? COLORS.danger
                   : /III/.test((selectedRiver.class_rating || "").toUpperCase())
@@ -539,9 +540,9 @@ export default function MapScreen() {
               }
               label="Rapid"
             />
-            <LegendDot color={COLORS.danger} label="Hazard / falls" />
-            <LegendDot color={COLORS.warning} label="Portage" />
-            <LegendDot color="#8B5E34" label="Campground" />
+            <LegendIcon kind="hazard" label="Hazard / falls" />
+            <LegendIcon kind="portage" label="Portage" />
+            <LegendIcon kind="camp" label="Campground" />
           </View>
         )}
       </View>
@@ -605,10 +606,51 @@ export default function MapScreen() {
   );
 }
 
-function LegendDot({ color, label }: { color: string; label: string }) {
+function LegendIcon({
+  kind,
+  rapidColor,
+  label,
+}: {
+  kind: "start" | "finish" | "rapid" | "hazard" | "portage" | "camp";
+  rapidColor?: string;
+  label: string;
+}) {
+  // Mini icon symbols mirroring the actual map markers
+  if (kind === "hazard") {
+    return (
+      <View style={styles.legendRow}>
+        <View style={styles.legendTri}>
+          <Text style={styles.legendTriText}>!</Text>
+        </View>
+        <Text style={styles.legendText}>{label}</Text>
+      </View>
+    );
+  }
+  const bg =
+    kind === "start"
+      ? COLORS.safe
+      : kind === "finish"
+      ? COLORS.textMain
+      : kind === "rapid"
+      ? rapidColor || COLORS.primary
+      : kind === "portage"
+      ? COLORS.warning
+      : "#8B5E34";
+  const iconName: any =
+    kind === "start"
+      ? "play"
+      : kind === "finish"
+      ? "flag"
+      : kind === "rapid"
+      ? "water"
+      : kind === "portage"
+      ? "footsteps"
+      : "bonfire";
   return (
     <View style={styles.legendRow}>
-      <View style={[styles.dot, { backgroundColor: color }]} />
+      <View style={[styles.legendPin, { backgroundColor: bg }]}>
+        <Ionicons name={iconName} size={11} color="#fff" />
+      </View>
       <Text style={styles.legendText}>{label}</Text>
     </View>
   );
@@ -671,6 +713,23 @@ const styles = StyleSheet.create({
   },
   legendRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 5 },
   dot: { width: 10, height: 10, borderRadius: 5 },
+  legendPin: {
+    width: 18, height: 18, borderRadius: 9,
+    alignItems: "center", justifyContent: "center",
+    borderWidth: 1.5, borderColor: "#fff",
+  },
+  legendTri: {
+    width: 0, height: 0,
+    borderLeftWidth: 9, borderRightWidth: 9, borderBottomWidth: 16,
+    borderLeftColor: "transparent", borderRightColor: "transparent",
+    borderBottomColor: COLORS.danger,
+    alignItems: "center", justifyContent: "center",
+    marginLeft: -1,
+  },
+  legendTriText: {
+    color: "#fff", fontSize: 9, fontWeight: "900",
+    position: "absolute", top: 4, left: -3, width: 6, textAlign: "center",
+  },
   legendText: { fontSize: 13, fontWeight: "700", color: COLORS.textMain },
   legendHint: { fontSize: 11, color: COLORS.textMuted, marginTop: 6, fontStyle: "italic" },
 

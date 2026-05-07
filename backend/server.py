@@ -51,7 +51,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "Lees Ferry", "lat": 36.8650, "lon": -111.5883},
         "take_out": {"name": "Diamond Creek", "lat": 35.7700, "lon": -113.3700},
         "usgs_site_id": "09380000",
-        "image": "https://images.unsplash.com/photo-1729906003626-c867d5dd4b19?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.unsplash.com/photo-1629248457649-b082812aea6c?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "gauley-river",
@@ -73,7 +73,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "Summersville Dam", "lat": 38.2256, "lon": -80.8831},
         "take_out": {"name": "Swiss", "lat": 38.1853, "lon": -81.0903},
         "usgs_site_id": "03189600",
-        "image": "https://images.unsplash.com/photo-1729906003626-c867d5dd4b19?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.unsplash.com/photo-1767471716671-60052b672451?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "ocoee-river",
@@ -96,7 +96,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "Ocoee #2 Powerhouse", "lat": 35.0719, "lon": -84.5239},
         "take_out": {"name": "Rogers Branch", "lat": 35.0628, "lon": -84.5878},
         "usgs_site_id": "03559500",
-        "image": "https://images.unsplash.com/photo-1729906003626-c867d5dd4b19?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.unsplash.com/photo-1767471716671-60052b672451?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "deschutes-river",
@@ -117,7 +117,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "Warm Springs", "lat": 44.7639, "lon": -121.2722},
         "take_out": {"name": "Maupin", "lat": 45.1751, "lon": -121.0833},
         "usgs_site_id": "14092500",
-        "image": "https://images.unsplash.com/photo-1695918431205-b70d3d43b332?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.unsplash.com/photo-1707261897515-834d5b65c12b?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "rogue-river",
@@ -139,7 +139,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "Grave Creek", "lat": 42.6500, "lon": -123.5833},
         "take_out": {"name": "Foster Bar", "lat": 42.6831, "lon": -123.9319},
         "usgs_site_id": "14372300",
-        "image": "https://images.unsplash.com/photo-1695918431205-b70d3d43b332?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.pexels.com/photos/34921063/pexels-photo-34921063.jpeg?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "buffalo-national-river",
@@ -160,7 +160,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "Ponca", "lat": 36.0411, "lon": -93.3624},
         "take_out": {"name": "Pruitt", "lat": 35.9672, "lon": -93.1939},
         "usgs_site_id": "07055875",
-        "image": "https://images.unsplash.com/photo-1695918431205-b70d3d43b332?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.unsplash.com/photo-1667198714117-857b9af745ef?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "delaware-river",
@@ -181,7 +181,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "Hancock", "lat": 41.9468, "lon": -75.2807},
         "take_out": {"name": "Narrowsburg", "lat": 41.6076, "lon": -75.0556},
         "usgs_site_id": "01427510",
-        "image": "https://images.unsplash.com/photo-1695918431205-b70d3d43b332?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.unsplash.com/photo-1634712901426-5f7a7443c703?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "arkansas-river-numbers",
@@ -203,7 +203,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "Numbers Put-in", "lat": 39.0220, "lon": -106.2425},
         "take_out": {"name": "Railroad Bridge", "lat": 38.9450, "lon": -106.1815},
         "usgs_site_id": "07091200",
-        "image": "https://images.unsplash.com/photo-1729906003626-c867d5dd4b19?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.unsplash.com/photo-1762943107260-d080e13266b3?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "new-river-gorge",
@@ -228,7 +228,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "Cunard", "lat": 37.9347, "lon": -81.0786},
         "take_out": {"name": "Fayette Station", "lat": 38.0697, "lon": -81.0728},
         "usgs_site_id": "03185400",
-        "image": "https://images.unsplash.com/photo-1503614472-8c93d56cd9d2?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.unsplash.com/photo-1624646580989-9f059e25eb78?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "nantahala-river",
@@ -251,7 +251,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "Powerhouse", "lat": 35.2708, "lon": -83.6486},
         "take_out": {"name": "Ferebee Memorial / NOC", "lat": 35.3306, "lon": -83.6097},
         "usgs_site_id": "03504000",
-        "image": "https://images.unsplash.com/photo-1502082553048-f009c37129b9?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.pexels.com/photos/33025530/pexels-photo-33025530.jpeg?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "lower-youghiogheny",
@@ -276,7 +276,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "Ohiopyle", "lat": 39.8689, "lon": -79.4914},
         "take_out": {"name": "Bruner Run", "lat": 39.9325, "lon": -79.5575},
         "usgs_site_id": "03082500",
-        "image": "https://images.unsplash.com/photo-1565992441121-4367c2967103?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.unsplash.com/photo-1762943107260-d080e13266b3?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "upper-youghiogheny",
@@ -301,7 +301,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "Sang Run", "lat": 39.5722, "lon": -79.4136},
         "take_out": {"name": "Friendsville", "lat": 39.6647, "lon": -79.4072},
         "usgs_site_id": "03075500",
-        "image": "https://images.unsplash.com/photo-1551632436-cbf8dd35adfa?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.unsplash.com/photo-1658355686821-f412c8397a0d?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "chattooga-section-iv",
@@ -326,7 +326,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "Hwy 76 Bridge", "lat": 34.8147, "lon": -83.3072},
         "take_out": {"name": "Lake Tugaloo", "lat": 34.7572, "lon": -83.2906},
         "usgs_site_id": "02177000",
-        "image": "https://images.unsplash.com/photo-1499678329028-101435549a4e?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.unsplash.com/photo-1762943107260-d080e13266b3?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "salmon-main-lower",
@@ -350,7 +350,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "Hammer Creek", "lat": 45.8506, "lon": -116.3322},
         "take_out": {"name": "Heller Bar", "lat": 45.9819, "lon": -116.7464},
         "usgs_site_id": "13317000",
-        "image": "https://images.unsplash.com/photo-1500964757637-c85e8a162699?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.unsplash.com/photo-1626594995085-36b551227b9a?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "snake-hells-canyon",
@@ -374,7 +374,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "Hells Canyon Dam", "lat": 45.2422, "lon": -116.6997},
         "take_out": {"name": "Pittsburg Landing", "lat": 45.6378, "lon": -116.4561},
         "usgs_site_id": "13290450",
-        "image": "https://images.unsplash.com/photo-1502786129293-79981df4e689?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.unsplash.com/photo-1762943107260-d080e13266b3?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "wenatchee-river",
@@ -397,7 +397,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "Tumwater Canyon", "lat": 47.6411, "lon": -120.6814},
         "take_out": {"name": "Cashmere", "lat": 47.5236, "lon": -120.4717},
         "usgs_site_id": "12462500",
-        "image": "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.pexels.com/photos/33025530/pexels-photo-33025530.jpeg?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "tuolumne-river",
@@ -422,7 +422,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "Meral's Pool (Lumsden)", "lat": 37.8753, "lon": -120.1442},
         "take_out": {"name": "Ward's Ferry", "lat": 37.8364, "lon": -120.2675},
         "usgs_site_id": "11290000",
-        "image": "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.unsplash.com/photo-1629248457649-b082812aea6c?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "french-broad-river",
@@ -445,7 +445,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "Barnard", "lat": 35.7847, "lon": -82.7008},
         "take_out": {"name": "Hot Springs", "lat": 35.8939, "lon": -82.8275},
         "usgs_site_id": "03453500",
-        "image": "https://images.unsplash.com/photo-1530549387789-4c1017266635?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.unsplash.com/photo-1707261897515-834d5b65c12b?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "arkansas-royal-gorge",
@@ -469,7 +469,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "Parkdale", "lat": 38.4922, "lon": -105.4275},
         "take_out": {"name": "Cañon City", "lat": 38.4406, "lon": -105.2886},
         "usgs_site_id": "07094500",
-        "image": "https://images.unsplash.com/photo-1547036967-23d11aacaee0?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.unsplash.com/photo-1658355686821-f412c8397a0d?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "cheat-canyon",
@@ -494,7 +494,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "Albright", "lat": 39.4983, "lon": -79.6492},
         "take_out": {"name": "Jenkinsburg Bridge", "lat": 39.5536, "lon": -79.7886},
         "usgs_site_id": "03070260",
-        "image": "https://images.unsplash.com/photo-1473773508845-188df298d2d1?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.unsplash.com/photo-1641523448193-94c3c1ceaf05?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "kennebec-river",
@@ -518,7 +518,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "Harris Station", "lat": 45.4675, "lon": -70.0150},
         "take_out": {"name": "The Forks", "lat": 45.3625, "lon": -69.9728},
         "usgs_site_id": "01042500",
-        "image": "https://images.unsplash.com/photo-1432888622747-4eb9a8f2c293?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.unsplash.com/photo-1624646580989-9f059e25eb78?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "salt-river-upper",
@@ -539,7 +539,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "US-60 Bridge", "lat": 33.7906, "lon": -110.5006},
         "take_out": {"name": "Highway 288", "lat": 33.7944, "lon": -110.9119},
         "usgs_site_id": "09498500",
-        "image": "https://images.unsplash.com/photo-1537905569824-f89f14cceb68?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.unsplash.com/photo-1762943107254-d9113dc3c427?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "animas-lower",
@@ -558,7 +558,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "33rd Street", "lat": 37.2939, "lon": -107.8769},
         "take_out": {"name": "Dallabetta Park", "lat": 37.2208, "lon": -107.8736},
         "usgs_site_id": "09361500",
-        "image": "https://images.unsplash.com/photo-1512238701577-f182d9ef8af1?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.pexels.com/photos/34921063/pexels-photo-34921063.jpeg?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "selway-river",
@@ -579,7 +579,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "Paradise", "lat": 46.0900, "lon": -114.7917},
         "take_out": {"name": "Selway Falls", "lat": 46.0772, "lon": -115.2986},
         "usgs_site_id": "13336500",
-        "image": "https://images.unsplash.com/photo-1496147539398-37bdcb14b00e?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.unsplash.com/photo-1641523448193-94c3c1ceaf05?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "rio-grande-taos-box",
@@ -600,7 +600,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "Taos Junction Bridge", "lat": 36.3192, "lon": -105.7544},
         "take_out": {"name": "Taos Box Take-out", "lat": 36.4167, "lon": -105.7242},
         "usgs_site_id": "08276500",
-        "image": "https://images.unsplash.com/photo-1547036967-23d11aacaee0?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.unsplash.com/photo-1624646580989-9f059e25eb78?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "white-salmon-river",
@@ -620,7 +620,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "BZ Corner", "lat": 45.8014, "lon": -121.5292},
         "take_out": {"name": "Northwestern Lake", "lat": 45.7714, "lon": -121.4933},
         "usgs_site_id": "14123500",
-        "image": "https://images.unsplash.com/photo-1473773508845-188df298d2d1?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.unsplash.com/photo-1762943107254-d9113dc3c427?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "klamath-upper",
@@ -640,7 +640,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "Sarah Totten", "lat": 41.7825, "lon": -123.0306},
         "take_out": {"name": "Happy Camp", "lat": 41.7989, "lon": -123.3789},
         "usgs_site_id": "11530500",
-        "image": "https://images.unsplash.com/photo-1500964757637-c85e8a162699?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.pexels.com/photos/33025530/pexels-photo-33025530.jpeg?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "lochsa-river",
@@ -661,7 +661,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "Wilderness Gateway", "lat": 46.5375, "lon": -115.3267},
         "take_out": {"name": "Split Creek", "lat": 46.4400, "lon": -115.7050},
         "usgs_site_id": "13337000",
-        "image": "https://images.unsplash.com/photo-1502786129293-79981df4e689?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.unsplash.com/photo-1629248457649-b082812aea6c?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "south-fork-payette",
@@ -682,7 +682,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "Deer Creek", "lat": 44.0894, "lon": -115.6533},
         "take_out": {"name": "Banks", "lat": 44.0789, "lon": -116.1183},
         "usgs_site_id": "13235000",
-        "image": "https://images.unsplash.com/photo-1432888622747-4eb9a8f2c293?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.unsplash.com/photo-1762943107260-d080e13266b3?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "green-river-desolation",
@@ -703,7 +703,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "Sand Wash", "lat": 39.7969, "lon": -109.9847},
         "take_out": {"name": "Swasey's Beach", "lat": 39.0686, "lon": -110.1322},
         "usgs_site_id": "09315000",
-        "image": "https://images.unsplash.com/photo-1473773508845-188df298d2d1?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.unsplash.com/photo-1626594995085-36b551227b9a?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "merced-river",
@@ -723,7 +723,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "Red Bud", "lat": 37.6372, "lon": -119.8694},
         "take_out": {"name": "Briceburg", "lat": 37.6072, "lon": -120.0264},
         "usgs_site_id": "11264500",
-        "image": "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.unsplash.com/photo-1641523448193-94c3c1ceaf05?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "yampa-river",
@@ -743,7 +743,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "Deerlodge Park", "lat": 40.4581, "lon": -108.5067},
         "take_out": {"name": "Echo Park", "lat": 40.5183, "lon": -108.9928},
         "usgs_site_id": "09251000",
-        "image": "https://images.unsplash.com/photo-1547036967-23d11aacaee0?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.unsplash.com/photo-1626594995085-36b551227b9a?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "russell-fork",
@@ -764,7 +764,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "Bartlick", "lat": 37.2856, "lon": -82.3369},
         "take_out": {"name": "Garden Hole", "lat": 37.2950, "lon": -82.4233},
         "usgs_site_id": "03208500",
-        "image": "https://images.unsplash.com/photo-1551632436-cbf8dd35adfa?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.unsplash.com/photo-1767471716671-60052b672451?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "truckee-river",
@@ -783,7 +783,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "Boca", "lat": 39.3892, "lon": -120.0894},
         "take_out": {"name": "Floriston", "lat": 39.4042, "lon": -120.0214},
         "usgs_site_id": "10346000",
-        "image": "https://images.unsplash.com/photo-1547036967-23d11aacaee0?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.unsplash.com/photo-1626594995085-36b551227b9a?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "hudson-gorge",
@@ -804,7 +804,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "Indian River", "lat": 43.7619, "lon": -74.1700},
         "take_out": {"name": "North River", "lat": 43.7100, "lon": -74.0033},
         "usgs_site_id": "01315500",
-        "image": "https://images.unsplash.com/photo-1565992441121-4367c2967103?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.unsplash.com/photo-1629248564797-8c5ba85da9d3?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "pigeon-river",
@@ -824,7 +824,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "Powerhouse", "lat": 35.7836, "lon": -83.0931},
         "take_out": {"name": "Hartford", "lat": 35.8225, "lon": -83.1597},
         "usgs_site_id": "03460795",
-        "image": "https://images.unsplash.com/photo-1502082553048-f009c37129b9?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.unsplash.com/photo-1527489377706-5bf97e608852?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "colorado-westwater",
@@ -845,7 +845,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "Westwater Ranger Station", "lat": 39.0214, "lon": -109.1467},
         "take_out": {"name": "Cisco", "lat": 38.9603, "lon": -109.3267},
         "usgs_site_id": "09180500",
-        "image": "https://images.unsplash.com/photo-1473773508845-188df298d2d1?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.unsplash.com/photo-1658355686821-f412c8397a0d?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "yellowstone-river",
@@ -865,7 +865,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "Carbella", "lat": 45.2025, "lon": -110.7689},
         "take_out": {"name": "Yankee Jim", "lat": 45.2581, "lon": -110.7350},
         "usgs_site_id": "06192500",
-        "image": "https://images.unsplash.com/photo-1454942901704-3c44c11b2ad1?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.pexels.com/photos/33025530/pexels-photo-33025530.jpeg?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "skykomish-river",
@@ -885,7 +885,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "Index", "lat": 47.8211, "lon": -121.5572},
         "take_out": {"name": "Big Eddy", "lat": 47.8378, "lon": -121.6900},
         "usgs_site_id": "12134500",
-        "image": "https://images.unsplash.com/photo-1502786129293-79981df4e689?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.unsplash.com/photo-1762943107260-d080e13266b3?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "owyhee-river",
@@ -906,7 +906,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "Three Forks", "lat": 42.5325, "lon": -117.1731},
         "take_out": {"name": "Birch Creek", "lat": 43.4156, "lon": -117.2331},
         "usgs_site_id": "13183000",
-        "image": "https://images.unsplash.com/photo-1545558014-8692077e9b5c?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.unsplash.com/photo-1762943107254-d9113dc3c427?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "smith-river-ca",
@@ -925,7 +925,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "Patrick Creek", "lat": 41.8589, "lon": -123.8553},
         "take_out": {"name": "South Fork Confluence", "lat": 41.7986, "lon": -124.0686},
         "usgs_site_id": "11532500",
-        "image": "https://images.unsplash.com/photo-1499678329028-101435549a4e?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.unsplash.com/photo-1641523448193-94c3c1ceaf05?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "mckenzie-river",
@@ -945,7 +945,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "Olallie", "lat": 44.2089, "lon": -122.0500},
         "take_out": {"name": "Finn Rock", "lat": 44.1431, "lon": -122.4036},
         "usgs_site_id": "14162500",
-        "image": "https://images.unsplash.com/photo-1496147539398-37bdcb14b00e?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.pexels.com/photos/34921063/pexels-photo-34921063.jpeg?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "north-fork-payette",
@@ -966,7 +966,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "Smith's Ferry", "lat": 44.3017, "lon": -116.0667},
         "take_out": {"name": "Banks", "lat": 44.0789, "lon": -116.1183},
         "usgs_site_id": "13246000",
-        "image": "https://images.unsplash.com/photo-1551632436-cbf8dd35adfa?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.unsplash.com/photo-1762943107254-d9113dc3c427?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "chattahoochee-river",
@@ -985,7 +985,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "Buford Dam", "lat": 34.1592, "lon": -84.0750},
         "take_out": {"name": "Paces Mill", "lat": 33.8703, "lon": -84.4486},
         "usgs_site_id": "02336000",
-        "image": "https://images.unsplash.com/photo-1530549387789-4c1017266635?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.unsplash.com/photo-1716392979020-16519d1874e1?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "tygart-river",
@@ -1005,7 +1005,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "Belington", "lat": 39.0264, "lon": -79.9347},
         "take_out": {"name": "Arden", "lat": 39.2872, "lon": -80.1086},
         "usgs_site_id": "03050500",
-        "image": "https://images.unsplash.com/photo-1473773508845-188df298d2d1?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.unsplash.com/photo-1658355686821-f412c8397a0d?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "esopus-creek",
@@ -1024,7 +1024,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "Phoenicia", "lat": 42.0822, "lon": -74.3158},
         "take_out": {"name": "Mt. Tremper", "lat": 42.0394, "lon": -74.2278},
         "usgs_site_id": "01362500",
-        "image": "https://images.unsplash.com/photo-1496147539398-37bdcb14b00e?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.unsplash.com/photo-1527489377706-5bf97e608852?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "shenandoah-river",
@@ -1043,7 +1043,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "Bloomery", "lat": 39.2842, "lon": -77.7569},
         "take_out": {"name": "Harpers Ferry", "lat": 39.3258, "lon": -77.7375},
         "usgs_site_id": "01636500",
-        "image": "https://images.unsplash.com/photo-1547036967-23d11aacaee0?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.unsplash.com/photo-1707261897515-834d5b65c12b?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "north-fork-american",
@@ -1063,7 +1063,334 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "Iowa Hill Bridge", "lat": 39.0156, "lon": -120.9067},
         "take_out": {"name": "Ponderosa Way", "lat": 38.9678, "lon": -121.0411},
         "usgs_site_id": "11427000",
-        "image": "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
+        "image": "https://images.unsplash.com/photo-1762943107260-d080e13266b3?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
+    },
+    {
+        "id": "arkansas-bighorn-sheep-canyon",
+        "name": "Arkansas River — Bighorn Sheep Canyon",
+        "state": "CO",
+        "class_rating": "III",
+        "type": "mixed",
+        "osm_names": ["Arkansas River"],
+        "description": "Family-friendly Class III canyon below Browns Canyon. Roadside access, big surfy waves, and frequent bighorn sheep sightings.",
+        "hazards": ["Three Rocks at high water — pick line carefully", "Cold snowmelt in spring"],
+        "points_of_interest": [
+            "Spike Buck Rapid (III): warm-up wave train",
+            "Maytag (III): namesake washing-machine hole",
+            "Three Rocks (III+): the crux — three big waves in a row",
+            "Squaw Creek (II+): final wave train above takeout",
+        ],
+        "put_in": {"name": "Salt Lick", "lat": 38.4242, "lon": -105.6850},
+        "take_out": {"name": "Parkdale", "lat": 38.4922, "lon": -105.4275},
+        "usgs_site_id": "07091200",
+        "image": "https://images.unsplash.com/photo-1707261897515-834d5b65c12b?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
+    },
+    {
+        "id": "browns-canyon",
+        "name": "Arkansas River — Browns Canyon",
+        "state": "CO",
+        "class_rating": "III",
+        "type": "mixed",
+        "osm_names": ["Arkansas River"],
+        "description": "Colorado's most-rafted run. Class III through Browns Canyon National Monument with iconic granite cliffs and reliable summer flows.",
+        "hazards": ["Zoom Flume at high water", "Rocky low water"],
+        "points_of_interest": [
+            "Pinball (III): warm-up boulder slalom",
+            "Zoom Flume (III+): the crux wave train",
+            "Big Drop (III): named for the surprising drop",
+            "Seidel's Suckhole (III): ledge hole — left line is best",
+            "Staircase (III): final rapid before take-out",
+        ],
+        "put_in": {"name": "Fisherman's Bridge", "lat": 38.7575, "lon": -106.0317},
+        "take_out": {"name": "Hecla Junction", "lat": 38.6661, "lon": -106.0231},
+        "usgs_site_id": "07091200",
+        "image": "https://images.unsplash.com/photo-1707261897515-834d5b65c12b?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
+    },
+    {
+        "id": "eagle-river",
+        "name": "Eagle River — Dowd Chute",
+        "state": "CO",
+        "class_rating": "III–IV",
+        "type": "whitewater",
+        "osm_names": ["Eagle River"],
+        "description": "Vail-area Class III–IV. Snowmelt-driven Colorado classic with the famous Dowd Chute big-wave train.",
+        "hazards": ["Strainers in early spring", "Continuous Class III-IV at high water"],
+        "points_of_interest": [
+            "Dowd Chute (IV): the namesake long wave train",
+            "Riverbend (III+): tight bend through the canyon",
+            "Avon Wave: surfable wave at moderate flows",
+        ],
+        "put_in": {"name": "Edwards", "lat": 39.6431, "lon": -106.5947},
+        "take_out": {"name": "Wolcott", "lat": 39.7028, "lon": -106.6786},
+        "usgs_site_id": "09064600",
+        "image": "https://images.unsplash.com/photo-1629248457649-b082812aea6c?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
+    },
+    {
+        "id": "colorado-upper",
+        "name": "Colorado River — Pumphouse",
+        "state": "CO",
+        "class_rating": "II",
+        "type": "calm",
+        "osm_names": ["Colorado River"],
+        "description": "Family-friendly upper Colorado run. Easy Class II through Gore Canyon's lower section — popular for overnight trips.",
+        "hazards": ["Cold snowmelt", "Changing flows from upstream releases"],
+        "points_of_interest": [
+            "Eye of the Needle (II): playful entrance rapid",
+            "Cottonwood Island: scenic mid-river camp",
+            "Rancho del Rio: takeout option mid-trip",
+        ],
+        "put_in": {"name": "Pumphouse", "lat": 39.9342, "lon": -106.5358},
+        "take_out": {"name": "Rancho del Rio", "lat": 39.8814, "lon": -106.6750},
+        "usgs_site_id": "09070500",
+        "image": "https://images.unsplash.com/photo-1722658062692-503ad5d906a2?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
+    },
+    {
+        "id": "klickitat-river",
+        "name": "Klickitat River",
+        "state": "WA",
+        "class_rating": "III",
+        "type": "mixed",
+        "osm_names": ["Klickitat River"],
+        "description": "Wild & Scenic Yakama Nation river. Class III through a scenic basalt canyon with great salmon runs and reliable summer flows.",
+        "hazards": ["Strainers along banks", "Cold spring snowmelt"],
+        "points_of_interest": [
+            "Class III wave trains throughout",
+            "Stinson Flats: scenic mid-trip camping",
+            "Lower Canyon (III): final committing section",
+        ],
+        "put_in": {"name": "Leidl", "lat": 45.9606, "lon": -121.1242},
+        "take_out": {"name": "Pitt", "lat": 45.7889, "lon": -121.1944},
+        "usgs_site_id": "14113000",
+        "image": "https://images.unsplash.com/photo-1707261897515-834d5b65c12b?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
+    },
+    {
+        "id": "sandy-river",
+        "name": "Sandy River",
+        "state": "OR",
+        "class_rating": "III",
+        "type": "mixed",
+        "osm_names": ["Sandy River"],
+        "description": "Glacier-fed Mt. Hood classic. Pacific Northwest Class III with great surfing waves and Old-Maid Flat scenery.",
+        "hazards": ["Cold glacial water", "Strainers from washouts"],
+        "points_of_interest": [
+            "Marmot Dam removal site: now a free-flowing rapid",
+            "Pipeline (III): wave train through the gorge",
+            "Revenuer's Creek: takeout option",
+        ],
+        "put_in": {"name": "Dodge Park", "lat": 45.4317, "lon": -122.2756},
+        "take_out": {"name": "Oxbow Park", "lat": 45.5089, "lon": -122.3014},
+        "usgs_site_id": "14142500",
+        "image": "https://images.unsplash.com/photo-1707261897515-834d5b65c12b?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
+    },
+    {
+        "id": "clackamas-river",
+        "name": "Clackamas River",
+        "state": "OR",
+        "class_rating": "III",
+        "type": "mixed",
+        "osm_names": ["Clackamas River"],
+        "description": "Oregon Cascades classic. Big-volume Class III through evergreen forest with reliable summer dam releases.",
+        "hazards": ["Carter Falls — scout/portage", "Strainers in early spring"],
+        "points_of_interest": [
+            "Big Eddy (III): warm-up wave train",
+            "Carter Falls (IV): scout/portage on river-right",
+            "Bob's Hole: surfable play wave",
+        ],
+        "put_in": {"name": "Three Lynx", "lat": 45.1306, "lon": -122.0775},
+        "take_out": {"name": "McIver Park", "lat": 45.3083, "lon": -122.3589},
+        "usgs_site_id": "14210000",
+        "image": "https://images.unsplash.com/photo-1707261897515-834d5b65c12b?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
+    },
+    {
+        "id": "john-day-river",
+        "name": "John Day River",
+        "state": "OR",
+        "class_rating": "II",
+        "type": "calm",
+        "osm_names": ["John Day River"],
+        "description": "Eastern Oregon desert wilderness. Multi-day Class II through painted hills and rimrock canyons — fossil country.",
+        "hazards": ["Limited shade", "Long shuttle through remote desert"],
+        "points_of_interest": [
+            "Service Creek (II): the warm-up",
+            "Clarno Rapid (III): the only major drop",
+            "Cathedral Rock: dramatic cliffs mid-trip",
+        ],
+        "put_in": {"name": "Service Creek", "lat": 44.7906, "lon": -120.0892},
+        "take_out": {"name": "Clarno", "lat": 44.9106, "lon": -120.4811},
+        "usgs_site_id": "14048000",
+        "image": "https://images.unsplash.com/photo-1722658062692-503ad5d906a2?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
+    },
+    {
+        "id": "trinity-river",
+        "name": "Trinity River — Pigeon Point",
+        "state": "CA",
+        "class_rating": "II–III",
+        "type": "mixed",
+        "osm_names": ["Trinity River"],
+        "description": "Northern California's Wild & Scenic Trinity. Class II–III through dense forest with great fishing and family rafting.",
+        "hazards": ["Cold tailwater releases", "Strainers along forested banks"],
+        "points_of_interest": [
+            "Pigeon Point (II+): warm-up wave train",
+            "Hell Hole (III): the biggest rapid — scout left",
+            "Burnt Ranch Falls (V): mandatory portage downstream",
+        ],
+        "put_in": {"name": "Pigeon Point", "lat": 40.7747, "lon": -123.5181},
+        "take_out": {"name": "Hawkins Bar", "lat": 40.8128, "lon": -123.5814},
+        "usgs_site_id": "11530000",
+        "image": "https://images.unsplash.com/photo-1707261897515-834d5b65c12b?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
+    },
+    {
+        "id": "bitterroot-river",
+        "name": "Bitterroot River",
+        "state": "MT",
+        "class_rating": "II",
+        "type": "calm",
+        "osm_names": ["Bitterroot River"],
+        "description": "Montana's premier trout stream. Easy Class I-II ideal for drift boats with stunning Bitterroot Range backdrop.",
+        "hazards": ["Strainers from cottonwood logs", "Diversion dams — portage required"],
+        "points_of_interest": [
+            "Bell Crossing: popular put-in", 
+            "Lolo Confluence: scenic mid-trip junction",
+            "Jim Crew Bridge: final takeout option",
+        ],
+        "put_in": {"name": "Hamilton", "lat": 46.2469, "lon": -114.1578},
+        "take_out": {"name": "Florence", "lat": 46.6228, "lon": -114.0589},
+        "usgs_site_id": "12352500",
+        "image": "https://images.unsplash.com/photo-1722658062692-503ad5d906a2?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
+    },
+    {
+        "id": "madison-river",
+        "name": "Madison River",
+        "state": "MT",
+        "class_rating": "II",
+        "type": "calm",
+        "osm_names": ["Madison River"],
+        "description": "Yellowstone-headwaters classic. Easy Class I-II through Hebgen Lake outflow — world-class trout fishing.",
+        "hazards": ["Cold tailwater", "Drift-boat angling traffic"],
+        "points_of_interest": [
+            "Three Dollar Bridge: classic put-in",
+            "Beartrap Canyon (III): mid-trip whitewater section",
+            "Greycliff: peaceful camp option",
+        ],
+        "put_in": {"name": "Three Dollar Bridge", "lat": 44.7572, "lon": -111.4794},
+        "take_out": {"name": "Lyons Bridge", "lat": 44.8589, "lon": -111.6431},
+        "usgs_site_id": "06038500",
+        "image": "https://images.unsplash.com/photo-1722658062692-503ad5d906a2?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
+    },
+    {
+        "id": "yellowstone-canyon",
+        "name": "Yellowstone River — Paradise Valley",
+        "state": "MT",
+        "class_rating": "II",
+        "type": "calm",
+        "osm_names": ["Yellowstone River"],
+        "description": "Below Yankee Jim — easy Class I–II through Paradise Valley. Great drift-boat fishing with Absaroka peaks in view.",
+        "hazards": ["Spring runoff bumps Class to II+", "Riverside cottonwood strainers"],
+        "points_of_interest": [
+            "Carbella: popular drift-boat ramp",
+            "Mallard's Rest: scenic mid-trip stop",
+            "Pine Creek: takeout option",
+        ],
+        "put_in": {"name": "Carbella", "lat": 45.2025, "lon": -110.7689},
+        "take_out": {"name": "Pine Creek", "lat": 45.4789, "lon": -110.7544},
+        "usgs_site_id": "06192500",
+        "image": "https://images.unsplash.com/photo-1722658062692-503ad5d906a2?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
+    },
+    {
+        "id": "deerfield-river",
+        "name": "Deerfield River — Dryway",
+        "state": "MA",
+        "class_rating": "III",
+        "type": "mixed",
+        "osm_names": ["Deerfield River"],
+        "description": "New England classic. Reliable summer dam releases bring Class III continuous wave trains through forested gorge.",
+        "hazards": ["Cold tailwater releases", "Limited eddies in the gorge"],
+        "points_of_interest": [
+            "Maze (III): warm-up rapid",
+            "Dragon's Tooth (III): named for the rock",
+            "Labyrinth (III): tight technical section",
+            "Final Drop (III): the take-out wave",
+        ],
+        "put_in": {"name": "Monroe Bridge", "lat": 42.7142, "lon": -72.9800},
+        "take_out": {"name": "Hoosac Tunnel", "lat": 42.6797, "lon": -72.9203},
+        "usgs_site_id": "01170500",
+        "image": "https://images.unsplash.com/photo-1707261897515-834d5b65c12b?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
+    },
+    {
+        "id": "penobscot-east-branch",
+        "name": "Penobscot — East Branch",
+        "state": "ME",
+        "class_rating": "II–III",
+        "type": "mixed",
+        "osm_names": ["East Branch Penobscot River"],
+        "description": "Maine wilderness multi-day. Class II-III through Katahdin Woods and Waters with classic Northeast lake-and-river paddling.",
+        "hazards": ["Remote backcountry", "Wind-exposed lake crossings"],
+        "points_of_interest": [
+            "Stair Falls (III): the classic drop",
+            "Haskell Rock Pitch (III+): scout from river-left",
+            "Pond Pitch (III): final big rapid",
+        ],
+        "put_in": {"name": "Matagamon Lake", "lat": 46.1322, "lon": -68.6717},
+        "take_out": {"name": "Whetstone Falls", "lat": 45.9819, "lon": -68.6386},
+        "usgs_site_id": "01029500",
+        "image": "https://images.unsplash.com/photo-1707261897515-834d5b65c12b?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
+    },
+    {
+        "id": "new-river-virginia",
+        "name": "New River — Virginia",
+        "state": "VA",
+        "class_rating": "II",
+        "type": "calm",
+        "osm_names": ["New River"],
+        "description": "Upper New River through southwest Virginia. Easy Class I-II family floating with the New River Trail State Park access.",
+        "hazards": ["Strainers along wooded banks", "Flash flooding in summer storms"],
+        "points_of_interest": [
+            "Foster Falls (II+): the only named drop",
+            "New River Trail: rail-trail along the run",
+            "Galax: family-friendly takeout",
+        ],
+        "put_in": {"name": "Allisonia", "lat": 36.9286, "lon": -80.7042},
+        "take_out": {"name": "Foster Falls", "lat": 36.8736, "lon": -80.7289},
+        "usgs_site_id": "03168000",
+        "image": "https://images.unsplash.com/photo-1722658062692-503ad5d906a2?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
+    },
+    {
+        "id": "saluda-river",
+        "name": "Saluda River — Lower",
+        "state": "SC",
+        "class_rating": "II–III",
+        "type": "mixed",
+        "osm_names": ["Saluda River"],
+        "description": "Columbia's urban whitewater. Reliable dam releases create Class II-III play waves right in the city.",
+        "hazards": ["Sudden flow spikes from dam releases", "Cold tailwater"],
+        "points_of_interest": [
+            "Pop-Up Wave: famous play feature",
+            "Millrace Rapids (III): downtown wave train",
+            "Three Rivers Confluence: takeout area",
+        ],
+        "put_in": {"name": "Lake Murray Dam", "lat": 34.0522, "lon": -81.2058},
+        "take_out": {"name": "Three Rivers", "lat": 33.9897, "lon": -81.0539},
+        "usgs_site_id": "02168504",
+        "image": "https://images.unsplash.com/photo-1707261897515-834d5b65c12b?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
+    },
+    {
+        "id": "snake-jackson-hole",
+        "name": "Snake River — Jackson Hole Scenic",
+        "state": "WY",
+        "class_rating": "II",
+        "type": "calm",
+        "osm_names": ["Snake River"],
+        "description": "Float through Grand Teton National Park. Easy Class I–II with iconic Teton peaks in view — wildlife everywhere.",
+        "hazards": ["Strainers from logjams", "Cold snowmelt water"],
+        "points_of_interest": [
+            "Schwabacher Landing: classic put-in",
+            "Snake River Overlook: dramatic Teton views",
+            "Moose: village-side takeout",
+        ],
+        "put_in": {"name": "Deadman's Bar", "lat": 43.7544, "lon": -110.6219},
+        "take_out": {"name": "Moose", "lat": 43.6597, "lon": -110.7106},
+        "usgs_site_id": "13317660",
+        "image": "https://images.unsplash.com/photo-1722658062692-503ad5d906a2?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     }
 ]
 
@@ -1347,9 +1674,9 @@ def _classify_osm(tags: Dict[str, str]) -> Optional[Dict[str, str]]:
 
 @api_router.get("/rivers/{river_id}/osm-poi")
 async def get_river_osm_pois(river_id: str):
-    """Fetch dynamic POIs (whitewater/waterfall/dam/rapids) from OpenStreetMap
-    via the Overpass API for the river's bounding box, restricted to features
-    actually along the named river way (within ~300 m). Cached for 24h in memory.
+    """Fetch dynamic POIs (whitewater/waterfall/dam/rapids/campgrounds) from
+    OpenStreetMap via the Overpass API for the named river. Cached for 24h.
+    Distance is computed along the actual river polyline (not haversine).
     """
     river = next((r for r in FEATURED_RIVERS if r["id"] == river_id), None)
     if not river:
@@ -1364,16 +1691,16 @@ async def get_river_osm_pois(river_id: str):
     bbox = f"{south:.5f},{west:.5f},{north:.5f},{east:.5f}"
 
     osm_names: List[str] = river.get("osm_names") or []
-    # Build a regex-anchored alternation for the river name, escaping pipes/quotes
     safe_names = [n.replace('"', '\\"') for n in osm_names]
     name_regex = "^(" + "|".join(safe_names) + ")$" if safe_names else None
 
     if name_regex:
-        # Restrict to features within 300 m of the named river way
+        # Fetch the river geometry (for along-river distance) AND POIs in one query
         query = f"""
-        [out:json][timeout:25];
+        [out:json][timeout:30];
         way["waterway"~"^(river|stream)$"]["name"~"{name_regex}"]({bbox})->.river;
         (
+          .river;
           node(around.river:300)["whitewater"];
           way(around.river:300)["whitewater"];
           node(around.river:300)["waterway"="waterfall"];
@@ -1387,12 +1714,11 @@ async def get_river_osm_pois(river_id: str):
           node(around.river:400)["leisure"="campground"];
           way(around.river:400)["leisure"="campground"];
         );
-        out tags center 120;
+        out tags geom 200;
         """.strip()
     else:
-        # Fallback: bbox-only (no name filter available)
         query = f"""
-        [out:json][timeout:20];
+        [out:json][timeout:25];
         (
           node["whitewater"]({bbox});
           way["whitewater"]({bbox});
@@ -1403,9 +1729,7 @@ async def get_river_osm_pois(river_id: str):
           way["waterway"="dam"]({bbox});
           node["waterway"="weir"]({bbox});
           node["tourism"="camp_site"]({bbox});
-          node["tourism"="camp_pitch"]({bbox});
           node["leisure"="campground"]({bbox});
-          way["leisure"="campground"]({bbox});
         );
         out tags center 80;
         """.strip()
@@ -1430,16 +1754,74 @@ async def get_river_osm_pois(river_id: str):
         return {"pois": [], "cached": False, "error": "osm_unavailable"}
 
     pois: List[Dict[str, Any]] = []
+    # Extract river polyline geometry for along-river distance computation
+    river_pts: List[tuple] = []
     for el in payload.get("elements", []) or []:
         tags = el.get("tags", {}) or {}
+        if tags.get("waterway") in ("river", "stream") and tags.get("name") and el.get("type") == "way":
+            geom = el.get("geometry", []) or []
+            for pt in geom:
+                if pt.get("lat") is not None and pt.get("lon") is not None:
+                    river_pts.append((pt["lat"], pt["lon"]))
+
+    # Pre-compute cumulative miles along the polyline so we can map any point
+    # to a position along the river quickly.
+    cum_miles: List[float] = [0.0]
+    for i in range(1, len(river_pts)):
+        cum_miles.append(
+            cum_miles[-1] + haversine_miles(river_pts[i - 1][0], river_pts[i - 1][1], river_pts[i][0], river_pts[i][1])
+        )
+
+    def project_to_river(lat: float, lon: float) -> Optional[float]:
+        """Return the cumulative-miles position of (lat, lon) along the river polyline.
+        None if no river geometry is available."""
+        if len(river_pts) < 2:
+            return None
+        best_dist = float("inf")
+        best_pos = 0.0
+        for i in range(len(river_pts) - 1):
+            a = river_pts[i]
+            b = river_pts[i + 1]
+            # Approximate projection onto segment (lat/lon plane is OK over short distances)
+            dx = b[1] - a[1]
+            dy = b[0] - a[0]
+            seg_len_sq = dx * dx + dy * dy
+            if seg_len_sq == 0:
+                t = 0.0
+                px, py = a[1], a[0]
+            else:
+                t = ((lon - a[1]) * dx + (lat - a[0]) * dy) / seg_len_sq
+                t = max(0.0, min(1.0, t))
+                px = a[1] + t * dx
+                py = a[0] + t * dy
+            d = haversine_miles(lat, lon, py, px)
+            if d < best_dist:
+                best_dist = d
+                # Cumulative miles: cum_miles[i] + t * length(seg_i)
+                seg_len_mi = cum_miles[i + 1] - cum_miles[i]
+                best_pos = cum_miles[i] + t * seg_len_mi
+        return best_pos
+
+    # Compute put-in's position along the river
+    putin_pos = project_to_river(river["put_in"]["lat"], river["put_in"]["lon"])
+
+    for el in payload.get("elements", []) or []:
+        tags = el.get("tags", {}) or {}
+        # Skip the river way elements themselves
+        if tags.get("waterway") in ("river", "stream") and not (tags.get("whitewater") or tags.get("waterway") in ("waterfall", "rapids", "dam", "weir")):
+            continue
         cls = _classify_osm(tags)
         if not cls:
             continue
         if el.get("type") == "node":
             lat, lon = el.get("lat"), el.get("lon")
         else:
-            center = el.get("center", {}) or {}
-            lat, lon = center.get("lat"), center.get("lon")
+            geom = el.get("geometry") or []
+            if geom:
+                lat, lon = geom[0].get("lat"), geom[0].get("lon")
+            else:
+                center = el.get("center", {}) or {}
+                lat, lon = center.get("lat"), center.get("lon")
         if lat is None or lon is None:
             continue
         name = (
@@ -1449,7 +1831,13 @@ async def get_river_osm_pois(river_id: str):
             or cls["category"]
         )
         pi = river["put_in"]
-        dist = haversine_miles(pi["lat"], pi["lon"], lat, lon)
+        # Compute along-river distance from put-in (signed; we take absolute)
+        poi_pos = project_to_river(lat, lon)
+        if poi_pos is not None and putin_pos is not None:
+            dist = abs(poi_pos - putin_pos)
+        else:
+            # Fallback to haversine if no river geometry was returned
+            dist = haversine_miles(pi["lat"], pi["lon"], lat, lon)
         grade = tags.get("whitewater:rapid_grade") or tags.get("whitewater:section_grade")
         pois.append({
             "name": name,

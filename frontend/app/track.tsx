@@ -426,7 +426,6 @@ export default function Track() {
           onPress={() => setPickerOpen(true)}
           activeOpacity={0.8}
         >
-          <Ionicons name="water" size={16} color={COLORS.primary} />
           <Text style={styles.runPickerText} numberOfLines={1}>
             {selectedRiver
               ? `${selectedRiver.name}`
