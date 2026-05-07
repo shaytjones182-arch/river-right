@@ -111,11 +111,11 @@ const buildMapHtml = () => `<!DOCTYPE html>
     }
   }
 
-  var USA_CENTER = [39.5, -98.35];
-  var USA_ZOOM = 4;
+  // Lower 48 bounds — fits the map regardless of screen aspect
+  var LOWER_48_BOUNDS = L.latLngBounds([24.5, -125], [49.5, -66]);
 
-  var map = L.map('m', { zoomControl:false, attributionControl:false, minZoom:3, maxZoom:15 })
-    .setView(USA_CENTER, USA_ZOOM);
+  var map = L.map('m', { zoomControl:false, attributionControl:false, minZoom:3, maxZoom:15 });
+  map.fitBounds(LOWER_48_BOUNDS, { animate: false, padding: [10, 10] });
 
   L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png',
     { subdomains:'abcd', maxZoom:19 }).addTo(map);
@@ -169,9 +169,9 @@ const buildMapHtml = () => `<!DOCTYPE html>
 
   function flyToOverview(animate){
     if (animate){
-      map.flyTo(USA_CENTER, USA_ZOOM, { duration: 1.0, easeLinearity: 0.25 });
+      map.flyToBounds(LOWER_48_BOUNDS, { duration: 1.0, easeLinearity: 0.25, padding: [10, 10] });
     } else {
-      map.setView(USA_CENTER, USA_ZOOM);
+      map.fitBounds(LOWER_48_BOUNDS, { animate: false, padding: [10, 10] });
     }
   }
 
@@ -251,13 +251,18 @@ const buildMapHtml = () => `<!DOCTYPE html>
     if (!state) return;
     if (state.cmd === 'overview'){
       renderOverview(state.rivers || []);
-      var animate = currentMode === 'focused';
-      flyToOverview(animate);
+      // Only move the camera if the caller asks (mode change, not filter update)
+      if (state.move !== 'none'){
+        var animate = currentMode === 'focused';
+        flyToOverview(animate);
+      }
       currentMode = 'overview';
     } else if (state.cmd === 'focus'){
       renderFocused(state.river, state.pois || []);
-      var animate2 = currentMode === 'overview' || currentMode === null;
-      flyToFocused(state.river, state.pois || [], animate2);
+      if (state.move !== 'none'){
+        var animate2 = currentMode === 'overview' || currentMode === null;
+        flyToFocused(state.river, state.pois || [], animate2);
+      }
       currentMode = 'focused';
     }
   };
@@ -396,12 +401,19 @@ export default function MapScreen() {
     };
   }, [selectedRiver, focusedPois, filteredRivers]);
 
+  const prevModeRef = useRef<"overview" | "focused" | null>(null);
+
   // Push state to map whenever map is ready or relevant state changes
   useEffect(() => {
     if (!mapReady) return;
     // Only push focused state once POIs are loaded so the bounds include them
     if (selectedRiver && focusedPois === null) return;
-    postCommand(buildPayload());
+    const newMode: "overview" | "focused" = selectedRiver ? "focused" : "overview";
+    // Only animate the camera on a real mode change. Filter changes within
+    // the same mode (overview→overview) should leave the camera alone.
+    const move = newMode !== prevModeRef.current ? "fit" : "none";
+    postCommand({ ...buildPayload(), move });
+    prevModeRef.current = newMode;
   }, [mapReady, selectedRiver, focusedPois, filteredRivers, buildPayload, postCommand]);
 
   // Handle messages from the map
