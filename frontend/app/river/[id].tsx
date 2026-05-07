@@ -183,62 +183,6 @@ export default function RiverDetail() {
           <Text style={styles.h3}>About this run</Text>
           <Text style={styles.body1}>{r.description}</Text>
 
-          {r.points_of_interest && r.points_of_interest.length > 0 && (
-            <>
-              <Text style={styles.h3}>Points of interest</Text>
-              {r.points_of_interest.map((p, i) => (
-                <View key={i} style={styles.hazard}>
-                  <Ionicons name="ellipse" size={8} color={COLORS.primary} style={{ marginTop: 8 }} />
-                  <Text style={styles.hazardText}>{p}</Text>
-                </View>
-              ))}
-            </>
-          )}
-
-          <View style={styles.osmHeaderRow}>
-            <Text style={styles.h3}>More features (OpenStreetMap)</Text>
-            {osmLoading && <ActivityIndicator size="small" color={COLORS.textMuted} />}
-          </View>
-          {!osmLoading && osmError && (
-            <Text style={styles.subtle}>OpenStreetMap data temporarily unavailable.</Text>
-          )}
-          {!osmLoading && !osmError && (osmPois?.length || 0) === 0 && (
-            <Text style={styles.subtle}>
-              No additional features tagged on OpenStreetMap for this run yet.
-            </Text>
-          )}
-          {!osmLoading && !osmError && osmPois && osmPois.length > 0 && (
-            <View style={styles.osmGrid} testID="osm-poi-list">
-              {osmPois.map((p, i) => {
-                const iconName = KIND_ICON[p.kind] || "location";
-                const accent =
-                  p.kind === "hazard" || p.kind === "waterfall"
-                    ? COLORS.danger
-                    : p.kind === "rapid"
-                    ? COLORS.primary
-                    : COLORS.textMuted;
-                return (
-                  <View key={`${p.lat}-${p.lon}-${i}`} style={styles.osmRow}>
-                    <View style={[styles.osmIconWrap, { backgroundColor: `${accent}1A` }]}>
-                      <Ionicons name={iconName} size={16} color={accent} />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.osmName} numberOfLines={1}>{p.name}</Text>
-                      <Text style={styles.osmMeta}>
-                        {p.category}
-                        {p.grade ? ` · Class ${p.grade}` : ""}
-                        {` · ${p.distance_from_putin_mi.toFixed(1)} mi from put-in`}
-                      </Text>
-                    </View>
-                  </View>
-                );
-              })}
-              <Text style={styles.osmFooter}>
-                Crowdsourced from OpenStreetMap contributors.
-              </Text>
-            </View>
-          )}
-
           <Text style={styles.h3}>Hazards</Text>
           {r.hazards.map((h, i) => (
             <View key={i} style={styles.hazard}>
@@ -247,30 +191,104 @@ export default function RiverDetail() {
             </View>
           ))}
 
-          <Text style={styles.h3}>Logistics</Text>
-          <View style={styles.logCard}>
-            <View style={styles.logRow}>
-              <Ionicons name="location" size={18} color={COLORS.safe} />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.logLabel}>PUT-IN</Text>
-                <Text style={styles.logName}>{r.put_in.name}</Text>
-                <Text style={styles.subtle}>
-                  {r.put_in.lat.toFixed(4)}, {r.put_in.lon.toFixed(4)}
-                </Text>
-              </View>
+          <View style={styles.osmHeaderRow}>
+            <View>
+              <Text style={styles.h3}>Points of interest</Text>
+              <Text style={styles.subtle}>from OpenStreetMap</Text>
             </View>
-            <View style={styles.divider} />
-            <View style={styles.logRow}>
-              <Ionicons name="flag" size={18} color={COLORS.danger} />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.logLabel}>TAKE-OUT</Text>
-                <Text style={styles.logName}>{r.take_out.name}</Text>
-                <Text style={styles.subtle}>
-                  {r.take_out.lat.toFixed(4)}, {r.take_out.lon.toFixed(4)}
-                </Text>
-              </View>
-            </View>
+            {osmLoading && <ActivityIndicator size="small" color={COLORS.textMuted} />}
           </View>
+
+          {/* Put-in (always first) */}
+          <View style={styles.hazard}>
+            <Ionicons name="ellipse" size={8} color={COLORS.safe} style={{ marginTop: 8 }} />
+            <Text style={styles.hazardText}>
+              <Text style={styles.poiLead}>Put-in: </Text>
+              {r.put_in.name}
+            </Text>
+          </View>
+
+          {/* OSM POIs (sorted by distance from put-in on the backend) */}
+          {!osmLoading && !osmError && osmPois && osmPois.length > 0 && (
+            <View testID="osm-poi-list">
+              {osmPois
+                .filter((p) => p.kind !== "putin" && p.kind !== "takeout")
+                .map((p, i) => {
+                  let name = p.name;
+                  if (!name || /^rapids?$/i.test(name)) name = "Unnamed rapid";
+                  const showCat =
+                    p.category &&
+                    !/^rapids?$/i.test(p.category);
+                  const parts: string[] = [];
+                  if (showCat) parts.push(p.category);
+                  if (p.grade) parts.push(`Class ${p.grade}`);
+                  const bulletColor =
+                    p.kind === "hazard" || p.kind === "waterfall"
+                      ? COLORS.danger
+                      : p.kind === "portage"
+                      ? COLORS.warning
+                      : p.kind === "play"
+                      ? COLORS.safe
+                      : COLORS.primary;
+                  return (
+                    <View key={`${p.lat}-${p.lon}-${i}`} style={styles.hazard}>
+                      <Ionicons
+                        name="ellipse"
+                        size={8}
+                        color={bulletColor}
+                        style={{ marginTop: 8 }}
+                      />
+                      <Text style={styles.hazardText}>
+                        {name}
+                        {parts.length > 0 ? (
+                          <Text style={styles.poiMeta}> — {parts.join(" · ")}</Text>
+                        ) : null}
+                      </Text>
+                    </View>
+                  );
+                })}
+            </View>
+          )}
+
+          {/* Take-out (always last) */}
+          <View style={styles.hazard}>
+            <Ionicons
+              name="ellipse"
+              size={8}
+              color={COLORS.textMain}
+              style={{ marginTop: 8 }}
+            />
+            <Text style={styles.hazardText}>
+              <Text style={styles.poiLead}>Take-out: </Text>
+              {r.take_out.name}
+            </Text>
+          </View>
+
+          {!osmLoading && osmError && (
+            <Text style={[styles.subtle, { marginTop: 6 }]}>
+              OpenStreetMap data temporarily unavailable.
+            </Text>
+          )}
+
+          {r.points_of_interest && r.points_of_interest.length > 0 && (
+            <>
+              <Text style={styles.h3}>Tips</Text>
+              <Text style={[styles.subtle, { marginBottom: 6 }]}>
+                These tips are user-contributed and have not been verified.
+              </Text>
+              {r.points_of_interest.map((p, i) => (
+                <View key={i} style={styles.hazard}>
+                  <Ionicons
+                    name="ellipse"
+                    size={8}
+                    color={COLORS.primary}
+                    style={{ marginTop: 8 }}
+                  />
+                  <Text style={styles.hazardText}>{p}</Text>
+                </View>
+              ))}
+            </>
+          )}
 
           <TouchableOpacity
             testID="river-detail-track-btn"
@@ -329,6 +347,8 @@ const styles = StyleSheet.create({
   body1: { color: COLORS.textMain, lineHeight: 22, marginBottom: 16, fontSize: 15 },
   hazard: { flexDirection: "row", gap: 10, alignItems: "flex-start", paddingVertical: 6 },
   hazardText: { flex: 1, color: COLORS.textMain, lineHeight: 20, fontSize: 14 },
+  poiLead: { fontWeight: "800", color: COLORS.textMain },
+  poiMeta: { color: COLORS.textMuted, fontSize: 13 },
   osmHeaderRow: {
     flexDirection: "row",
     justifyContent: "space-between",
