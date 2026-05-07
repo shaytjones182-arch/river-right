@@ -73,11 +73,7 @@ export default function Home() {
       const typeOk = filter === "all" ? true : r.type === filter;
       if (!typeOk) return false;
       if (!q) return true;
-      return (
-        r.name.toLowerCase().includes(q) ||
-        r.state.toLowerCase().includes(q) ||
-        r.description.toLowerCase().includes(q)
-      );
+      return r.name.toLowerCase().includes(q);
     });
   }, [rivers, filter, query]);
 

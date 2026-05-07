@@ -476,7 +476,7 @@ export default function MapScreen() {
             activeOpacity={0.85}
           >
             <Ionicons name="arrow-back" size={18} color="#fff" />
-            <Text style={styles.backBtnText}>USA</Text>
+            <Text style={styles.backBtnText}>BACK</Text>
           </TouchableOpacity>
         )}
 
