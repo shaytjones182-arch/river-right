@@ -77,7 +77,7 @@ const buildHtml = (rivers: River[]) => {
   var map = L.map('m', { zoomControl:false, attributionControl:false, minZoom:3, maxZoom:13 })
     .setView([39.5, -98.35], 4);
 
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png',
     { subdomains:'abcd', maxZoom:19 }).addTo(map);
 
   L.tileLayer('https://basemap.nationalmap.gov/arcgis/rest/services/USGSHydroCached/MapServer/tile/{z}/{y}/{x}',
@@ -93,9 +93,6 @@ const buildHtml = (rivers: River[]) => {
 
   rivers.forEach(function(r){
     var color = colorFor(r.type);
-    L.polyline([[r.plat, r.plon], [r.tlat, r.tlon]], {
-      color: color, weight: 4, opacity: 0.95
-    }).addTo(map);
 
     var icon = L.divIcon({
       className: '',
