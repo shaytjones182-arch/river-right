@@ -7,6 +7,7 @@ type Props = {
   style?: ViewStyle;
   testID?: string;
   webViewRef?: React.Ref<WebView>;
+  iframeRef?: React.Ref<HTMLIFrameElement>;
   onMessage?: (data: string) => void;
 };
 
@@ -15,13 +16,15 @@ type Props = {
  * - Native: renders a react-native-webview
  * - Web: renders an <iframe srcDoc=...> so the map actually shows
  * - onMessage: called with postMessage payload from inside the map (string).
+ * - Both webViewRef and iframeRef are exposed so callers can push commands in.
  */
-export default function MapView({ html, style, testID, webViewRef, onMessage }: Props) {
+export default function MapView({ html, style, testID, webViewRef, iframeRef, onMessage }: Props) {
   if (Platform.OS === "web") {
     return (
       <View style={[styles.fill, style]} testID={testID}>
         {/* @ts-ignore - iframe is a valid web-only DOM element */}
         <iframe
+          ref={iframeRef as any}
           srcDoc={html}
           style={{ border: 0, width: "100%", height: "100%", display: "block" }}
           // @ts-ignore

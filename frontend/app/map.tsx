@@ -14,12 +14,14 @@ import { useRouter } from "expo-router";
 import MapView from "../src/MapView";
 import { COLORS, API } from "../src/theme";
 
+type RiverType = "whitewater" | "mixed" | "calm";
+
 type River = {
   id: string;
   name: string;
   state: string;
   class_rating: string;
-  type: string;
+  type: RiverType | string;
   description: string;
   put_in: { name: string; lat: number; lon: number };
   take_out: { name: string; lat: number; lon: number };
@@ -35,9 +37,22 @@ type OsmPoi = {
   grade?: string | null;
 };
 
-// ---------------- HTML builders ----------------
+type FilterKey = "all" | "whitewater" | "mixed" | "calm";
 
-const COMMON_HEAD = `
+// ---------------- HTML (single, persistent) ----------------
+
+const SVG_ICONS = {
+  play: '<svg viewBox="0 0 24 24" fill="white"><polygon points="6 4 20 12 6 20 6 4"/></svg>',
+  flag:
+    '<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22V4"/><path d="M4 4h14l-2 4 2 4H4"/></svg>',
+  wave:
+    '<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 10c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/><path d="M2 16c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/></svg>',
+  steps:
+    '<svg viewBox="0 0 24 24" fill="white"><circle cx="8" cy="8" r="3"/><circle cx="16" cy="14" r="3"/><circle cx="9" cy="18" r="2"/></svg>',
+};
+
+const buildMapHtml = () => `<!DOCTYPE html>
+<html><head>
 <meta name="viewport" content="initial-scale=1.0,maximum-scale=1.0,user-scalable=no" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
@@ -46,6 +61,7 @@ const COMMON_HEAD = `
     width:14px;height:14px;border-radius:50%;
     border:2px solid #fff;
     box-shadow:0 0 0 4px rgba(255,255,255,0.55), 0 1px 4px rgba(0,0,0,0.4);
+    cursor:pointer;
   }
   .pin{
     width:28px;height:28px;border-radius:50%;
@@ -77,227 +93,202 @@ const COMMON_HEAD = `
   .pop-title{font-weight:800;font-size:13px;color:#0A1128;}
   .pop-meta{font-size:11px;color:#5C6B73;margin-top:2px;}
 </style>
-`;
+</head><body>
+<div id="m"></div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function(){
+  var SVG = ${JSON.stringify(SVG_ICONS)};
 
-const COMMON_TILES_JS = `
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png',
-    { subdomains:'abcd', maxZoom:19 }).addTo(map);
-  L.tileLayer('https://basemap.nationalmap.gov/arcgis/rest/services/USGSHydroCached/MapServer/tile/{z}/{y}/{x}',
-    { maxZoom:16, opacity:0.85 }).addTo(map);
-  L.control.zoom({ position:'topright' }).addTo(map);
-`;
-
-const NAV_JS = `
-  function navigate(id){
+  function send(id){
     if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
       window.ReactNativeWebView.postMessage(id);
     } else if (window.parent && window.parent !== window) {
       window.parent.postMessage({ type: 'msg', id: id }, '*');
     }
   }
-`;
 
-const buildOverviewHtml = (rivers: River[]) => {
-  const dataJson = JSON.stringify(
-    rivers.map((r) => ({
-      id: r.id,
-      name: r.name,
-      state: r.state,
-      cls: r.class_rating,
-      type: r.type,
-      plat: r.put_in.lat,
-      plon: r.put_in.lon,
-    }))
-  );
+  var USA_CENTER = [39.5, -98.35];
+  var USA_ZOOM = 4;
 
-  return `<!DOCTYPE html>
-<html><head>${COMMON_HEAD}</head><body>
-<div id="m"></div>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-(function(){
-  ${NAV_JS}
-  var rivers = ${dataJson};
-  var map = L.map('m', { zoomControl:false, attributionControl:false, minZoom:3, maxZoom:13 })
-    .setView([39.5, -98.35], 4);
-  ${COMMON_TILES_JS}
+  var map = L.map('m', { zoomControl:false, attributionControl:false, minZoom:3, maxZoom:15 })
+    .setView(USA_CENTER, USA_ZOOM);
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png',
+    { subdomains:'abcd', maxZoom:19 }).addTo(map);
+  L.tileLayer('https://basemap.nationalmap.gov/arcgis/rest/services/USGSHydroCached/MapServer/tile/{z}/{y}/{x}',
+    { maxZoom:16, opacity:0.85 }).addTo(map);
+  L.control.zoom({ position:'topright' }).addTo(map);
+
+  var overviewLayer = L.layerGroup().addTo(map);
+  var focusedLayer = L.layerGroup().addTo(map);
+  var currentMode = null;
 
   function colorFor(t){
     if (t === 'whitewater') return '#D62828';
     if (t === 'calm') return '#2A9D8F';
     return '#F4A261';
   }
-  rivers.forEach(function(r){
-    var color = colorFor(r.type);
-    var icon = L.divIcon({
-      className: '',
-      html: '<div class="pulse" style="background:' + color + '"></div>',
-      iconSize: [14,14],
-      iconAnchor: [7,7]
-    });
-    var m = L.marker([r.plat, r.plon], { icon: icon }).addTo(map);
-    m.on('click', function(){ navigate('select:' + r.id); });
-  });
-})();
-</script>
-</body></html>`;
-};
-
-// SVG icon snippets — small, bundled inline for Leaflet divIcons
-const SVG = {
-  play: '<svg viewBox="0 0 24 24" fill="white"><polygon points="6 4 20 12 6 20 6 4"/></svg>',
-  flag:
-    '<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22V4"/><path d="M4 4h14l-2 4 2 4H4"/></svg>',
-  wave:
-    '<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 10c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/><path d="M2 16c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/></svg>',
-  warning:
-    '<svg viewBox="0 0 24 24" fill="white"><path d="M12 2L1 22h22L12 2zm0 6c.6 0 1 .4 1 1v6c0 .6-.4 1-1 1s-1-.4-1-1V9c0-.6.4-1 1-1zm0 11a1.2 1.2 0 110-2.4A1.2 1.2 0 0112 19z" fill="#D62828"/></svg>',
-  steps:
-    '<svg viewBox="0 0 24 24" fill="white"><circle cx="8" cy="8" r="3"/><circle cx="16" cy="14" r="3"/><circle cx="9" cy="18" r="2"/></svg>',
-};
-
-const buildFocusedHtml = (river: River, pois: OsmPoi[]) => {
-  // Heuristic: derive rapid intensity tier from the river's class_rating
-  const cls = (river.class_rating || "").toUpperCase();
-  const intensity = /V/.test(cls)
-    ? "hard"
-    : /IV/.test(cls)
-    ? "hard"
-    : /III/.test(cls)
-    ? "mod"
-    : "mild";
-
-  const startLat = river.put_in.lat;
-  const startLon = river.put_in.lon;
-  const endLat = river.take_out.lat;
-  const endLon = river.take_out.lon;
-
-  const dataJson = JSON.stringify({
-    putIn: { lat: startLat, lon: startLon, name: river.put_in.name },
-    takeOut: { lat: endLat, lon: endLon, name: river.take_out.name },
-    riverClass: river.class_rating || "",
-    pois: pois.map((p) => ({
-      name: p.name,
-      kind: p.kind,
-      cat: p.category,
-      lat: p.lat,
-      lon: p.lon,
-      grade: p.grade || null,
-    })),
-    intensity,
-  });
-
-  // Inject SVGs as JS strings
-  const svgJs = `var SVG = ${JSON.stringify(SVG)};`;
-
-  return `<!DOCTYPE html>
-<html><head>${COMMON_HEAD}</head><body>
-<div id="m"></div>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-(function(){
-  ${NAV_JS}
-  ${svgJs}
-  var data = ${dataJson};
-
-  var map = L.map('m', { zoomControl:false, attributionControl:false, minZoom:5, maxZoom:15 });
-  ${COMMON_TILES_JS}
 
   function pin(cls, svg){
     return L.divIcon({
       className: '',
       html: '<div class="pin ' + cls + '">' + svg + '</div>',
-      iconSize: [28,28],
-      iconAnchor: [14,14],
-      popupAnchor: [0,-14]
+      iconSize: [28,28], iconAnchor: [14,14], popupAnchor: [0,-14]
     });
   }
   function tri(){
     return L.divIcon({
       className: '',
       html: '<div class="pin-tri"></div>',
-      iconSize: [28,28],
-      iconAnchor: [14,22],
-      popupAnchor: [0,-20]
+      iconSize: [28,28], iconAnchor: [14,22], popupAnchor: [0,-20]
     });
   }
-  function popup(title, meta){
+  function popupHtml(title, meta){
     return '<div class="pop-title">' + title + '</div>' +
            (meta ? '<div class="pop-meta">' + meta + '</div>' : '');
   }
-  function classLabel(grade){
-    var g = (grade || data.riverClass || '').toString();
-    return g ? 'Class ' + g : '';
+
+  function renderOverview(rivers){
+    overviewLayer.clearLayers();
+    focusedLayer.clearLayers();
+    rivers.forEach(function(r){
+      var color = colorFor(r.type);
+      var icon = L.divIcon({
+        className: '',
+        html: '<div class="pulse" style="background:' + color + '"></div>',
+        iconSize: [14,14], iconAnchor: [7,7]
+      });
+      var m = L.marker([r.plat, r.plon], { icon: icon }).addTo(overviewLayer);
+      m.on('click', function(){ send('select:' + r.id); });
+    });
   }
 
-  // Put-in (start) — green play
-  L.marker([data.putIn.lat, data.putIn.lon], { icon: pin('start', SVG.play), zIndexOffset: 1000 })
-    .addTo(map)
-    .bindPopup(popup('Put-in: ' + data.putIn.name, 'Start of run'));
-
-  // Take-out (finish) — dark flag
-  L.marker([data.takeOut.lat, data.takeOut.lon], { icon: pin('finish', SVG.flag), zIndexOffset: 1000 })
-    .addTo(map)
-    .bindPopup(popup('Take-out: ' + data.takeOut.name, 'End of run'));
-
-  // POI markers
-  var rapidClass = 'rapid-' + data.intensity; // mild | mod | hard
-  data.pois.forEach(function(p){
-    var marker;
-    if (p.kind === 'waterfall'){
-      marker = L.marker([p.lat, p.lon], { icon: tri() })
-        .bindPopup(popup(p.name, 'Waterfall' + (p.grade ? ' · Class ' + p.grade : '')));
-    } else if (p.kind === 'hazard'){
-      marker = L.marker([p.lat, p.lon], { icon: tri() })
-        .bindPopup(popup(p.name, p.cat));
-    } else if (p.kind === 'portage'){
-      marker = L.marker([p.lat, p.lon], { icon: pin('portage', SVG.steps) })
-        .bindPopup(popup(p.name, 'Portage'));
-    } else if (p.kind === 'play'){
-      marker = L.marker([p.lat, p.lon], { icon: pin('play', SVG.wave) })
-        .bindPopup(popup(p.name, 'Play spot' + (p.grade ? ' · Class ' + p.grade : '')));
-    } else if (p.kind === 'putin' || p.kind === 'takeout'){
-      // Skip OSM-tagged put-ins/take-outs (we already have curated ones)
-      return;
+  function flyToOverview(animate){
+    if (animate){
+      map.flyTo(USA_CENTER, USA_ZOOM, { duration: 1.0, easeLinearity: 0.25 });
     } else {
-      // Default: rapid (color-coded by river's overall class)
-      var grade = (p.grade || '').toUpperCase();
-      var cls = rapidClass;
-      if (/V/.test(grade) || /IV/.test(grade)) cls = 'rapid-hard';
-      else if (/III/.test(grade)) cls = 'rapid-mod';
-      else if (grade) cls = 'rapid-mild';
-      // Title: prefer the OSM name; if it's just the generic "Rapids" (no real name),
-      // show the river's class-based label instead
-      var displayName = p.name;
-      if (!displayName || /^rapids?$/i.test(displayName)){
-        displayName = 'Unnamed rapid';
-      }
-      marker = L.marker([p.lat, p.lon], { icon: pin(cls, SVG.wave) })
-        .bindPopup(popup(displayName, classLabel(p.grade)));
+      map.setView(USA_CENTER, USA_ZOOM);
     }
-    if (marker) marker.addTo(map);
+  }
+
+  function renderFocused(river, pois){
+    overviewLayer.clearLayers();
+    focusedLayer.clearLayers();
+
+    // Put-in (start)
+    L.marker([river.put_in_lat, river.put_in_lon], {
+      icon: pin('start', SVG.play), zIndexOffset: 1000
+    }).addTo(focusedLayer)
+      .bindPopup(popupHtml('Put-in: ' + river.put_in_name, 'Start of run'));
+
+    // Take-out (finish)
+    L.marker([river.take_out_lat, river.take_out_lon], {
+      icon: pin('finish', SVG.flag), zIndexOffset: 1000
+    }).addTo(focusedLayer)
+      .bindPopup(popupHtml('Take-out: ' + river.take_out_name, 'End of run'));
+
+    function classLabel(grade){
+      var g = (grade || river.class_rating || '').toString();
+      return g ? 'Class ' + g : '';
+    }
+
+    var rapidClass = 'rapid-' + river.intensity; // mild | mod | hard
+    pois.forEach(function(p){
+      var marker;
+      if (p.kind === 'waterfall'){
+        marker = L.marker([p.lat, p.lon], { icon: tri() })
+          .bindPopup(popupHtml(p.name, 'Waterfall' + (p.grade ? ' · Class ' + p.grade : '')));
+      } else if (p.kind === 'hazard'){
+        marker = L.marker([p.lat, p.lon], { icon: tri() })
+          .bindPopup(popupHtml(p.name, p.cat));
+      } else if (p.kind === 'portage'){
+        marker = L.marker([p.lat, p.lon], { icon: pin('portage', SVG.steps) })
+          .bindPopup(popupHtml(p.name, 'Portage'));
+      } else if (p.kind === 'play'){
+        marker = L.marker([p.lat, p.lon], { icon: pin('play', SVG.wave) })
+          .bindPopup(popupHtml(p.name, 'Play spot' + (p.grade ? ' · Class ' + p.grade : '')));
+      } else if (p.kind === 'putin' || p.kind === 'takeout'){
+        return;
+      } else {
+        var grade = (p.grade || '').toUpperCase();
+        var cls = rapidClass;
+        if (/V/.test(grade) || /IV/.test(grade)) cls = 'rapid-hard';
+        else if (/III/.test(grade)) cls = 'rapid-mod';
+        else if (grade) cls = 'rapid-mild';
+        var name = p.name;
+        if (!name || /^rapids?$/i.test(name)) name = 'Unnamed rapid';
+        marker = L.marker([p.lat, p.lon], { icon: pin(cls, SVG.wave) })
+          .bindPopup(popupHtml(name, classLabel(p.grade)));
+      }
+      if (marker) marker.addTo(focusedLayer);
+    });
+  }
+
+  function flyToFocused(river, pois, animate){
+    var pts = [
+      [river.put_in_lat, river.put_in_lon],
+      [river.take_out_lat, river.take_out_lon]
+    ];
+    pois.forEach(function(p){
+      if (p.kind !== 'putin' && p.kind !== 'takeout') pts.push([p.lat, p.lon]);
+    });
+    var b = L.latLngBounds(pts).pad(0.2);
+    if (animate){
+      map.flyToBounds(b, { duration: 1.4, easeLinearity: 0.3 });
+    } else {
+      map.fitBounds(b, { animate: false });
+    }
+  }
+
+  window.applyState = function(state){
+    if (!state) return;
+    if (state.cmd === 'overview'){
+      renderOverview(state.rivers || []);
+      var animate = currentMode === 'focused';
+      flyToOverview(animate);
+      currentMode = 'overview';
+    } else if (state.cmd === 'focus'){
+      renderFocused(state.river, state.pois || []);
+      var animate2 = currentMode === 'overview' || currentMode === null;
+      flyToFocused(state.river, state.pois || [], animate2);
+      currentMode = 'focused';
+    }
+  };
+
+  // Listen for parent (web) postMessage as well
+  window.addEventListener('message', function(e){
+    var d = e.data;
+    if (typeof d === 'string'){ try { d = JSON.parse(d); } catch(_) { return; } }
+    if (d && d.cmd) window.applyState(d);
   });
 
-  // Fit bounds tightly around put-in, take-out, and all POIs
-  var pts = [[data.putIn.lat, data.putIn.lon], [data.takeOut.lat, data.takeOut.lon]];
-  data.pois.forEach(function(p){ pts.push([p.lat, p.lon]); });
-  var b = L.latLngBounds(pts);
-  map.fitBounds(b.pad(0.18), { animate: false });
+  // Tell host we're ready to receive state
+  send('ready');
 })();
 </script>
 </body></html>`;
-};
 
 // ---------------- React component ----------------
+
+const FILTERS: { key: FilterKey; label: string; color: string }[] = [
+  { key: "all", label: "All Rivers", color: COLORS.primary },
+  { key: "whitewater", label: "Whitewater", color: COLORS.danger },
+  { key: "mixed", label: "Mixed", color: COLORS.warning },
+  { key: "calm", label: "Calm", color: COLORS.safe },
+];
 
 export default function MapScreen() {
   const router = useRouter();
   const webRef = useRef<WebView>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
   const [rivers, setRivers] = useState<River[]>([]);
   const [loading, setLoading] = useState(true);
   const [legendOpen, setLegendOpen] = useState(true);
+  const [filter, setFilter] = useState<FilterKey>("all");
+  const [mapReady, setMapReady] = useState(false);
 
-  // Focused-river state
   const [selectedRiverId, setSelectedRiverId] = useState<string | null>(null);
   const [focusedPois, setFocusedPois] = useState<OsmPoi[] | null>(null);
   const [focusLoading, setFocusLoading] = useState(false);
@@ -306,6 +297,11 @@ export default function MapScreen() {
     () => rivers.find((r) => r.id === selectedRiverId) || null,
     [rivers, selectedRiverId]
   );
+
+  const filteredRivers = useMemo(() => {
+    if (filter === "all") return rivers;
+    return rivers.filter((r) => r.type === filter);
+  }, [rivers, filter]);
 
   // Initial featured-river fetch
   const load = useCallback(async () => {
@@ -348,6 +344,69 @@ export default function MapScreen() {
     };
   }, [selectedRiverId]);
 
+  // Send a command into the map (works on both web iframe and native WebView)
+  const postCommand = useCallback((payload: any) => {
+    if (Platform.OS === "web") {
+      iframeRef.current?.contentWindow?.postMessage(payload, "*");
+    } else {
+      const js = `if (window.applyState) window.applyState(${JSON.stringify(payload)}); true;`;
+      webRef.current?.injectJavaScript(js);
+    }
+  }, []);
+
+  // Compose payload for either overview or focused view
+  const buildPayload = useCallback(() => {
+    if (selectedRiver) {
+      const cls = (selectedRiver.class_rating || "").toUpperCase();
+      const intensity = /V/.test(cls) || /IV/.test(cls)
+        ? "hard"
+        : /III/.test(cls)
+        ? "mod"
+        : "mild";
+      return {
+        cmd: "focus",
+        river: {
+          id: selectedRiver.id,
+          class_rating: selectedRiver.class_rating,
+          intensity,
+          put_in_lat: selectedRiver.put_in.lat,
+          put_in_lon: selectedRiver.put_in.lon,
+          put_in_name: selectedRiver.put_in.name,
+          take_out_lat: selectedRiver.take_out.lat,
+          take_out_lon: selectedRiver.take_out.lon,
+          take_out_name: selectedRiver.take_out.name,
+        },
+        pois: focusedPois || [],
+      };
+    }
+    return {
+      cmd: "overview",
+      rivers: filteredRivers.map((r) => ({
+        id: r.id,
+        type: r.type,
+        plat: r.put_in.lat,
+        plon: r.put_in.lon,
+      })),
+    };
+  }, [selectedRiver, focusedPois, filteredRivers]);
+
+  // Push state to map whenever map is ready or relevant state changes
+  useEffect(() => {
+    if (!mapReady) return;
+    // Only push focused state once POIs are loaded so the bounds include them
+    if (selectedRiver && focusedPois === null) return;
+    postCommand(buildPayload());
+  }, [mapReady, selectedRiver, focusedPois, filteredRivers, buildPayload, postCommand]);
+
+  // Handle messages from the map
+  const handleMessage = useCallback((msg: string) => {
+    if (msg === "ready") {
+      setMapReady(true);
+    } else if (msg.startsWith("select:")) {
+      setSelectedRiverId(msg.slice("select:".length));
+    }
+  }, []);
+
   // Web: listen for postMessage from iframe
   useEffect(() => {
     if (Platform.OS !== "web") return;
@@ -363,33 +422,9 @@ export default function MapScreen() {
       // @ts-ignore
       window.removeEventListener("message", handler);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [handleMessage]);
 
-  const handleMessage = useCallback((msg: string) => {
-    if (msg.startsWith("select:")) {
-      setSelectedRiverId(msg.slice("select:".length));
-    }
-  }, []);
-
-  const html = useMemo(() => {
-    if (loading) return null;
-    if (selectedRiver && focusedPois !== null) {
-      return buildFocusedHtml(selectedRiver, focusedPois);
-    }
-    if (selectedRiver) {
-      // Loading POIs — show focused map without POIs yet (just put-in/take-out + map zoom)
-      return buildFocusedHtml(selectedRiver, []);
-    }
-    return rivers.length > 0 ? buildOverviewHtml(rivers) : null;
-  }, [loading, rivers, selectedRiver, focusedPois]);
-
-  const onMessageNative = useCallback(
-    (data: string) => {
-      handleMessage(data);
-    },
-    [handleMessage]
-  );
+  const html = useMemo(() => buildMapHtml(), []);
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]} testID="map-screen">
@@ -419,7 +454,7 @@ export default function MapScreen() {
       </View>
 
       <View style={styles.mapWrap} testID="map-container">
-        {loading || !html ? (
+        {loading ? (
           <View style={styles.loaderWrap}>
             <ActivityIndicator color={COLORS.primary} />
             <Text style={styles.loadingText}>Loading rivers…</Text>
@@ -427,8 +462,9 @@ export default function MapScreen() {
         ) : (
           <MapView
             webViewRef={webRef}
+            iframeRef={iframeRef}
             html={html}
-            onMessage={onMessageNative}
+            onMessage={handleMessage}
           />
         )}
 
@@ -477,9 +513,9 @@ export default function MapScreen() {
             <LegendDot color={COLORS.textMain} label="Take-out" />
             <LegendDot
               color={
-                /V|IV/.test(selectedRiver.class_rating.toUpperCase())
+                /V|IV/.test((selectedRiver.class_rating || "").toUpperCase())
                   ? COLORS.danger
-                  : /III/.test(selectedRiver.class_rating.toUpperCase())
+                  : /III/.test((selectedRiver.class_rating || "").toUpperCase())
                   ? COLORS.warning
                   : COLORS.info
               }
@@ -513,35 +549,40 @@ export default function MapScreen() {
           </TouchableOpacity>
         </View>
       ) : (
-        <View style={styles.statsBar} testID="map-stats">
-          <Stat label="RIVERS" value={`${rivers.length}`} />
-          <View style={styles.statDivider} />
-          <Stat
-            label="WHITEWATER"
-            value={`${rivers.filter((r) => r.type === "whitewater").length}`}
-          />
-          <View style={styles.statDivider} />
-          <Stat
-            label="MIXED"
-            value={`${rivers.filter((r) => r.type === "mixed").length}`}
-          />
-          <View style={styles.statDivider} />
-          <Stat
-            label="CALM"
-            value={`${rivers.filter((r) => r.type === "calm").length}`}
-          />
+        <View style={styles.filterBar} testID="map-filter-bar">
+          {FILTERS.map((f, idx) => {
+            const active = filter === f.key;
+            return (
+              <React.Fragment key={f.key}>
+                <TouchableOpacity
+                  testID={`map-filter-${f.key}`}
+                  style={[styles.filterBtn, active && styles.filterBtnActive]}
+                  onPress={() => setFilter(f.key)}
+                  activeOpacity={0.85}
+                >
+                  {f.key === "all" ? (
+                    <View style={styles.allDots}>
+                      <View style={[styles.miniDot, { backgroundColor: COLORS.danger }]} />
+                      <View style={[styles.miniDot, { backgroundColor: COLORS.warning }]} />
+                      <View style={[styles.miniDot, { backgroundColor: COLORS.safe }]} />
+                    </View>
+                  ) : (
+                    <View style={[styles.filterDot, { backgroundColor: f.color }]} />
+                  )}
+                  <Text
+                    style={[styles.filterLabel, active && styles.filterLabelActive]}
+                    numberOfLines={1}
+                  >
+                    {f.label}
+                  </Text>
+                </TouchableOpacity>
+                {idx < FILTERS.length - 1 && <View style={styles.filterDivider} />}
+              </React.Fragment>
+            );
+          })}
         </View>
       )}
     </SafeAreaView>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={styles.stat}>
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
-    </View>
   );
 }
 
@@ -568,136 +609,102 @@ const styles = StyleSheet.create({
   h1: { fontSize: 24, fontWeight: "900", color: COLORS.textMain, letterSpacing: -0.5 },
   sub: { color: COLORS.textMuted, marginTop: 2, fontSize: 13 },
   iconBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: "center",
-    justifyContent: "center",
+    width: 44, height: 44, borderRadius: 22,
+    alignItems: "center", justifyContent: "center",
     backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    borderWidth: 1, borderColor: COLORS.border,
   },
   mapWrap: {
-    flex: 1,
-    marginHorizontal: 16,
-    marginBottom: 12,
-    borderRadius: 20,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    flex: 1, marginHorizontal: 16, marginBottom: 12,
+    borderRadius: 20, overflow: "hidden",
+    borderWidth: 1, borderColor: COLORS.border,
     backgroundColor: COLORS.border,
     position: "relative",
   },
   loaderWrap: { flex: 1, alignItems: "center", justifyContent: "center", gap: 10 },
   loadingText: { color: COLORS.textMuted, fontSize: 13, fontWeight: "600" },
   backBtn: {
-    position: "absolute",
-    top: 12,
-    left: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
+    position: "absolute", top: 12, left: 12,
+    flexDirection: "row", alignItems: "center", gap: 6,
     backgroundColor: "rgba(10,17,40,0.92)",
-    paddingHorizontal: 14,
-    paddingVertical: 9,
+    paddingHorizontal: 14, paddingVertical: 9,
     borderRadius: 999,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.2)",
+    borderWidth: 1, borderColor: "rgba(255,255,255,0.2)",
     minHeight: 36,
   },
-  backBtnText: {
-    color: "#fff",
-    fontWeight: "900",
-    fontSize: 12,
-    letterSpacing: 1,
-  },
+  backBtnText: { color: "#fff", fontWeight: "900", fontSize: 12, letterSpacing: 1 },
   focusLoading: {
-    position: "absolute",
-    top: 12,
-    right: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
+    position: "absolute", top: 12, right: 12,
+    flexDirection: "row", alignItems: "center", gap: 8,
     backgroundColor: "rgba(10,17,40,0.85)",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 999,
+    paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999,
   },
   focusLoadingText: { color: "#fff", fontSize: 12, fontWeight: "700" },
   legend: {
-    position: "absolute",
-    left: 12,
-    bottom: 12,
+    position: "absolute", left: 12, bottom: 12,
     backgroundColor: "rgba(255,255,255,0.96)",
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    minWidth: 158,
+    borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12,
+    borderWidth: 1, borderColor: COLORS.border, minWidth: 158,
   },
   legendTitle: {
-    fontSize: 10,
-    fontWeight: "900",
-    letterSpacing: 1.5,
-    color: COLORS.textMuted,
-    marginBottom: 8,
+    fontSize: 10, fontWeight: "900", letterSpacing: 1.5,
+    color: COLORS.textMuted, marginBottom: 8,
   },
   legendRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 5 },
   dot: { width: 10, height: 10, borderRadius: 5 },
   legendText: { fontSize: 13, fontWeight: "700", color: COLORS.textMain },
-  legendHint: {
-    fontSize: 11,
-    color: COLORS.textMuted,
-    marginTop: 6,
-    fontStyle: "italic",
-  },
-  statsBar: {
+  legendHint: { fontSize: 11, color: COLORS.textMuted, marginTop: 6, fontStyle: "italic" },
+
+  // Filter bar (replaces old stats bar)
+  filterBar: {
     flexDirection: "row",
     backgroundColor: COLORS.surface,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    alignItems: "center",
-    justifyContent: "space-between",
+    borderTopWidth: 1, borderTopColor: COLORS.border,
+    paddingHorizontal: 8, paddingVertical: 8,
+    alignItems: "stretch",
   },
-  stat: { alignItems: "center", flex: 1 },
-  statValue: { fontSize: 20, fontWeight: "900", color: COLORS.textMain, letterSpacing: -0.5 },
-  statLabel: {
-    fontSize: 9,
-    fontWeight: "800",
-    letterSpacing: 1.2,
-    color: COLORS.textMuted,
-    marginTop: 2,
+  filterBtn: {
+    flex: 1,
+    alignItems: "center", justifyContent: "center",
+    paddingVertical: 10, paddingHorizontal: 6,
+    borderRadius: 14,
+    minHeight: 56,
+    gap: 6,
   },
-  statDivider: { width: 1, height: 30, backgroundColor: COLORS.border },
+  filterBtnActive: {
+    backgroundColor: COLORS.textMain,
+  },
+  filterDot: {
+    width: 12, height: 12, borderRadius: 6,
+  },
+  allDots: {
+    flexDirection: "row", gap: 3, alignItems: "center",
+  },
+  miniDot: {
+    width: 7, height: 7, borderRadius: 4,
+  },
+  filterLabel: {
+    fontSize: 11, fontWeight: "800",
+    letterSpacing: 0.4, color: COLORS.textMain,
+    textAlign: "center",
+  },
+  filterLabelActive: { color: "#fff" },
+  filterDivider: { width: 1, marginVertical: 8, backgroundColor: COLORS.border },
+
+  // Detail bar (when zoomed in)
   detailBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
+    flexDirection: "row", alignItems: "center", gap: 12,
     backgroundColor: COLORS.surface,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    borderTopWidth: 1, borderTopColor: COLORS.border,
+    paddingHorizontal: 16, paddingVertical: 12,
   },
-  detailLabel: {
-    fontSize: 13,
-    fontWeight: "800",
-    color: COLORS.textMain,
-    letterSpacing: -0.2,
-  },
+  detailLabel: { fontSize: 13, fontWeight: "800", color: COLORS.textMain, letterSpacing: -0.2 },
   detailSub: { fontSize: 12, color: COLORS.textMuted, marginTop: 2 },
   viewRunBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
+    flexDirection: "row", alignItems: "center", gap: 6,
     backgroundColor: COLORS.primary,
-    paddingHorizontal: 14,
-    paddingVertical: 11,
-    borderRadius: 999,
-    minHeight: 44,
+    paddingHorizontal: 14, paddingVertical: 11,
+    borderRadius: 999, minHeight: 44,
   },
   viewRunBtnText: { color: "#fff", fontSize: 12, fontWeight: "900", letterSpacing: 1 },
 });
