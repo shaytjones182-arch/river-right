@@ -175,6 +175,7 @@ const buildFocusedHtml = (river: River, pois: OsmPoi[]) => {
   const dataJson = JSON.stringify({
     putIn: { lat: startLat, lon: startLon, name: river.put_in.name },
     takeOut: { lat: endLat, lon: endLon, name: river.take_out.name },
+    riverClass: river.class_rating || "",
     pois: pois.map((p) => ({
       name: p.name,
       kind: p.kind,
@@ -224,6 +225,10 @@ const buildFocusedHtml = (river: River, pois: OsmPoi[]) => {
     return '<div class="pop-title">' + title + '</div>' +
            (meta ? '<div class="pop-meta">' + meta + '</div>' : '');
   }
+  function classLabel(grade){
+    var g = (grade || data.riverClass || '').toString();
+    return g ? 'Class ' + g : '';
+  }
 
   // Put-in (start) — green play
   L.marker([data.putIn.lat, data.putIn.lon], { icon: pin('start', SVG.play), zIndexOffset: 1000 })
@@ -239,16 +244,18 @@ const buildFocusedHtml = (river: River, pois: OsmPoi[]) => {
   var rapidClass = 'rapid-' + data.intensity; // mild | mod | hard
   data.pois.forEach(function(p){
     var marker;
-    if (p.kind === 'waterfall' || p.kind === 'hazard'){
-      // Warning triangle
+    if (p.kind === 'waterfall'){
       marker = L.marker([p.lat, p.lon], { icon: tri() })
-        .bindPopup(popup(p.name, p.cat + (p.grade ? ' · Class ' + p.grade : '')));
+        .bindPopup(popup(p.name, 'Waterfall' + (p.grade ? ' · Class ' + p.grade : '')));
+    } else if (p.kind === 'hazard'){
+      marker = L.marker([p.lat, p.lon], { icon: tri() })
+        .bindPopup(popup(p.name, p.cat));
     } else if (p.kind === 'portage'){
       marker = L.marker([p.lat, p.lon], { icon: pin('portage', SVG.steps) })
-        .bindPopup(popup(p.name, p.cat));
+        .bindPopup(popup(p.name, 'Portage'));
     } else if (p.kind === 'play'){
       marker = L.marker([p.lat, p.lon], { icon: pin('play', SVG.wave) })
-        .bindPopup(popup(p.name, p.cat));
+        .bindPopup(popup(p.name, 'Play spot' + (p.grade ? ' · Class ' + p.grade : '')));
     } else if (p.kind === 'putin' || p.kind === 'takeout'){
       // Skip OSM-tagged put-ins/take-outs (we already have curated ones)
       return;
@@ -259,8 +266,14 @@ const buildFocusedHtml = (river: River, pois: OsmPoi[]) => {
       if (/V/.test(grade) || /IV/.test(grade)) cls = 'rapid-hard';
       else if (/III/.test(grade)) cls = 'rapid-mod';
       else if (grade) cls = 'rapid-mild';
+      // Title: prefer the OSM name; if it's just the generic "Rapids" (no real name),
+      // show the river's class-based label instead
+      var displayName = p.name;
+      if (!displayName || /^rapids?$/i.test(displayName)){
+        displayName = 'Unnamed rapid';
+      }
       marker = L.marker([p.lat, p.lon], { icon: pin(cls, SVG.wave) })
-        .bindPopup(popup(p.name, p.cat + (p.grade ? ' · Class ' + p.grade : '')));
+        .bindPopup(popup(displayName, classLabel(p.grade)));
     }
     if (marker) marker.addTo(map);
   });

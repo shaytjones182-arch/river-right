@@ -37,6 +37,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "state": "AZ",
         "class_rating": "III–V",
         "type": "whitewater",
+        "osm_names": ["Colorado River"],
         "description": "Iconic 277-mile expedition through the Grand Canyon. Big-water hydraulics, towering cliffs, world-class rapids.",
         "hazards": ["Massive holes (Lava Falls, Crystal)", "Cold water year-round", "Remote — multi-day commitment"],
         "points_of_interest": [
@@ -57,6 +58,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "state": "WV",
         "class_rating": "IV–V",
         "type": "whitewater",
+        "osm_names": ["Gauley River"],
         "description": "Legendary fall release run. 100+ rapids in 25 miles — 'Beast of the East'.",
         "hazards": ["Pillow Rock", "Sweet's Falls — mandatory scout", "Strainers and undercuts"],
         "points_of_interest": [
@@ -78,6 +80,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "state": "TN",
         "class_rating": "III–IV",
         "type": "whitewater",
+        "osm_names": ["Ocoee River"],
         "description": "1996 Olympic whitewater venue. Continuous, technical, and tons of fun.",
         "hazards": ["Hell Hole hydraulic", "Crashing rocks just below put-in"],
         "points_of_interest": [
@@ -100,6 +103,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "state": "OR",
         "class_rating": "II–III",
         "type": "mixed",
+        "osm_names": ["Deschutes River"],
         "description": "Classic multi-day desert canyon run. Mix of calm flatwater and fun rapids.",
         "hazards": ["Whitehorse Rapid (III+)", "Hot summer temps — bring water"],
         "points_of_interest": [
@@ -120,6 +124,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "state": "OR",
         "class_rating": "II–IV",
         "type": "mixed",
+        "osm_names": ["Rogue River"],
         "description": "Federally designated Wild & Scenic. 34 miles of pristine canyon, salmon, and a few big drops.",
         "hazards": ["Rainie Falls (V) — most portage", "Blossom Bar — complex maneuvering"],
         "points_of_interest": [
@@ -141,6 +146,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "state": "AR",
         "class_rating": "I–II",
         "type": "calm",
+        "osm_names": ["Buffalo National River", "Buffalo River"],
         "description": "America's first National River. Crystal-clear water through Ozark bluffs — perfect for canoes.",
         "hazards": ["Strainers in spring high water", "Low flows in late summer"],
         "points_of_interest": [
@@ -161,6 +167,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "state": "PA/NY",
         "class_rating": "I–II",
         "type": "calm",
+        "osm_names": ["Delaware River"],
         "description": "Family-friendly float through wooded valleys. Easy access, eagles, and gentle riffles.",
         "hazards": ["Skinner's Falls (II)", "Cold water in spring"],
         "points_of_interest": [
@@ -181,6 +188,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "state": "CO",
         "class_rating": "IV",
         "type": "whitewater",
+        "osm_names": ["Arkansas River"],
         "description": "Steep, continuous Class IV through high-altitude granite. Rapids 1 through 7 — non-stop action.",
         "hazards": ["Continuous gradient — no rest", "Cold snowmelt water"],
         "points_of_interest": [
@@ -477,7 +485,8 @@ def _classify_osm(tags: Dict[str, str]) -> Optional[Dict[str, str]]:
 @api_router.get("/rivers/{river_id}/osm-poi")
 async def get_river_osm_pois(river_id: str):
     """Fetch dynamic POIs (whitewater/waterfall/dam/rapids) from OpenStreetMap
-    via the Overpass API for the river's bounding box. Cached for 24h in memory.
+    via the Overpass API for the river's bounding box, restricted to features
+    actually along the named river way (within ~300 m). Cached for 24h in memory.
     """
     river = next((r for r in FEATURED_RIVERS if r["id"] == river_id), None)
     if not river:
@@ -490,20 +499,45 @@ async def get_river_osm_pois(river_id: str):
 
     south, west, north, east = _bbox_for_river(river)
     bbox = f"{south:.5f},{west:.5f},{north:.5f},{east:.5f}"
-    query = f"""
-    [out:json][timeout:20];
-    (
-      node["whitewater"]({bbox});
-      way["whitewater"]({bbox});
-      node["waterway"="waterfall"]({bbox});
-      node["waterway"="rapids"]({bbox});
-      way["waterway"="rapids"]({bbox});
-      node["waterway"="dam"]({bbox});
-      way["waterway"="dam"]({bbox});
-      node["waterway"="weir"]({bbox});
-    );
-    out tags center 60;
-    """.strip()
+
+    osm_names: List[str] = river.get("osm_names") or []
+    # Build a regex-anchored alternation for the river name, escaping pipes/quotes
+    safe_names = [n.replace('"', '\\"') for n in osm_names]
+    name_regex = "^(" + "|".join(safe_names) + ")$" if safe_names else None
+
+    if name_regex:
+        # Restrict to features within 300 m of the named river way
+        query = f"""
+        [out:json][timeout:25];
+        way["waterway"~"^(river|stream)$"]["name"~"{name_regex}"]({bbox})->.river;
+        (
+          node(around.river:300)["whitewater"];
+          way(around.river:300)["whitewater"];
+          node(around.river:300)["waterway"="waterfall"];
+          node(around.river:300)["waterway"="rapids"];
+          way(around.river:300)["waterway"="rapids"];
+          node(around.river:300)["waterway"="dam"];
+          way(around.river:300)["waterway"="dam"];
+          node(around.river:300)["waterway"="weir"];
+        );
+        out tags center 80;
+        """.strip()
+    else:
+        # Fallback: bbox-only (no name filter available)
+        query = f"""
+        [out:json][timeout:20];
+        (
+          node["whitewater"]({bbox});
+          way["whitewater"]({bbox});
+          node["waterway"="waterfall"]({bbox});
+          node["waterway"="rapids"]({bbox});
+          way["waterway"="rapids"]({bbox});
+          node["waterway"="dam"]({bbox});
+          way["waterway"="dam"]({bbox});
+          node["waterway"="weir"]({bbox});
+        );
+        out tags center 60;
+        """.strip()
 
     payload = None
     last_err: Optional[str] = None
