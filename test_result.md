@@ -101,3 +101,119 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: |
+  River-focused GPS app (white-water + calmer trips) with USGS flow data, USA-only,
+  using OpenStreetMap. Latest round: rebrand to "RiverRight", replace Gauges tab with
+  a Map tab showing USA rivers highlighted in blue, fix squished Rivers filter buttons,
+  add POIs to river descriptions, fix "Could not load gauge data" 404 on river runs.
+
+backend:
+  - task: "Fix Ocoee USGS site id (404 → 200)"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Replaced inactive 03566425 with active 03559500 (OCOEE RIVER AT COPPERHILL, TN). Verified via curl: returns cfs=848 status=Runnable."
+
+  - task: "Featured rivers POIs"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "All 8 featured rivers carry points_of_interest arrays with named rapids/eddies and run notes."
+
+  - task: "API rebrand (RiverRight)"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "low"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Root /api/ now returns RiverRight."
+
+frontend:
+  - task: "Replace Gauges tab with Map tab (USA rivers in blue)"
+    implemented: true
+    working: true
+    file: "frontend/app/map.tsx, frontend/app/_layout.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "New Map tab uses CartoDB Voyager basemap + USGS National Map hydrography overlay. Markers for all featured rivers colored by type (whitewater/mixed/calm). Popup CTA navigates to river detail. Legend + bottom stats. Old gauges.tsx removed from /app."
+
+  - task: "Polish Rivers filter buttons"
+    implemented: true
+    working: true
+    file: "frontend/app/rivers.tsx"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Increased horizontal padding 18→22, vertical 11→12, minHeight 44→46, added minWidth 88. Buttons no longer squished."
+
+  - task: "Rebrand to RiverRight"
+    implemented: true
+    working: true
+    file: "frontend/app.json, frontend/app/index.tsx"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "app.json name/slug → RiverRight/riverright. Home overline RIVERRUNNER → RIVERRIGHT, headline 'Run it well' → 'Run it right'."
+
+  - task: "POI rendering on river detail"
+    implemented: true
+    working: true
+    file: "frontend/app/river/[id].tsx"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "river/[id].tsx renders points_of_interest as a bulleted list above Hazards. Verified via screenshot — Colorado Grand Canyon shows Soap Creek, Hance, Crystal, Lava Falls, Diamond Peak."
+
+metadata:
+  created_by: "main_agent"
+  version: "1.2"
+  test_sequence: 2
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Fix Ocoee USGS site id (404 → 200)"
+    - "Replace Gauges tab with Map tab (USA rivers in blue)"
+    - "Polish Rivers filter buttons"
+    - "Rebrand to RiverRight"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "main"
+    message: |
+      Round 2 of feedback applied: rebrand to RiverRight, Gauges→Map tab with USA hydrography overlay
+      and per-river markers, fixed Ocoee USGS 404 (03566425 → 03559500), polished filter button padding,
+      verified POIs render on river detail. Ran curl + screenshot smoke checks. All 8 featured rivers
+      now return live USGS flow data. Awaiting user verification before further enhancements.

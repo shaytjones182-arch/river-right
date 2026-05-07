@@ -81,7 +81,7 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         ],
         "put_in": {"name": "Ocoee #2 Powerhouse", "lat": 35.0719, "lon": -84.5239},
         "take_out": {"name": "Rogers Branch", "lat": 35.0628, "lon": -84.5878},
-        "usgs_site_id": "03566425",
+        "usgs_site_id": "03559500",
         "image": "https://images.unsplash.com/photo-1729906003626-c867d5dd4b19?crop=entropy&cs=srgb&fm=jpg&w=800&q=85"
     },
     {
@@ -278,7 +278,7 @@ def parse_iv_response(payload: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
 # ---------------- Routes ----------------
 @api_router.get("/")
 async def root():
-    return {"message": "RiverRunner API", "status": "ok"}
+    return {"message": "RiverRight API", "status": "ok"}
 
 
 @api_router.get("/rivers/featured")

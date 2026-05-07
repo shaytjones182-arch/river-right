@@ -7,14 +7,16 @@ type Props = {
   style?: ViewStyle;
   testID?: string;
   webViewRef?: React.Ref<WebView>;
+  onMessage?: (data: string) => void;
 };
 
 /**
  * Cross-platform Leaflet/OSM map.
  * - Native: renders a react-native-webview
  * - Web: renders an <iframe srcDoc=...> so the map actually shows
+ * - onMessage: called with postMessage payload from inside the map (string).
  */
-export default function MapView({ html, style, testID, webViewRef }: Props) {
+export default function MapView({ html, style, testID, webViewRef, onMessage }: Props) {
   if (Platform.OS === "web") {
     return (
       <View style={[styles.fill, style]} testID={testID}>
@@ -39,6 +41,9 @@ export default function MapView({ html, style, testID, webViewRef }: Props) {
       domStorageEnabled
       scalesPageToFit={false}
       mixedContentMode="always"
+      onMessage={(e) => {
+        if (onMessage && e?.nativeEvent?.data) onMessage(e.nativeEvent.data);
+      }}
       testID={testID}
     />
   );

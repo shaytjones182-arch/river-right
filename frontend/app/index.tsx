@@ -61,8 +61,8 @@ export default function Home() {
         }
       >
         <View style={styles.header}>
-          <Text style={styles.overline}>RIVERRUNNER</Text>
-          <Text style={styles.h1}>Read the river.{"\n"}Run it well.</Text>
+          <Text style={styles.overline}>RIVERRIGHT</Text>
+          <Text style={styles.h1}>Read the river.{"\n"}Run it right.</Text>
           <Text style={styles.subtitle}>
             Live USGS flow data, GPS tracking, and curated American rivers — from glassy floats to gnarly whitewater.
           </Text>
@@ -80,14 +80,14 @@ export default function Home() {
             <Text style={[styles.quickSub, { color: "rgba(255,255,255,0.8)" }]}>GPS track</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            testID="home-gauges-btn"
+            testID="home-map-btn"
             style={styles.quickCard}
-            onPress={() => router.push("/gauges")}
+            onPress={() => router.push("/map")}
             activeOpacity={0.85}
           >
-            <Ionicons name="water" size={26} color={COLORS.primary} />
-            <Text style={styles.quickTitle}>Gauges</Text>
-            <Text style={styles.quickSub}>Live flows</Text>
+            <Ionicons name="map" size={26} color={COLORS.primary} />
+            <Text style={styles.quickTitle}>Map</Text>
+            <Text style={styles.quickSub}>USA rivers</Text>
           </TouchableOpacity>
           <TouchableOpacity
             testID="home-rivers-btn"
@@ -95,7 +95,7 @@ export default function Home() {
             onPress={() => router.push("/rivers")}
             activeOpacity={0.85}
           >
-            <Ionicons name="map" size={26} color={COLORS.primary} />
+            <Ionicons name="water" size={26} color={COLORS.primary} />
             <Text style={styles.quickTitle}>Rivers</Text>
             <Text style={styles.quickSub}>Guidebook</Text>
           </TouchableOpacity>

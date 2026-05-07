@@ -40,29 +40,29 @@ export default function RootLayout() {
             }}
           />
           <Tabs.Screen
-            name="track"
+            name="rivers"
             options={{
-              title: "Track",
-              tabBarIcon: ({ color, size }) => (
-                <Ionicons name="navigate" size={size} color={color} />
-              ),
-            }}
-          />
-          <Tabs.Screen
-            name="gauges"
-            options={{
-              title: "Gauges",
+              title: "Rivers",
               tabBarIcon: ({ color, size }) => (
                 <Ionicons name="water" size={size} color={color} />
               ),
             }}
           />
           <Tabs.Screen
-            name="rivers"
+            name="map"
             options={{
-              title: "Rivers",
+              title: "Map",
               tabBarIcon: ({ color, size }) => (
                 <Ionicons name="map" size={size} color={color} />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="track"
+            options={{
+              title: "Track",
+              tabBarIcon: ({ color, size }) => (
+                <Ionicons name="navigate" size={size} color={color} />
               ),
             }}
           />
