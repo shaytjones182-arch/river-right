@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import List, Optional, Any, Dict
 import httpx
 import math
+import time
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -16,8 +17,17 @@ api_router = APIRouter(prefix="/api")
 
 USGS_IV_URL = "https://waterservices.usgs.gov/nwis/iv/"
 USGS_SITE_URL = "https://waterservices.usgs.gov/nwis/site/"
+OVERPASS_URLS = [
+    "https://overpass.kumi.systems/api/interpreter",
+    "https://overpass-api.de/api/interpreter",
+    "https://overpass.openstreetmap.fr/api/interpreter",
+]
 
 # Discharge (cfs) parameter code = 00060, Gauge height (ft) = 00065
+
+# In-memory TTL cache for OSM POI lookups. river_id -> (expires_ts, payload)
+_osm_poi_cache: Dict[str, Any] = {}
+_OSM_TTL_SECONDS = 24 * 60 * 60  # 24h
 
 # ---------------- Featured Rivers (curated USA whitewater + calm) ----------------
 FEATURED_RIVERS: List[Dict[str, Any]] = [
@@ -425,6 +435,131 @@ async def usgs_site_detail(site_id: str):
         raise HTTPException(404, "Site not found or inactive")
     cls = classify_flow(site.get("cfs"))
     return {**site, **cls}
+
+
+# ---------------- OSM POI (dynamic, cached) ----------------
+def _bbox_for_river(river: Dict[str, Any], pad_deg: float = 0.05):
+    """Compute bbox covering put-in and take-out with a small padding (~3 mi)."""
+    lats = [river["put_in"]["lat"], river["take_out"]["lat"]]
+    lons = [river["put_in"]["lon"], river["take_out"]["lon"]]
+    south, north = min(lats) - pad_deg, max(lats) + pad_deg
+    west, east = min(lons) - pad_deg, max(lons) + pad_deg
+    return south, west, north, east
+
+
+def _classify_osm(tags: Dict[str, str]) -> Optional[Dict[str, str]]:
+    """Map OSM tags to a friendly category + icon hint."""
+    ww = tags.get("whitewater")
+    wway = tags.get("waterway")
+    if ww == "rapid":
+        return {"category": "Rapid", "kind": "rapid"}
+    if ww == "play_spot":
+        return {"category": "Play spot", "kind": "play"}
+    if ww == "put_in":
+        return {"category": "Put-in", "kind": "putin"}
+    if ww == "egress" or ww == "take_out":
+        return {"category": "Take-out", "kind": "takeout"}
+    if ww == "portage_way" or ww == "portage":
+        return {"category": "Portage", "kind": "portage"}
+    if ww == "hazard":
+        return {"category": "Hazard", "kind": "hazard"}
+    if wway == "waterfall":
+        return {"category": "Waterfall", "kind": "waterfall"}
+    if wway == "rapids":
+        return {"category": "Rapids", "kind": "rapid"}
+    if wway == "dam":
+        return {"category": "Dam", "kind": "hazard"}
+    if wway == "weir":
+        return {"category": "Weir", "kind": "hazard"}
+    return None
+
+
+@api_router.get("/rivers/{river_id}/osm-poi")
+async def get_river_osm_pois(river_id: str):
+    """Fetch dynamic POIs (whitewater/waterfall/dam/rapids) from OpenStreetMap
+    via the Overpass API for the river's bounding box. Cached for 24h in memory.
+    """
+    river = next((r for r in FEATURED_RIVERS if r["id"] == river_id), None)
+    if not river:
+        raise HTTPException(404, "River not found")
+
+    cached = _osm_poi_cache.get(river_id)
+    now = time.time()
+    if cached and cached[0] > now:
+        return {"pois": cached[1], "cached": True}
+
+    south, west, north, east = _bbox_for_river(river)
+    bbox = f"{south:.5f},{west:.5f},{north:.5f},{east:.5f}"
+    query = f"""
+    [out:json][timeout:20];
+    (
+      node["whitewater"]({bbox});
+      way["whitewater"]({bbox});
+      node["waterway"="waterfall"]({bbox});
+      node["waterway"="rapids"]({bbox});
+      way["waterway"="rapids"]({bbox});
+      node["waterway"="dam"]({bbox});
+      way["waterway"="dam"]({bbox});
+      node["waterway"="weir"]({bbox});
+    );
+    out tags center 60;
+    """.strip()
+
+    payload = None
+    last_err: Optional[str] = None
+    for url in OVERPASS_URLS:
+        try:
+            async with httpx.AsyncClient(timeout=12.0, headers={"User-Agent": "RiverRight/1.0 (river-info app)"}) as client_http:
+                r = await client_http.post(url, content=query.encode("utf-8"), headers={"Content-Type": "text/plain"})
+                if r.status_code == 200:
+                    payload = r.json()
+                    break
+                last_err = f"{url} -> {r.status_code}"
+        except Exception as e:
+            last_err = f"{url} -> {e}"
+            continue
+    if payload is None:
+        logging.warning(f"Overpass fetch failed for {river_id}: {last_err}")
+        # Cache an empty result for a short time so we don't hammer the API
+        _osm_poi_cache[river_id] = (now + 5 * 60, [])
+        return {"pois": [], "cached": False, "error": "osm_unavailable"}
+
+    pois: List[Dict[str, Any]] = []
+    for el in payload.get("elements", []) or []:
+        tags = el.get("tags", {}) or {}
+        cls = _classify_osm(tags)
+        if not cls:
+            continue
+        if el.get("type") == "node":
+            lat, lon = el.get("lat"), el.get("lon")
+        else:
+            center = el.get("center", {}) or {}
+            lat, lon = center.get("lat"), center.get("lon")
+        if lat is None or lon is None:
+            continue
+        name = (
+            tags.get("name")
+            or tags.get("whitewater:rapid_name")
+            or tags.get("ref")
+            or cls["category"]
+        )
+        pi = river["put_in"]
+        dist = haversine_miles(pi["lat"], pi["lon"], lat, lon)
+        grade = tags.get("whitewater:rapid_grade") or tags.get("whitewater:section_grade")
+        pois.append({
+            "name": name,
+            "category": cls["category"],
+            "kind": cls["kind"],
+            "lat": lat,
+            "lon": lon,
+            "distance_from_putin_mi": round(dist, 2),
+            "grade": grade,
+        })
+
+    pois.sort(key=lambda x: x["distance_from_putin_mi"])
+    pois = pois[:60]
+    _osm_poi_cache[river_id] = (now + _OSM_TTL_SECONDS, pois)
+    return {"pois": pois, "cached": False, "count": len(pois)}
 
 
 app.include_router(api_router)

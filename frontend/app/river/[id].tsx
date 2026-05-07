@@ -37,11 +37,34 @@ type RiverDetail = {
   } | null;
 };
 
+type OsmPoi = {
+  name: string;
+  category: string;
+  kind: string;
+  lat: number;
+  lon: number;
+  distance_from_putin_mi: number;
+  grade?: string | null;
+};
+
+const KIND_ICON: Record<string, any> = {
+  rapid: "water",
+  play: "swap-horizontal",
+  putin: "log-in",
+  takeout: "log-out",
+  portage: "footsteps",
+  hazard: "warning",
+  waterfall: "trending-down",
+};
+
 export default function RiverDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const [data, setData] = useState<RiverDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [osmPois, setOsmPois] = useState<OsmPoi[] | null>(null);
+  const [osmLoading, setOsmLoading] = useState(true);
+  const [osmError, setOsmError] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -53,6 +76,30 @@ export default function RiverDetail() {
         setLoading(false);
       }
     })();
+  }, [id]);
+
+  useEffect(() => {
+    // Fetch OSM POIs in parallel — non-blocking, falls back gracefully
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await fetch(`${API}/rivers/${id}/osm-poi`);
+        const j = await r.json();
+        if (cancelled) return;
+        if (j.error) {
+          setOsmError(true);
+        } else {
+          setOsmPois(j.pois || []);
+        }
+      } catch {
+        if (!cancelled) setOsmError(true);
+      } finally {
+        if (!cancelled) setOsmLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
   if (loading) {
@@ -148,6 +195,50 @@ export default function RiverDetail() {
             </>
           )}
 
+          <View style={styles.osmHeaderRow}>
+            <Text style={styles.h3}>More features (OpenStreetMap)</Text>
+            {osmLoading && <ActivityIndicator size="small" color={COLORS.textMuted} />}
+          </View>
+          {!osmLoading && osmError && (
+            <Text style={styles.subtle}>OpenStreetMap data temporarily unavailable.</Text>
+          )}
+          {!osmLoading && !osmError && (osmPois?.length || 0) === 0 && (
+            <Text style={styles.subtle}>
+              No additional features tagged on OpenStreetMap for this run yet.
+            </Text>
+          )}
+          {!osmLoading && !osmError && osmPois && osmPois.length > 0 && (
+            <View style={styles.osmGrid} testID="osm-poi-list">
+              {osmPois.map((p, i) => {
+                const iconName = KIND_ICON[p.kind] || "location";
+                const accent =
+                  p.kind === "hazard" || p.kind === "waterfall"
+                    ? COLORS.danger
+                    : p.kind === "rapid"
+                    ? COLORS.primary
+                    : COLORS.textMuted;
+                return (
+                  <View key={`${p.lat}-${p.lon}-${i}`} style={styles.osmRow}>
+                    <View style={[styles.osmIconWrap, { backgroundColor: `${accent}1A` }]}>
+                      <Ionicons name={iconName} size={16} color={accent} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.osmName} numberOfLines={1}>{p.name}</Text>
+                      <Text style={styles.osmMeta}>
+                        {p.category}
+                        {p.grade ? ` · Class ${p.grade}` : ""}
+                        {` · ${p.distance_from_putin_mi.toFixed(1)} mi from put-in`}
+                      </Text>
+                    </View>
+                  </View>
+                );
+              })}
+              <Text style={styles.osmFooter}>
+                Crowdsourced from OpenStreetMap contributors.
+              </Text>
+            </View>
+          )}
+
           <Text style={styles.h3}>Hazards</Text>
           {r.hazards.map((h, i) => (
             <View key={i} style={styles.hazard}>
@@ -238,6 +329,45 @@ const styles = StyleSheet.create({
   body1: { color: COLORS.textMain, lineHeight: 22, marginBottom: 16, fontSize: 15 },
   hazard: { flexDirection: "row", gap: 10, alignItems: "flex-start", paddingVertical: 6 },
   hazardText: { flex: 1, color: COLORS.textMain, lineHeight: 20, fontSize: 14 },
+  osmHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 8,
+  },
+  osmGrid: {
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 16,
+    padding: 8,
+    marginBottom: 16,
+  },
+  osmRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  osmIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  osmName: { fontWeight: "800", color: COLORS.textMain, fontSize: 14 },
+  osmMeta: { color: COLORS.textMuted, fontSize: 12, marginTop: 2 },
+  osmFooter: {
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    fontSize: 11,
+    color: COLORS.textMuted,
+    fontStyle: "italic",
+  },
   logCard: {
     backgroundColor: COLORS.surface,
     borderWidth: 1,

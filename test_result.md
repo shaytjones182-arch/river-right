@@ -216,4 +216,16 @@ agent_communication:
       Round 2 of feedback applied: rebrand to RiverRight, Gauges→Map tab with USA hydrography overlay
       and per-river markers, fixed Ocoee USGS 404 (03566425 → 03559500), polished filter button padding,
       verified POIs render on river detail. Ran curl + screenshot smoke checks. All 8 featured rivers
-      now return live USGS flow data. Awaiting user verification before further enhancements.
+      now return live USGS flow data.
+  - agent: "main"
+    message: |
+      Round 3: Native marker tap + dynamic POIs.
+      • Refactored map.tsx HTML to bind popup CTA via addEventListener (not inline onclick) — fixes
+        ReactNativeWebView.postMessage on iOS/Android. MapView already had onMessage prop wired.
+      • New endpoint GET /api/rivers/{id}/osm-poi: queries Overpass (kumi/de/fr fallback chain) for
+        whitewater=*, waterway=waterfall|rapids|dam|weir within river bbox. 24h in-memory TTL cache,
+        12s timeout per provider, 60-item cap, sorted by distance from put-in. Verified live data
+        for ocoee (13), gauley (19), colorado (60), rogue (50) etc.
+      • River detail screen fetches OSM POIs in parallel (non-blocking) and renders a "More features
+        (OpenStreetMap)" section with category icons (rapid/waterfall/hazard/portage/etc), grade,
+        and distance.

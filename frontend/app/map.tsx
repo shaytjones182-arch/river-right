@@ -26,22 +26,20 @@ type River = {
 };
 
 const buildHtml = (rivers: River[]) => {
-  const markers = rivers
-    .map((r) => {
-      const color =
-        r.type === "whitewater"
-          ? "#D62828"
-          : r.type === "calm"
-          ? "#2A9D8F"
-          : "#F4A261";
-      const safeName = (r.name || "").replace(/'/g, "&#39;");
-      return `addRiver(${JSON.stringify(r.id)}, ${JSON.stringify(safeName)}, ${JSON.stringify(
-        r.state
-      )}, ${JSON.stringify(r.class_rating)}, ${r.put_in.lat}, ${r.put_in.lon}, ${r.take_out.lat}, ${r.take_out.lon}, ${JSON.stringify(
-        color
-      )});`;
-    })
-    .join("\n");
+  // Pass river data as JSON; bind handlers programmatically (no inline onclick)
+  const dataJson = JSON.stringify(
+    rivers.map((r) => ({
+      id: r.id,
+      name: r.name,
+      state: r.state,
+      cls: r.class_rating,
+      type: r.type,
+      plat: r.put_in.lat,
+      plon: r.put_in.lon,
+      tlat: r.take_out.lat,
+      tlon: r.take_out.lon,
+    }))
+  );
 
   return `<!DOCTYPE html>
 <html><head>
@@ -57,40 +55,79 @@ const buildHtml = (rivers: River[]) => {
   .leaflet-popup-content-wrapper{border-radius:12px;}
   .leaflet-popup-content{margin:10px 12px;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;}
   .pop-title{font-weight:800;font-size:14px;color:#0A1128;margin-bottom:2px;}
-  .pop-meta{font-size:11px;color:#5C6B73;letter-spacing:1px;font-weight:700;text-transform:uppercase;margin-bottom:6px;}
-  .pop-cta{display:inline-block;background:#0077B6;color:#fff;padding:6px 12px;border-radius:999px;font-size:12px;font-weight:800;text-decoration:none;letter-spacing:0.5px;}
+  .pop-meta{font-size:11px;color:#5C6B73;letter-spacing:1px;font-weight:700;text-transform:uppercase;margin-bottom:8px;}
+  .pop-cta{display:inline-block;background:#0077B6;color:#fff;padding:8px 14px;border-radius:999px;font-size:12px;font-weight:800;text-decoration:none;letter-spacing:0.5px;cursor:pointer;border:none;}
+  .pop-cta:active{opacity:0.85;}
 </style>
 </head><body>
 <div id="m"></div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-var map = L.map('m', { zoomControl:false, attributionControl:false, minZoom:3, maxZoom:13 })
-  .setView([39.5, -98.35], 4);
+(function(){
+  var rivers = ${dataJson};
 
-// Base: clean light canvas (CartoDB Voyager) — gives a soft, modern basemap
-L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-  { subdomains:'abcd', maxZoom:19 }).addTo(map);
+  function navigate(id){
+    if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+      window.ReactNativeWebView.postMessage(id);
+    } else if (window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: 'river', id: id }, '*');
+    }
+  }
 
-// Hydrography overlay from USGS National Map — every USA river highlighted in blue
-L.tileLayer('https://basemap.nationalmap.gov/arcgis/rest/services/USGSHydroCached/MapServer/tile/{z}/{y}/{x}',
-  { maxZoom:16, opacity:0.85 }).addTo(map);
+  var map = L.map('m', { zoomControl:false, attributionControl:false, minZoom:3, maxZoom:13 })
+    .setView([39.5, -98.35], 4);
 
-L.control.zoom({ position:'topright' }).addTo(map);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+    { subdomains:'abcd', maxZoom:19 }).addTo(map);
 
-function addRiver(id, name, state, cls, plat, plon, tlat, tlon, color){
-  var line = L.polyline([[plat, plon], [tlat, tlon]], {
-    color: color, weight: 4, opacity: 0.95
-  }).addTo(map);
+  L.tileLayer('https://basemap.nationalmap.gov/arcgis/rest/services/USGSHydroCached/MapServer/tile/{z}/{y}/{x}',
+    { maxZoom:16, opacity:0.85 }).addTo(map);
 
-  var icon = L.divIcon({ className:'', html:'<div class="pulse" style="background:'+color+'"></div>', iconSize:[14,14], iconAnchor:[7,7] });
-  var html = '<div class="pop-title">'+name+'</div>'+
-             '<div class="pop-meta">'+state+' · CLASS '+cls+'</div>'+
-             '<a class="pop-cta" href="#" onclick="window.ReactNativeWebView ? window.ReactNativeWebView.postMessage(\\''+id+'\\') : window.parent.postMessage({type:\\'river\\',id:\\''+id+'\\'},\\'*\\'); return false;">View run →</a>';
-  var m = L.marker([plat, plon], { icon: icon }).addTo(map).bindPopup(html);
-  m.on('click', function(){ m.openPopup(); });
-}
+  L.control.zoom({ position:'topright' }).addTo(map);
 
-${markers}
+  function colorFor(t){
+    if (t === 'whitewater') return '#D62828';
+    if (t === 'calm') return '#2A9D8F';
+    return '#F4A261';
+  }
+
+  rivers.forEach(function(r){
+    var color = colorFor(r.type);
+    L.polyline([[r.plat, r.plon], [r.tlat, r.tlon]], {
+      color: color, weight: 4, opacity: 0.95
+    }).addTo(map);
+
+    var icon = L.divIcon({
+      className: '',
+      html: '<div class="pulse" style="background:' + color + '"></div>',
+      iconSize: [14,14],
+      iconAnchor: [7,7]
+    });
+
+    var popupEl = document.createElement('div');
+    var title = document.createElement('div');
+    title.className = 'pop-title';
+    title.textContent = r.name;
+    var meta = document.createElement('div');
+    meta.className = 'pop-meta';
+    meta.textContent = r.state + ' \\u00B7 CLASS ' + r.cls;
+    var btn = document.createElement('button');
+    btn.className = 'pop-cta';
+    btn.textContent = 'View run \\u2192';
+    btn.addEventListener('click', function(ev){
+      ev.preventDefault();
+      ev.stopPropagation();
+      navigate(r.id);
+    });
+    popupEl.appendChild(title);
+    popupEl.appendChild(meta);
+    popupEl.appendChild(btn);
+
+    L.marker([r.plat, r.plon], { icon: icon })
+      .addTo(map)
+      .bindPopup(popupEl, { closeButton: false, offset: [0, -4] });
+  });
+})();
 </script>
 </body></html>`;
 };
