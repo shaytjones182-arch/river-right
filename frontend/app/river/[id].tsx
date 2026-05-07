@@ -26,6 +26,7 @@ type RiverDetail = {
     take_out: { name: string; lat: number; lon: number };
     usgs_site_id: string;
     image: string;
+    points_of_interest?: string[];
   };
   flow: {
     cfs: number | null;
@@ -134,6 +135,18 @@ export default function RiverDetail() {
 
           <Text style={styles.h3}>About this run</Text>
           <Text style={styles.body1}>{r.description}</Text>
+
+          {r.points_of_interest && r.points_of_interest.length > 0 && (
+            <>
+              <Text style={styles.h3}>Points of interest</Text>
+              {r.points_of_interest.map((p, i) => (
+                <View key={i} style={styles.hazard}>
+                  <Ionicons name="ellipse" size={8} color={COLORS.primary} style={{ marginTop: 8 }} />
+                  <Text style={styles.hazardText}>{p}</Text>
+                </View>
+              ))}
+            </>
+          )}
 
           <Text style={styles.h3}>Hazards</Text>
           {r.hazards.map((h, i) => (
