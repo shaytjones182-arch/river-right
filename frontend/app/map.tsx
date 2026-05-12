@@ -12,6 +12,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { WebView } from "react-native-webview";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import MapView from "../src/MapView";
+import ProfileMenu from "../src/ProfileMenu";
 import Svg, { Path, Polygon, Circle, Polyline as SvgPolyline } from "react-native-svg";
 import { COLORS, API } from "../src/theme";
 
@@ -560,6 +561,7 @@ export default function MapScreen() {
             color={COLORS.textMain}
           />
         </TouchableOpacity>
+        <ProfileMenu testID="map-profile-btn" />
       </View>
 
       <View style={styles.mapWrap} testID="map-container">

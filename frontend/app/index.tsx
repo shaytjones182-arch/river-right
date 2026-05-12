@@ -16,6 +16,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import ProfileMenu from "../src/ProfileMenu";
 import { COLORS, API } from "../src/theme";
 
 type River = {
@@ -85,7 +86,10 @@ export default function Home() {
           }
         >
           <View style={styles.header}>
-            <Text style={styles.overline}>RIVERRIGHT</Text>
+            <View style={styles.headerTopRow}>
+              <Text style={styles.overline}>RIVERRIGHT</Text>
+              <ProfileMenu testID="home-profile-btn" />
+            </View>
             <Text style={styles.h1}>Read the river.{"\n"}Run it right.</Text>
             <Text style={styles.subtitle}>
               Live USGS flow data, GPS tracking, and curated American rivers — from
@@ -187,6 +191,12 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.background },
   container: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 40 },
   header: { marginBottom: 8 },
+  headerTopRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 6,
+  },
   overline: {
     fontSize: 11,
     fontWeight: "800",

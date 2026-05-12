@@ -221,19 +221,26 @@ test_plan:
       - working: true
         agent: "main"
         comment: |
-          UI polish round (user feedback):
-          • Removed put-in / take-out markers from map. Boat ramps from curated data
-            now serve as the effective access points (labels unchanged for future
-            multi-access-point selection).
-          • Replaced legend Ionicons with inline react-native-svg icons rendering the
-            EXACT same paths as the map pin SVGs (wave for Rapid, triangle for Hazard,
-            tent for Campground, footsteps for Portage, boat for Boat ramp, info "i" for
-            Note). Installed react-native-svg.
-          • Home tab: removed filter buttons (All/Whitewater/Mixed/Calm), alphabetized
-            river list by name using localeCompare.
-          • Added "View on Map" button on river detail (between CFS card and About) that
-            navigates to /map?river=<id>. Map page now reads the `river` query param via
-            useLocalSearchParams and auto-selects on load.
+          Round 5: Trip tracking & profile shell.
+          • Removed gray/red recording status dot from Track tab header.
+          • Fixed "Pick a run" modal overlap with iOS status bar (now uses
+            useSafeAreaInsets directly on the modal body, not just edges=["top"]).
+          • Trip state machine: idle → tracking (PAUSE TRIP) → paused (RESUME / LOG
+            DAY N / END TRIP). Verified end-to-end via Playwright with 2-day flow.
+          • Stats per day: SPEED, DIST, AVG (moving-time-based, AllTrails-style
+            using 0.5 mph threshold), MAX, MOVING time, TIME elapsed.
+          • Per-day stats persisted via AsyncStorage at /trips/<id>. Trip-wide rollup
+            (distance, max, avg over total moving time, total elapsed) computed on save.
+          • New screens: /trips (past trips list with empty state + pull-to-refresh)
+            and /trips/[id] (trip totals + by-day breakdown). Both hidden from tab bar
+            (href: null in _layout.tsx).
+          • ProfileMenu component added to top-right of Home, Map, and Track headers.
+            Menu items: Past trips → /trips, Plus account (placeholder alert), About.
+          • Plus tier (subscriptions, offline, auth) deliberately deferred — see PRD.
+          • Web compatibility: Location.watchPositionAsync().remove() throws on the
+            expo-location web shim; guarded with Platform.OS check + try/catch.
+          • Installed @react-native-async-storage/async-storage@2.2.0 and
+            react-native-svg@15.12.1 (Expo SDK aligned versions).
       - working: true
         agent: "testing"
         comment: |

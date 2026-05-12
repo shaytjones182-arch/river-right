@@ -12,12 +12,20 @@ import {
   Keyboard,
   KeyboardAvoidingView,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import { WebView } from "react-native-webview";
 import MapView from "../src/MapView";
 import { COLORS, API } from "../src/theme";
+import ProfileMenu from "../src/ProfileMenu";
+import {
+  rollupTrip,
+  saveTrip,
+  TripDay,
+  TripPoint,
+  MOVING_MPH_THRESHOLD,
+} from "../src/storage";
 
 type Pt = { lat: number; lon: number; t: number };
 
@@ -233,13 +241,29 @@ export default function Track() {
 
   const [permGranted, setPermGranted] = useState<boolean | null>(null);
   const [coord, setCoord] = useState<Pt | null>(null);
-  const [tracking, setTracking] = useState(false);
-  const [points, setPoints] = useState<Pt[]>([]);
+
+  // ─── Trip state machine ──────────────────────────────────────────────────
+  //  idle      → no trip in progress
+  //  tracking  → recording GPS
+  //  paused    → trip in progress but recording stopped; can resume, log a day, or end
+  type TripState = "idle" | "tracking" | "paused";
+  const [tripState, setTripState] = useState<TripState>("idle");
+  // Days the user has already logged in this trip (via "Log Day N")
+  const [loggedDays, setLoggedDays] = useState<TripDay[]>([]);
+  // Trip's first-day start timestamp (used as the trip id seed)
+  const tripStartedAtRef = useRef<number | null>(null);
+  const tripRiverRef = useRef<{ id: string | null; name: string | null }>({ id: null, name: null });
+
+  // ─── Live (current-day) accumulators ─────────────────────────────────────
   const [distMiles, setDistMiles] = useState(0);
   const [speedMph, setSpeedMph] = useState(0);
   const [maxMph, setMaxMph] = useState(0);
-  const [elapsed, setElapsed] = useState(0);
-  const [, setStartedAt] = useState<number | null>(null);
+  const [totalSec, setTotalSec] = useState(0); // elapsed seconds for current day (excludes paused time)
+  const [movingSec, setMovingSec] = useState(0); // seconds with speed >= MOVING_MPH_THRESHOLD
+  const [points, setPoints] = useState<TripPoint[]>([]);
+  // Refs used inside callbacks/intervals so we always read the latest values
+  const speedRef = useRef(0);
+  const dayStartedAtRef = useRef<number | null>(null);
 
   // Run picker / POI state
   const [rivers, setRivers] = useState<RiverShort[]>([]);
@@ -280,7 +304,9 @@ export default function Track() {
       }
     })();
     return () => {
-      if (subRef.current) subRef.current.remove();
+      if (subRef.current) {
+        try { subRef.current.remove(); } catch {}
+      }
       if (tickRef.current) clearInterval(tickRef.current);
     };
   }, []);
@@ -345,58 +371,189 @@ export default function Track() {
   }, [selectedRiver, sendJs]);
 
   const onLoc = (loc: Location.LocationObject) => {
-    const p: Pt = { lat: loc.coords.latitude, lon: loc.coords.longitude, t: loc.timestamp };
-    setCoord(p);
+    const speed = loc.coords.speed && loc.coords.speed > 0 ? loc.coords.speed * 2.23694 : 0;
+    const p: TripPoint = {
+      lat: loc.coords.latitude,
+      lon: loc.coords.longitude,
+      t: loc.timestamp,
+      speed,
+    };
+    setCoord({ lat: p.lat, lon: p.lon, t: p.t });
+    speedRef.current = speed;
+    setSpeedMph(speed);
+    setMaxMph((m) => (speed > m ? speed : m));
     setPoints((prev) => {
-      let nextDist = distMiles;
       if (prev.length > 0) {
-        nextDist = distMiles + haversineMiles(prev[prev.length - 1], p);
-        setDistMiles(nextDist);
+        const last = prev[prev.length - 1];
+        const delta = haversineMiles(last, p);
+        // Drop micro-noise spikes (< ~3 meters)
+        if (delta > 0.002) {
+          setDistMiles((d) => d + delta);
+        }
       }
       return [...prev, p];
     });
-    const sps = loc.coords.speed && loc.coords.speed > 0 ? loc.coords.speed : 0;
-    const mph = sps * 2.23694;
-    setSpeedMph(mph);
-    setMaxMph((m) => (mph > m ? mph : m));
     sendJs(`window.updatePos(${p.lat}, ${p.lon}, true)`);
   };
 
-  const startTracking = async () => {
-    if (!permGranted) {
-      Alert.alert("Location required", "Please enable location to track your trip.");
-      return;
-    }
+  // Reset all per-day counters to start a fresh day
+  const resetDayCounters = () => {
     setPoints([]);
     setDistMiles(0);
     setSpeedMph(0);
     setMaxMph(0);
-    setElapsed(0);
+    setTotalSec(0);
+    setMovingSec(0);
+    speedRef.current = 0;
     sendJs(`window.setPath([])`);
-    const start = Date.now();
-    setStartedAt(start);
-    setTracking(true);
-    tickRef.current = setInterval(() => {
-      setElapsed(Math.floor((Date.now() - start) / 1000));
-    }, 1000);
-    subRef.current = await Location.watchPositionAsync(
-      { accuracy: Location.Accuracy.High, distanceInterval: 5, timeInterval: 2000 },
-      onLoc
-    );
   };
 
-  const stopTracking = () => {
-    setTracking(false);
-    if (subRef.current) {
-      subRef.current.remove();
-      subRef.current = null;
+  // Begin (or resume) recording GPS + 1-second tick.
+  const beginRecording = async () => {
+    if (!permGranted) {
+      Alert.alert("Location required", "Please enable location to track your trip.");
+      return false;
+    }
+    // 1-second tick: advances elapsed time + moving time (when speed >= threshold)
+    if (!tickRef.current) {
+      tickRef.current = setInterval(() => {
+        setTotalSec((s) => s + 1);
+        if (speedRef.current >= MOVING_MPH_THRESHOLD) {
+          setMovingSec((s) => s + 1);
+        }
+      }, 1000);
+    }
+    if (!subRef.current) {
+      subRef.current = await Location.watchPositionAsync(
+        { accuracy: Location.Accuracy.High, distanceInterval: 5, timeInterval: 2000 },
+        onLoc
+      );
+    }
+    return true;
+  };
+
+  // Stop recording (does not finalize the day)
+  const stopRecording = () => {
+    const sub = subRef.current;
+    subRef.current = null; // clear ref first so any in-flight callbacks bail
+    if (sub) {
+      // On web, expo-location's subscription.remove() throws (its event emitter
+      // shim is incomplete). Guard with both try/catch AND a platform check.
+      if (Platform.OS !== "web") {
+        try {
+          sub.remove();
+        } catch (e) {
+          console.warn("location subscription remove failed", e);
+        }
+      }
     }
     if (tickRef.current) {
       clearInterval(tickRef.current);
       tickRef.current = null;
     }
-    sendJs(`window.fitPath()`);
+    setSpeedMph(0);
+    speedRef.current = 0;
   };
+
+  // Build a TripDay snapshot from current accumulators
+  const snapshotCurrentDay = (): TripDay => {
+    const dayNumber = loggedDays.length + 1;
+    const startedAt = dayStartedAtRef.current || Date.now();
+    const avg = movingSec > 0 ? distMiles / (movingSec / 3600) : 0;
+    return {
+      dayNumber,
+      startedAt,
+      endedAt: Date.now(),
+      points,
+      distMiles,
+      movingSec,
+      totalSec,
+      maxMph,
+      avgMph: avg,
+    };
+  };
+
+  // ─── Button handlers ─────────────────────────────────────────────────────
+
+  const handleStartTrip = async () => {
+    // Fresh trip OR starting next day after a prior "Log day" pause
+    const ok = await beginRecording();
+    if (!ok) return;
+    if (loggedDays.length === 0) {
+      tripStartedAtRef.current = Date.now();
+      tripRiverRef.current = {
+        id: selectedRiver?.id || null,
+        name: selectedRiver?.name || null,
+      };
+    }
+    resetDayCounters();
+    dayStartedAtRef.current = Date.now();
+    setTripState("tracking");
+  };
+
+  const handlePause = () => {
+    stopRecording();
+    setTripState("paused");
+    sendJs(`window.fitPath && window.fitPath()`);
+  };
+
+  const handleResume = async () => {
+    const ok = await beginRecording();
+    if (!ok) return;
+    setTripState("tracking");
+  };
+
+  const handleLogDay = () => {
+    const day = snapshotCurrentDay();
+    setLoggedDays((prev) => [...prev, day]);
+    // Stay in 'idle' so the START TRIP button is shown again for the next day
+    setTripState("idle");
+    resetDayCounters();
+    dayStartedAtRef.current = null;
+  };
+
+  const handleEndTrip = async () => {
+    // Decide whether the current day has any progress worth saving
+    const hasActiveDay = dayStartedAtRef.current !== null && (points.length > 1 || totalSec > 5);
+    const allDays = [...loggedDays];
+    if (hasActiveDay) {
+      allDays.push(snapshotCurrentDay());
+    }
+    if (allDays.length === 0) {
+      // Nothing to save → just reset back to idle
+      setTripState("idle");
+      return;
+    }
+    const trip = rollupTrip(
+      allDays,
+      tripRiverRef.current.id,
+      tripRiverRef.current.name,
+      `trip_${tripStartedAtRef.current || Date.now()}`,
+      tripStartedAtRef.current || Date.now()
+    );
+    try {
+      await saveTrip(trip);
+    } catch (e) {
+      console.warn("save trip failed", e);
+    }
+    // Hard reset all trip state
+    setLoggedDays([]);
+    tripStartedAtRef.current = null;
+    dayStartedAtRef.current = null;
+    tripRiverRef.current = { id: null, name: null };
+    setTripState("idle");
+    resetDayCounters();
+    Alert.alert(
+      "Trip saved",
+      `${allDays.length} day${allDays.length === 1 ? "" : "s"} · ${trip.totalDistMiles.toFixed(2)} mi total. View it from the profile menu.`
+    );
+  };
+
+  // Live avg speed (over moving time only — AllTrails-style)
+  const liveAvgMph = useMemo(
+    () => (movingSec > 0 ? distMiles / (movingSec / 3600) : 0),
+    [distMiles, movingSec]
+  );
 
   const html = useMemo(() => (coord ? buildHtml(coord.lat, coord.lon) : null), [coord]);
 
@@ -410,13 +567,7 @@ export default function Track() {
     <SafeAreaView style={styles.safe} edges={["top"]} testID="track-screen">
       <View style={styles.headerBar}>
         <Text style={styles.headerTitle}>Trip Tracker</Text>
-        <View
-          testID="track-status-badge"
-          style={[
-            styles.statusDot,
-            { backgroundColor: tracking ? COLORS.danger : COLORS.textMuted },
-          ]}
-        />
+        <ProfileMenu testID="track-profile-btn" />
       </View>
 
       <View style={styles.runRow}>
@@ -467,30 +618,76 @@ export default function Track() {
           <Metric testID="track-metric-distance" label="DIST" value={distMiles.toFixed(2)} unit="MI" />
         </View>
         <View style={styles.metricsRow}>
-          <Metric testID="track-metric-time" label="TIME" value={fmtTime(elapsed)} unit="" small />
+          <Metric testID="track-metric-avg" label="AVG" value={liveAvgMph.toFixed(1)} unit="MPH" small />
           <Metric testID="track-metric-max" label="MAX" value={maxMph.toFixed(1)} unit="MPH" small />
         </View>
+        <View style={styles.metricsRow}>
+          <Metric testID="track-metric-moving" label="MOVING" value={fmtTime(movingSec)} unit="" small />
+          <Metric testID="track-metric-time" label="TIME" value={fmtTime(totalSec)} unit="" small />
+        </View>
 
-        {!tracking ? (
+        {tripState === "idle" && (
           <TouchableOpacity
             testID="track-start-btn"
             style={[styles.bigBtn, { backgroundColor: COLORS.primary }]}
-            onPress={startTracking}
+            onPress={handleStartTrip}
             activeOpacity={0.85}
           >
             <Ionicons name="play" size={22} color="#fff" />
-            <Text style={styles.bigBtnText}>START TRIP</Text>
+            <Text style={styles.bigBtnText}>
+              {loggedDays.length > 0 ? `START DAY ${loggedDays.length + 1}` : "START TRIP"}
+            </Text>
           </TouchableOpacity>
-        ) : (
+        )}
+
+        {tripState === "tracking" && (
           <TouchableOpacity
-            testID="track-stop-btn"
-            style={[styles.bigBtn, { backgroundColor: COLORS.danger }]}
-            onPress={stopTracking}
+            testID="track-pause-btn"
+            style={[styles.bigBtn, { backgroundColor: COLORS.warning }]}
+            onPress={handlePause}
             activeOpacity={0.85}
           >
-            <Ionicons name="stop" size={22} color="#fff" />
-            <Text style={styles.bigBtnText}>STOP TRIP</Text>
+            <Ionicons name="pause" size={22} color="#fff" />
+            <Text style={styles.bigBtnText}>PAUSE TRIP</Text>
           </TouchableOpacity>
+        )}
+
+        {tripState === "paused" && (
+          <View style={styles.threeBtnRow}>
+            <TouchableOpacity
+              testID="track-resume-btn"
+              style={[styles.thirdBtn, { backgroundColor: COLORS.primary }]}
+              onPress={handleResume}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="play" size={18} color="#fff" />
+              <Text style={styles.thirdBtnText}>RESUME</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              testID="track-log-day-btn"
+              style={[styles.thirdBtn, { backgroundColor: COLORS.safe }]}
+              onPress={handleLogDay}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="bookmark" size={18} color="#fff" />
+              <Text style={styles.thirdBtnText}>LOG DAY {loggedDays.length + 1}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              testID="track-end-btn"
+              style={[styles.thirdBtn, { backgroundColor: COLORS.danger }]}
+              onPress={handleEndTrip}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="stop" size={18} color="#fff" />
+              <Text style={styles.thirdBtnText}>END TRIP</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {loggedDays.length > 0 && tripState === "idle" && (
+          <Text style={styles.loggedDaysHint}>
+            {loggedDays.length} day{loggedDays.length === 1 ? "" : "s"} logged on this trip
+          </Text>
         )}
 
         {permGranted === false && (
@@ -506,99 +703,18 @@ export default function Track() {
         onRequestClose={() => setPickerOpen(false)}
         transparent={false}
       >
-        <SafeAreaView style={styles.safe} edges={["top"]}>
-          <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : undefined}
-            style={{ flex: 1 }}
-          >
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Pick a run</Text>
-              <TouchableOpacity
-                onPress={() => setPickerOpen(false)}
-                testID="track-picker-close"
-                hitSlop={10}
-                style={styles.modalClose}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="close" size={24} color={COLORS.textMain} />
-              </TouchableOpacity>
-            </View>
-            <View style={styles.modalSearchWrap}>
-              <Ionicons
-                name="search"
-                size={18}
-                color={COLORS.textMuted}
-                style={{ marginRight: 8 }}
-              />
-              <TextInput
-                testID="track-picker-search"
-                value={pickerQuery}
-                onChangeText={setPickerQuery}
-                placeholder="Search rivers…"
-                placeholderTextColor={COLORS.textMuted}
-                style={styles.modalSearchInput}
-                autoCorrect={false}
-                returnKeyType="search"
-                onSubmitEditing={() => Keyboard.dismiss()}
-              />
-              {pickerQuery.length > 0 && (
-                <TouchableOpacity
-                  onPress={() => setPickerQuery("")}
-                  hitSlop={10}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons name="close-circle" size={18} color={COLORS.textMuted} />
-                </TouchableOpacity>
-              )}
-            </View>
-            <FlatList
-              data={visiblePickerRivers}
-              keyExtractor={(item) => item.id}
-              keyboardShouldPersistTaps="handled"
-              ItemSeparatorComponent={() => <View style={styles.sep} />}
-              contentContainerStyle={{ paddingBottom: 24 }}
-              renderItem={({ item }) => {
-                const active = item.id === selectedRiverId;
-                const dotColor =
-                  item.type === "whitewater"
-                    ? COLORS.danger
-                    : item.type === "calm"
-                    ? COLORS.safe
-                    : COLORS.warning;
-                return (
-                  <TouchableOpacity
-                    testID={`track-picker-row-${item.id}`}
-                    style={[styles.row, active && styles.rowActive]}
-                    onPress={() => {
-                      setSelectedRiverId(item.id);
-                      setPickerOpen(false);
-                      setPickerQuery("");
-                    }}
-                    activeOpacity={0.85}
-                  >
-                    <View style={[styles.rowDot, { backgroundColor: dotColor }]} />
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.rowName} numberOfLines={1}>
-                        {item.name}
-                      </Text>
-                      <Text style={styles.rowMeta}>
-                        {item.state} · Class {item.class_rating}
-                      </Text>
-                    </View>
-                    {active && (
-                      <Ionicons name="checkmark-circle" size={22} color={COLORS.primary} />
-                    )}
-                  </TouchableOpacity>
-                );
-              }}
-              ListEmptyComponent={
-                <View style={{ alignItems: "center", paddingVertical: 36 }}>
-                  <Text style={{ color: COLORS.textMuted }}>No rivers match.</Text>
-                </View>
-              }
-            />
-          </KeyboardAvoidingView>
-        </SafeAreaView>
+        <PickerModalBody
+          query={pickerQuery}
+          setQuery={setPickerQuery}
+          rivers={visiblePickerRivers}
+          selectedId={selectedRiverId}
+          onPick={(id) => {
+            setSelectedRiverId(id);
+            setPickerOpen(false);
+            setPickerQuery("");
+          }}
+          onClose={() => setPickerOpen(false)}
+        />
       </Modal>
     </SafeAreaView>
   );
@@ -628,6 +744,113 @@ function Metric({
   );
 }
 
+// Picker modal body — extracted so we can apply explicit safe-area top padding
+// (some iOS dynamic-island devices clip the modal header otherwise).
+function PickerModalBody({
+  query,
+  setQuery,
+  rivers,
+  selectedId,
+  onPick,
+  onClose,
+}: {
+  query: string;
+  setQuery: (q: string) => void;
+  rivers: RiverShort[];
+  selectedId: string | null;
+  onPick: (id: string) => void;
+  onClose: () => void;
+}) {
+  const insets = useSafeAreaInsets();
+  return (
+    <View style={[styles.safe, { paddingTop: insets.top }]}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={{ flex: 1 }}
+      >
+        <View style={styles.modalHeader}>
+          <Text style={styles.modalTitle}>Pick a run</Text>
+          <TouchableOpacity
+            onPress={onClose}
+            testID="track-picker-close"
+            hitSlop={10}
+            style={styles.modalClose}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="close" size={24} color={COLORS.textMain} />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.modalSearchWrap}>
+          <Ionicons
+            name="search"
+            size={18}
+            color={COLORS.textMuted}
+            style={{ marginRight: 8 }}
+          />
+          <TextInput
+            testID="track-picker-search"
+            value={query}
+            onChangeText={setQuery}
+            placeholder="Search rivers…"
+            placeholderTextColor={COLORS.textMuted}
+            style={styles.modalSearchInput}
+            autoCorrect={false}
+            returnKeyType="search"
+            onSubmitEditing={() => Keyboard.dismiss()}
+          />
+          {query.length > 0 && (
+            <TouchableOpacity onPress={() => setQuery("")} hitSlop={10} activeOpacity={0.7}>
+              <Ionicons name="close-circle" size={18} color={COLORS.textMuted} />
+            </TouchableOpacity>
+          )}
+        </View>
+        <FlatList
+          data={rivers}
+          keyExtractor={(item) => item.id}
+          keyboardShouldPersistTaps="handled"
+          ItemSeparatorComponent={() => <View style={styles.sep} />}
+          contentContainerStyle={{ paddingBottom: 24 }}
+          renderItem={({ item }) => {
+            const active = item.id === selectedId;
+            const dotColor =
+              item.type === "whitewater"
+                ? COLORS.danger
+                : item.type === "calm"
+                ? COLORS.safe
+                : COLORS.warning;
+            return (
+              <TouchableOpacity
+                testID={`track-picker-row-${item.id}`}
+                style={[styles.row, active && styles.rowActive]}
+                onPress={() => onPick(item.id)}
+                activeOpacity={0.85}
+              >
+                <View style={[styles.rowDot, { backgroundColor: dotColor }]} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.rowName} numberOfLines={1}>
+                    {item.name}
+                  </Text>
+                  <Text style={styles.rowMeta}>
+                    {item.state} · Class {item.class_rating}
+                  </Text>
+                </View>
+                {active && (
+                  <Ionicons name="checkmark-circle" size={22} color={COLORS.primary} />
+                )}
+              </TouchableOpacity>
+            );
+          }}
+          ListEmptyComponent={
+            <View style={{ alignItems: "center", paddingVertical: 36 }}>
+              <Text style={{ color: COLORS.textMuted }}>No rivers match.</Text>
+            </View>
+          }
+        />
+      </KeyboardAvoidingView>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.background },
   headerBar: {
@@ -638,7 +861,36 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   headerTitle: { fontSize: 22, fontWeight: "900", color: COLORS.textMain, letterSpacing: -0.5 },
-  statusDot: { width: 12, height: 12, borderRadius: 6 },
+
+  threeBtnRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 8,
+  },
+  thirdBtn: {
+    flex: 1,
+    height: 56,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 4,
+    gap: 4,
+  },
+  thirdBtnText: {
+    color: "#fff",
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 0.8,
+    textAlign: "center",
+  },
+  loggedDaysHint: {
+    marginTop: 12,
+    color: COLORS.textMuted,
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: 0.5,
+    textAlign: "center",
+  },
 
   runRow: {
     flexDirection: "row",

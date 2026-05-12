@@ -65,6 +65,14 @@ export default function RootLayout() {
             name="gauge/[id]"
             options={{ href: null }}
           />
+          <Tabs.Screen
+            name="trips/index"
+            options={{ href: null }}
+          />
+          <Tabs.Screen
+            name="trips/[id]"
+            options={{ href: null }}
+          />
         </Tabs>
       </SafeAreaProvider>
     </GestureHandlerRootView>
