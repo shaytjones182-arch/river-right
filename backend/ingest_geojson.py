@@ -284,6 +284,10 @@ WATERWAY_TO_KIND = {
     "campground": "camp",
     "camp": "camp",
     "camp_site": "camp",
+    "camp_pitch": "camp",
+    "camping": "camp",
+    "uncategorized": "camp",  # QGIS sometimes drops the tag — most user POIs are camps
+    "uncategori": "camp",  # 10-char truncated form seen in some QGIS exports
     "slipway": "boat_ramp",
     "boat_ramp": "boat_ramp",
     "access_point": "access",
