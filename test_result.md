@@ -221,14 +221,19 @@ test_plan:
       - working: true
         agent: "main"
         comment: |
-          Round 4 follow-up: switched distance semantics. POI distances are now measured
-          along the river polyline from its FIRST point (mile 0 = polyline start), not
-          from the put-in. This applies to both the curated path AND the live-OSM
-          Overpass fallback path. Added `river_mi` field (back-compat: `distance_from_putin_mi`
-          mirrors the same value). Verified on Desolation: Sand Wash Boat Ramp now at
-          0.04 mi (= polyline start), BLM permit note at 0.05 mi, first downstream rapid
-          (Little Rock House Riffle) at 16.46 mi, take-out features (Swasey's Beach
-          campground/ramp/access) at 82.98–83.04 mi (= polyline length).
+          UI polish round (user feedback):
+          • Removed put-in / take-out markers from map. Boat ramps from curated data
+            now serve as the effective access points (labels unchanged for future
+            multi-access-point selection).
+          • Replaced legend Ionicons with inline react-native-svg icons rendering the
+            EXACT same paths as the map pin SVGs (wave for Rapid, triangle for Hazard,
+            tent for Campground, footsteps for Portage, boat for Boat ramp, info "i" for
+            Note). Installed react-native-svg.
+          • Home tab: removed filter buttons (All/Whitewater/Mixed/Calm), alphabetized
+            river list by name using localeCompare.
+          • Added "View on Map" button on river detail (between CFS card and About) that
+            navigates to /map?river=<id>. Map page now reads the `river` query param via
+            useLocalSearchParams and auto-selects on load.
       - working: true
         agent: "testing"
         comment: |

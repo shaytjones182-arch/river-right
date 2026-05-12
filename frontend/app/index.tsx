@@ -28,21 +28,11 @@ type River = {
   image: string;
 };
 
-const FILTERS = [
-  { key: "all", label: "All" },
-  { key: "whitewater", label: "Whitewater" },
-  { key: "mixed", label: "Mixed" },
-  { key: "calm", label: "Calm" },
-] as const;
-
-type FilterKey = (typeof FILTERS)[number]["key"];
-
 export default function Home() {
   const router = useRouter();
   const [rivers, setRivers] = useState<River[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [filter, setFilter] = useState<FilterKey>("all");
   const [query, setQuery] = useState("");
 
   const load = useCallback(async () => {
@@ -69,13 +59,13 @@ export default function Home() {
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return rivers.filter((r) => {
-      const typeOk = filter === "all" ? true : r.type === filter;
-      if (!typeOk) return false;
-      if (!q) return true;
-      return r.name.toLowerCase().includes(q);
-    });
-  }, [rivers, filter, query]);
+    // Alphabetized by name (case-insensitive, locale-aware)
+    const sorted = [...rivers].sort((a, b) =>
+      a.name.localeCompare(b.name, undefined, { sensitivity: "base" })
+    );
+    if (!q) return sorted;
+    return sorted.filter((r) => r.name.toLowerCase().includes(q));
+  }, [rivers, query]);
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]} testID="home-screen">
@@ -102,32 +92,6 @@ export default function Home() {
               glassy floats to gnarly whitewater.
             </Text>
           </View>
-
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.filterRow}
-            keyboardShouldPersistTaps="handled"
-          >
-            {FILTERS.map((f) => (
-              <TouchableOpacity
-                key={f.key}
-                testID={`home-filter-${f.key}`}
-                onPress={() => setFilter(f.key)}
-                style={[styles.filter, filter === f.key && styles.filterActive]}
-                activeOpacity={0.85}
-              >
-                <Text
-                  style={[
-                    styles.filterText,
-                    filter === f.key && { color: "#fff" },
-                  ]}
-                >
-                  {f.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
 
           <View style={styles.searchWrap} testID="home-search-wrap">
             <Ionicons
@@ -168,7 +132,7 @@ export default function Home() {
               <Ionicons name="water-outline" size={36} color={COLORS.textMuted} />
               <Text style={styles.emptyTitle}>No rivers found</Text>
               <Text style={styles.emptySub}>
-                Try a different filter or clear your search.
+                Try a different search.
               </Text>
             </View>
           ) : (

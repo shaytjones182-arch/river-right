@@ -180,6 +180,16 @@ export default function RiverDetail() {
             )}
           </View>
 
+          <TouchableOpacity
+            testID="river-view-on-map"
+            style={styles.viewOnMapBtn}
+            activeOpacity={0.85}
+            onPress={() => router.push({ pathname: "/map", params: { river: r.id } })}
+          >
+            <Ionicons name="map" size={18} color="#fff" />
+            <Text style={styles.viewOnMapBtnText}>View on Map</Text>
+          </TouchableOpacity>
+
           <Text style={styles.h3}>About this run</Text>
           <Text style={styles.body1}>{r.description}</Text>
 
@@ -344,7 +354,24 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
     borderRadius: 20,
     padding: 18,
+    marginBottom: 16,
+  },
+  viewOnMapBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: COLORS.primary,
+    paddingVertical: 14,
+    borderRadius: 14,
     marginBottom: 24,
+    minHeight: 48,
+  },
+  viewOnMapBtnText: {
+    color: "#fff",
+    fontWeight: "900",
+    fontSize: 14,
+    letterSpacing: 0.8,
   },
   overline: { fontSize: 11, fontWeight: "800", letterSpacing: 2, color: COLORS.textMuted, marginBottom: 8 },
   flowRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },

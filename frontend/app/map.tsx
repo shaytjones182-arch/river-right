@@ -10,8 +10,9 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { WebView } from "react-native-webview";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import MapView from "../src/MapView";
+import Svg, { Path, Polygon, Circle, Polyline as SvgPolyline } from "react-native-svg";
 import { COLORS, API } from "../src/theme";
 
 type RiverType = "whitewater" | "mixed" | "calm";
@@ -211,17 +212,8 @@ const buildMapHtml = () => `<!DOCTYPE html>
       });
     }
 
-    // Put-in (start)
-    L.marker([river.put_in_lat, river.put_in_lon], {
-      icon: pin('start', SVG.play), zIndexOffset: 1000
-    }).addTo(focusedLayer)
-      .bindPopup(popupHtml('Put-in: ' + river.put_in_name, 'Start of run'));
-
-    // Take-out (finish)
-    L.marker([river.take_out_lat, river.take_out_lon], {
-      icon: pin('finish', SVG.flag), zIndexOffset: 1000
-    }).addTo(focusedLayer)
-      .bindPopup(popupHtml('Take-out: ' + river.take_out_name, 'End of run'));
+    // NOTE: Put-in / take-out markers intentionally NOT drawn. The corresponding
+    // boat ramps from the curated POI layer serve as the effective access points.
 
     function classLabel(grade){
       var g = (grade || river.class_rating || '').toString();
@@ -387,6 +379,15 @@ export default function MapScreen() {
   useEffect(() => {
     load();
   }, [load]);
+
+  // Deep-link: if the route includes ?river=<id>, auto-select once rivers load
+  const params = useLocalSearchParams<{ river?: string }>();
+  useEffect(() => {
+    if (params.river && rivers.length > 0) {
+      const exists = rivers.some((r) => r.id === params.river);
+      if (exists) setSelectedRiverId(params.river as string);
+    }
+  }, [params.river, rivers]);
 
   // When a river is selected, fetch its POIs + (optional) curated polyline
   useEffect(() => {
@@ -617,8 +618,6 @@ export default function MapScreen() {
         {legendOpen && selectedRiver && (
           <View style={styles.legend} testID="map-legend-focused">
             <Text style={styles.legendTitle}>ON THIS RUN</Text>
-            <LegendIcon kind="start" label="Put-in" />
-            <LegendIcon kind="finish" label="Take-out" />
             <LegendIcon
               kind="rapid"
               rapidColor={
@@ -710,12 +709,13 @@ function LegendIcon({
   rapidColor,
   label,
 }: {
-  kind: "start" | "finish" | "rapid" | "hazard" | "portage" | "camp" | "boat" | "note";
+  kind: "rapid" | "hazard" | "portage" | "camp" | "boat" | "note";
   rapidColor?: string;
   label: string;
 }) {
-  // Mini icon symbols mirroring the actual map markers
+  // Mini icon symbols mirroring the exact SVGs on the map markers
   if (kind === "hazard") {
+    // Red triangle with "!" — same as map waterfall/hazard markers
     return (
       <View style={styles.legendRow}>
         <View style={styles.legendTri}>
@@ -726,11 +726,7 @@ function LegendIcon({
     );
   }
   const bg =
-    kind === "start"
-      ? COLORS.safe
-      : kind === "finish"
-      ? COLORS.textMain
-      : kind === "rapid"
+    kind === "rapid"
       ? rapidColor || COLORS.primary
       : kind === "portage"
       ? COLORS.warning
@@ -739,25 +735,145 @@ function LegendIcon({
       : kind === "note"
       ? "#6C757D"
       : "#8B5E34";
-  const iconName: any =
-    kind === "start"
-      ? "play"
-      : kind === "finish"
-      ? "flag"
-      : kind === "rapid"
-      ? "water"
-      : kind === "portage"
-      ? "footsteps"
-      : kind === "boat"
-      ? "boat"
-      : kind === "note"
-      ? "information"
-      : "bonfire";
+
+  // Render the SAME SVG paths as the map's pin icons
+  const renderSvg = () => {
+    const stroke = "#fff";
+    const sw = 2.5;
+    if (kind === "rapid") {
+      // Wave (two horizontal wavy lines) — matches SVG_ICONS.wave on map
+      return (
+        <Svg viewBox="0 0 24 24" width={14} height={14}>
+          <Path
+            d="M2 10c2-2 4-2 6 0s4 2 6 0 4-2 6 0"
+            stroke={stroke}
+            strokeWidth={sw}
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <Path
+            d="M2 16c2-2 4-2 6 0s4 2 6 0 4-2 6 0"
+            stroke={stroke}
+            strokeWidth={sw}
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </Svg>
+      );
+    }
+    if (kind === "portage") {
+      // Three circles (steps) — matches SVG_ICONS.steps
+      return (
+        <Svg viewBox="0 0 24 24" width={14} height={14}>
+          <Circle cx="8" cy="8" r="3" fill="#fff" />
+          <Circle cx="16" cy="14" r="3" fill="#fff" />
+          <Circle cx="9" cy="18" r="2" fill="#fff" />
+        </Svg>
+      );
+    }
+    if (kind === "camp") {
+      // Tent outline — matches SVG_ICONS.tent
+      return (
+        <Svg viewBox="0 0 24 24" width={14} height={14}>
+          <Path
+            d="M3 20h18"
+            stroke={stroke}
+            strokeWidth={sw}
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <Path
+            d="M12 4L3 20"
+            stroke={stroke}
+            strokeWidth={sw}
+            fill="none"
+            strokeLinecap="round"
+          />
+          <Path
+            d="M12 4l9 16"
+            stroke={stroke}
+            strokeWidth={sw}
+            fill="none"
+            strokeLinecap="round"
+          />
+          <Path
+            d="M12 11l-3 9"
+            stroke={stroke}
+            strokeWidth={sw}
+            fill="none"
+            strokeLinecap="round"
+          />
+          <Path
+            d="M12 11l3 9"
+            stroke={stroke}
+            strokeWidth={sw}
+            fill="none"
+            strokeLinecap="round"
+          />
+        </Svg>
+      );
+    }
+    if (kind === "boat") {
+      // Boat — matches SVG_ICONS.boat
+      return (
+        <Svg viewBox="0 0 24 24" width={14} height={14}>
+          <Path
+            d="M3 16c2 2 4 2 6 0s4-2 6 0 4 2 6 0"
+            stroke={stroke}
+            strokeWidth={sw}
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <Path
+            d="M5 13l1-4h12l1 4"
+            stroke={stroke}
+            strokeWidth={sw}
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <Path
+            d="M12 9V4"
+            stroke={stroke}
+            strokeWidth={sw}
+            fill="none"
+            strokeLinecap="round"
+          />
+        </Svg>
+      );
+    }
+    if (kind === "note") {
+      // Info "i" — matches SVG_ICONS.info
+      return (
+        <Svg viewBox="0 0 24 24" width={14} height={14}>
+          <Circle cx="12" cy="12" r="9" stroke={stroke} strokeWidth={sw} fill="none" />
+          <Path
+            d="M12 8v.01"
+            stroke={stroke}
+            strokeWidth={sw}
+            strokeLinecap="round"
+          />
+          <Path
+            d="M11 12h1v4h1"
+            stroke={stroke}
+            strokeWidth={sw}
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </Svg>
+      );
+    }
+    return null;
+  };
+
   return (
     <View style={styles.legendRow}>
-      <View style={[styles.legendPin, { backgroundColor: bg }]}>
-        <Ionicons name={iconName} size={11} color="#fff" />
-      </View>
+      <View style={[styles.legendPin, { backgroundColor: bg }]}>{renderSvg()}</View>
       <Text style={styles.legendText}>{label}</Text>
     </View>
   );
