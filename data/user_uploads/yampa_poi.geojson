@@ -1,0 +1,33 @@
+{
+"type": "FeatureCollection",
+"name": "poi",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "properties.name": "Mathers Hole River Camp", "properties.waterway": "camp_site" }, "geometry": { "type": "Point", "coordinates": [ -108.8701424, 40.4710424 ] } },
+{ "type": "Feature", "properties": { "properties.name": "Teepee Hole River Camp", "properties.waterway": "camp_site" }, "geometry": { "type": "Point", "coordinates": [ -108.6386664, 40.467902 ] } },
+{ "type": "Feature", "properties": { "properties.name": "TeePee Rapid", "properties.waterway": "rapids" }, "geometry": { "type": "Point", "coordinates": [ -108.6383073, 40.4674732 ] } },
+{ "type": "Feature", "properties": { "properties.name": "Deerlodge Park Campground", "properties.waterway": "camp_site" }, "geometry": { "type": "Point", "coordinates": [ -108.5126793, 40.4468356 ] } },
+{ "type": "Feature", "properties": { "properties.name": "Anderson Hole River Camp", "properties.waterway": "camp_site" }, "geometry": { "type": "Point", "coordinates": [ -108.5768476, 40.4676709 ] } },
+{ "type": "Feature", "properties": { "properties.name": "Laddie Park River Camp 1", "properties.waterway": "camp_site" }, "geometry": { "type": "Point", "coordinates": [ -108.9079127, 40.4793762 ] } },
+{ "type": "Feature", "properties": { "properties.name": "Deerlodge Park Boat Ramp", "properties.waterway": "slipway" }, "geometry": { "type": "Point", "coordinates": [ -108.511746, 40.4463708 ] } },
+{ "type": "Feature", "properties": { "properties.name": "Echo Park Boat Launch", "properties.waterway": "slipway" }, "geometry": { "type": "Point", "coordinates": [ -108.9903766, 40.5205613 ] } },
+{ "type": "Feature", "properties": { "properties.name": "Warm Springs River Camp", "properties.waterway": "camp_site" }, "geometry": { "type": "Point", "coordinates": [ -108.9318365, 40.5317033 ] } },
+{ "type": "Feature", "properties": { "properties.name": null, "properties.waterway": "rapids" }, "geometry": { "type": "Point", "coordinates": [ -108.5614839, 40.4725095 ] } },
+{ "type": "Feature", "properties": { "properties.name": "Warm Spring Rapid", "properties.waterway": "rapids" }, "geometry": { "type": "Point", "coordinates": [ -108.9287149, 40.5293499 ] } },
+{ "type": "Feature", "properties": { "properties.name": "Big Joe River Camp", "properties.waterway": "camp_site" }, "geometry": { "type": "Point", "coordinates": [ -108.8146599, 40.4920321 ] } },
+{ "type": "Feature", "properties": { "properties.name": "Echo Park Campground", "properties.waterway": "camp_site" }, "geometry": { "type": "Point", "coordinates": [ -108.9932317, 40.5208089 ] } },
+{ "type": "Feature", "properties": { "properties.name": "Harding Hole River Camp 3", "properties.waterway": "camp_site" }, "geometry": { "type": "Point", "coordinates": [ -108.8446511, 40.4651189 ] } },
+{ "type": "Feature", "properties": { "properties.name": "Harding Hole River Camp 4", "properties.waterway": "camp_site" }, "geometry": { "type": "Point", "coordinates": [ -108.8472555, 40.4647822 ] } },
+{ "type": "Feature", "properties": { "properties.name": "Split Rock Rapid", "properties.waterway": "rapids" }, "geometry": { "type": "Point", "coordinates": [ -108.6280039, 40.4581102 ] } },
+{ "type": "Feature", "properties": { "properties.name": "Big Joe Rapid", "properties.waterway": "rapids" }, "geometry": { "type": "Point", "coordinates": [ -108.8140127, 40.4918005 ] } },
+{ "type": "Feature", "properties": { "properties.name": "Ponderosa River Camp", "properties.waterway": "camp_site" }, "geometry": { "type": "Point", "coordinates": [ -108.6340134, 40.4642595 ] } },
+{ "type": "Feature", "properties": { "properties.name": "Box Elder River Camp 3", "properties.waterway": "camp_site" }, "geometry": { "type": "Point", "coordinates": [ -108.9587745, 40.5216819 ] } },
+{ "type": "Feature", "properties": { "properties.name": "Harding Hole River Camp 2", "properties.waterway": "camp_site" }, "geometry": { "type": "Point", "coordinates": [ -108.8433851, 40.4653542 ] } },
+{ "type": "Feature", "properties": { "properties.name": null, "properties.waterway": "rapids" }, "geometry": { "type": "Point", "coordinates": [ -108.6435069, 40.4695903 ] } },
+{ "type": "Feature", "properties": { "properties.name": "Box Elder River Camp 1", "properties.waterway": "camp_site" }, "geometry": { "type": "Point", "coordinates": [ -108.9571983, 40.5201798 ] } },
+{ "type": "Feature", "properties": { "properties.name": "Box Elder River Camp 2", "properties.waterway": "camp_site" }, "geometry": { "type": "Point", "coordinates": [ -108.9588674, 40.5209665 ] } },
+{ "type": "Feature", "properties": { "properties.name": "Harding Hole River Camp 1", "properties.waterway": "camp_site" }, "geometry": { "type": "Point", "coordinates": [ -108.8427516, 40.4658416 ] } },
+{ "type": "Feature", "properties": { "properties.name": "Laddie Park River Camp 2", "properties.waterway": "camp_site" }, "geometry": { "type": "Point", "coordinates": [ -108.9085135, 40.4802187 ] } },
+{ "type": "Feature", "properties": { "properties.name": null, "properties.waterway": "rapids" }, "geometry": { "type": "Point", "coordinates": [ -108.738866, 40.4893805 ] } }
+]
+}
