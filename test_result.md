@@ -221,20 +221,14 @@ test_plan:
       - working: true
         agent: "main"
         comment: |
-          Built ingestion pipeline for user-supplied GeoJSON polylines + POI layers.
-          • ingest_geojson.py reprojects any CRS → WGS84 (verified EPSG:6350 NAD83 Conus
-            Albers → EPSG:4326 produced expected 83.0 mi for Desolation Canyon).
-          • Normalizes POI properties (waterway → kind, class formats → Roman numerals).
-          • Writes /app/data/runs/<id>/polyline.geojson + poi.geojson + meta.json.
-          • New endpoint GET /api/rivers/{id}/polyline returns the curated MultiLineString
-            (404 if not curated).
-          • GET /api/rivers/{id}/osm-poi now prefers curated data when present
-            (source: "curated") with along-river distance computed against the curated
-            polyline. Falls back to live Overpass for non-curated rivers — non-breaking.
-          • GET /api/rivers/featured now annotates each river with has_curated_data.
-          • Startup warm-up skips curated rivers (no Overpass needed).
-          • Verified: Desolation returns 38 curated POIs (33 rapids, 2 boat ramps, 1
-            campground, 1 access, 1 BLM permit note) with 83.0 mi polyline served from disk.
+          Round 4 follow-up: switched distance semantics. POI distances are now measured
+          along the river polyline from its FIRST point (mile 0 = polyline start), not
+          from the put-in. This applies to both the curated path AND the live-OSM
+          Overpass fallback path. Added `river_mi` field (back-compat: `distance_from_putin_mi`
+          mirrors the same value). Verified on Desolation: Sand Wash Boat Ramp now at
+          0.04 mi (= polyline start), BLM permit note at 0.05 mi, first downstream rapid
+          (Little Rock House Riffle) at 16.46 mi, take-out features (Swasey's Beach
+          campground/ramp/access) at 82.98–83.04 mi (= polyline length).
       - working: true
         agent: "testing"
         comment: |

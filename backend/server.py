@@ -1797,10 +1797,14 @@ async def get_river_osm_pois(river_id: str):
             lon = p.get("lon")
             if lat is None or lon is None:
                 continue
+            # Distance is measured along the river polyline from its FIRST point
+            # (not from the put-in). project_to_river_curated returns cumulative miles
+            # from the start of the polyline.
             poi_pos = project_to_river_curated(lat, lon)
-            if poi_pos is not None and putin_pos is not None:
-                dist = abs(poi_pos - putin_pos)
+            if poi_pos is not None:
+                dist = poi_pos
             else:
+                # Fall back to straight-line if no polyline (shouldn't happen in curated branch)
                 dist = haversine_miles(river["put_in"]["lat"], river["put_in"]["lon"], lat, lon)
             kind = p.get("kind") or "rapid"
             name = p.get("name")
@@ -1817,12 +1821,13 @@ async def get_river_osm_pois(river_id: str):
                 "kind": kind,
                 "lat": lat,
                 "lon": lon,
-                "distance_from_putin_mi": round(dist, 2),
+                "distance_from_putin_mi": round(dist, 2),  # kept for back-compat; now = river-mi from polyline start
+                "river_mi": round(dist, 2),
                 "grade": p.get("grade"),
                 "description": p.get("description"),
                 "source": "curated",
             })
-        pois_out.sort(key=lambda x: x["distance_from_putin_mi"])
+        pois_out.sort(key=lambda x: x["river_mi"])
         return {
             "pois": pois_out,
             "cached": True,
@@ -1980,12 +1985,13 @@ async def get_river_osm_pois(river_id: str):
             or cls["category"]
         )
         pi = river["put_in"]
-        # Compute along-river distance from put-in (signed; we take absolute)
+        # Distance is measured along the river polyline from its FIRST point
+        # (not from the put-in). project_to_river returns cumulative miles from start.
         poi_pos = project_to_river(lat, lon)
-        if poi_pos is not None and putin_pos is not None:
-            dist = abs(poi_pos - putin_pos)
+        if poi_pos is not None:
+            dist = poi_pos
         else:
-            # Fallback to haversine if no river geometry was returned
+            # Fallback to haversine if no river geometry was returned by OSM
             dist = haversine_miles(pi["lat"], pi["lon"], lat, lon)
         grade = tags.get("whitewater:rapid_grade") or tags.get("whitewater:section_grade")
         pois.append({
@@ -1994,11 +2000,12 @@ async def get_river_osm_pois(river_id: str):
             "kind": cls["kind"],
             "lat": lat,
             "lon": lon,
-            "distance_from_putin_mi": round(dist, 2),
+            "distance_from_putin_mi": round(dist, 2),  # kept for back-compat; now = river-mi from polyline start
+            "river_mi": round(dist, 2),
             "grade": grade,
         })
 
-    pois.sort(key=lambda x: x["distance_from_putin_mi"])
+    pois.sort(key=lambda x: x["river_mi"])
     pois = pois[:60]
     _osm_poi_cache[river_id] = (now + _OSM_TTL_SECONDS, pois)
     return {"pois": pois, "cached": False, "count": len(pois)}
