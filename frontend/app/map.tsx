@@ -35,6 +35,13 @@ type OsmPoi = {
   lon: number;
   distance_from_putin_mi: number;
   grade?: string | null;
+  description?: string | null;
+  source?: string;
+};
+
+type Polyline = {
+  coordinates: number[][][]; // MultiLineString [seg][pt][lon,lat]
+  length_mi?: number;
 };
 
 type FilterKey = "all" | "whitewater" | "mixed" | "calm";
@@ -51,6 +58,10 @@ const SVG_ICONS = {
     '<svg viewBox="0 0 24 24" fill="white"><circle cx="8" cy="8" r="3"/><circle cx="16" cy="14" r="3"/><circle cx="9" cy="18" r="2"/></svg>',
   tent:
     '<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M12 4L3 20"/><path d="M12 4l9 16"/><path d="M12 11l-3 9"/><path d="M12 11l3 9"/></svg>',
+  boat:
+    '<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16c2 2 4 2 6 0s4-2 6 0 4 2 6 0"/><path d="M5 13l1-4h12l1 4"/><path d="M12 9V4"/></svg>',
+  info:
+    '<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v.01"/><path d="M11 12h1v4h1"/></svg>',
 };
 
 const buildMapHtml = () => `<!DOCTYPE html>
@@ -82,6 +93,9 @@ const buildMapHtml = () => `<!DOCTYPE html>
   .pin.portage{background:#F4A261;}
   .pin.play{background:#2A9D8F;}
   .pin.camp{background:#8B5E34;}
+  .pin.boat{background:#1D4E89;}
+  .pin.access{background:#1D4E89;}
+  .pin.note{background:#6C757D;}
   .pin-tri{
     width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;
     border-bottom:24px solid #D62828;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.4));
@@ -125,6 +139,7 @@ const buildMapHtml = () => `<!DOCTYPE html>
 
   var overviewLayer = L.layerGroup().addTo(map);
   var focusedLayer = L.layerGroup().addTo(map);
+  var polylineLayer = L.layerGroup().addTo(map);
   var currentMode = null;
 
   function colorFor(t){
@@ -155,6 +170,7 @@ const buildMapHtml = () => `<!DOCTYPE html>
   function renderOverview(rivers){
     overviewLayer.clearLayers();
     focusedLayer.clearLayers();
+    polylineLayer.clearLayers();
     rivers.forEach(function(r){
       var color = colorFor(r.type);
       var icon = L.divIcon({
@@ -175,9 +191,25 @@ const buildMapHtml = () => `<!DOCTYPE html>
     }
   }
 
-  function renderFocused(river, pois){
+  function renderFocused(river, pois, polyline){
     overviewLayer.clearLayers();
     focusedLayer.clearLayers();
+    polylineLayer.clearLayers();
+
+    // Draw the river polyline (curated GeoJSON MultiLineString) — under markers
+    if (polyline && polyline.coordinates && polyline.coordinates.length){
+      polyline.coordinates.forEach(function(seg){
+        var latlngs = seg.map(function(pt){ return [pt[1], pt[0]]; });
+        // Outline (halo) for legibility on busy basemap
+        L.polyline(latlngs, {
+          color: '#FFFFFF', weight: 7, opacity: 0.9, lineCap: 'round', lineJoin: 'round'
+        }).addTo(polylineLayer);
+        // Main blue river line
+        L.polyline(latlngs, {
+          color: '#1D6FB8', weight: 4, opacity: 0.95, lineCap: 'round', lineJoin: 'round'
+        }).addTo(polylineLayer);
+      });
+    }
 
     // Put-in (start)
     L.marker([river.put_in_lat, river.put_in_lon], {
@@ -195,25 +227,38 @@ const buildMapHtml = () => `<!DOCTYPE html>
       var g = (grade || river.class_rating || '').toString();
       return g ? 'Class ' + g : '';
     }
+    function esc(s){
+      return (s == null ? '' : String(s))
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
 
     var rapidClass = 'rapid-' + river.intensity; // mild | mod | hard
     pois.forEach(function(p){
       var marker;
       if (p.kind === 'waterfall'){
         marker = L.marker([p.lat, p.lon], { icon: tri() })
-          .bindPopup(popupHtml(p.name, 'Waterfall' + (p.grade ? ' · Class ' + p.grade : '')));
+          .bindPopup(popupHtml(esc(p.name), 'Waterfall' + (p.grade ? ' · Class ' + esc(p.grade) : '')));
       } else if (p.kind === 'hazard'){
         marker = L.marker([p.lat, p.lon], { icon: tri() })
-          .bindPopup(popupHtml(p.name, p.cat));
+          .bindPopup(popupHtml(esc(p.name), esc(p.cat || 'Hazard')));
       } else if (p.kind === 'portage'){
         marker = L.marker([p.lat, p.lon], { icon: pin('portage', SVG.steps) })
-          .bindPopup(popupHtml(p.name, 'Portage'));
+          .bindPopup(popupHtml(esc(p.name), 'Portage'));
       } else if (p.kind === 'play'){
         marker = L.marker([p.lat, p.lon], { icon: pin('play', SVG.wave) })
-          .bindPopup(popupHtml(p.name, 'Play spot' + (p.grade ? ' · Class ' + p.grade : '')));
+          .bindPopup(popupHtml(esc(p.name), 'Play spot' + (p.grade ? ' · Class ' + esc(p.grade) : '')));
       } else if (p.kind === 'camp'){
         marker = L.marker([p.lat, p.lon], { icon: pin('camp', SVG.tent) })
-          .bindPopup(popupHtml(p.name || 'Campground', 'Campground'));
+          .bindPopup(popupHtml(esc(p.name || 'Campground'), 'Campground'));
+      } else if (p.kind === 'boat_ramp'){
+        marker = L.marker([p.lat, p.lon], { icon: pin('boat', SVG.boat) })
+          .bindPopup(popupHtml(esc(p.name || 'Boat Ramp'), 'Boat Ramp'));
+      } else if (p.kind === 'access'){
+        marker = L.marker([p.lat, p.lon], { icon: pin('access', SVG.boat) })
+          .bindPopup(popupHtml(esc(p.name || 'Access Point'), 'Access Point'));
+      } else if (p.kind === 'note'){
+        marker = L.marker([p.lat, p.lon], { icon: pin('note', SVG.info) })
+          .bindPopup(popupHtml(esc(p.name || 'Note'), esc(p.description || '')));
       } else if (p.kind === 'putin' || p.kind === 'takeout'){
         return;
       } else {
@@ -225,21 +270,32 @@ const buildMapHtml = () => `<!DOCTYPE html>
         var name = p.name;
         if (!name || /^rapids?$/i.test(name)) name = 'Unnamed rapid';
         marker = L.marker([p.lat, p.lon], { icon: pin(cls, SVG.wave) })
-          .bindPopup(popupHtml(name, classLabel(p.grade)));
+          .bindPopup(popupHtml(esc(name), classLabel(p.grade)));
       }
       if (marker) marker.addTo(focusedLayer);
     });
   }
 
-  function flyToFocused(river, pois, animate){
+  function flyToFocused(river, pois, polyline, animate){
     var pts = [
       [river.put_in_lat, river.put_in_lon],
       [river.take_out_lat, river.take_out_lon]
     ];
-    pois.forEach(function(p){
-      if (p.kind !== 'putin' && p.kind !== 'takeout') pts.push([p.lat, p.lon]);
-    });
-    var b = L.latLngBounds(pts).pad(0.2);
+    // Prefer polyline coords (sample every Nth point — bounds-only is fine)
+    if (polyline && polyline.coordinates && polyline.coordinates.length){
+      polyline.coordinates.forEach(function(seg){
+        // Sample sparsely; we only need bounds
+        var step = Math.max(1, Math.floor(seg.length / 60));
+        for (var i = 0; i < seg.length; i += step){
+          pts.push([seg[i][1], seg[i][0]]);
+        }
+      });
+    } else {
+      pois.forEach(function(p){
+        if (p.kind !== 'putin' && p.kind !== 'takeout') pts.push([p.lat, p.lon]);
+      });
+    }
+    var b = L.latLngBounds(pts).pad(0.15);
     if (animate){
       map.flyToBounds(b, { duration: 1.4, easeLinearity: 0.3 });
     } else {
@@ -258,10 +314,10 @@ const buildMapHtml = () => `<!DOCTYPE html>
       }
       currentMode = 'overview';
     } else if (state.cmd === 'focus'){
-      renderFocused(state.river, state.pois || []);
+      renderFocused(state.river, state.pois || [], state.polyline || null);
       if (state.move !== 'none'){
         var animate2 = currentMode === 'overview' || currentMode === null;
-        flyToFocused(state.river, state.pois || [], animate2);
+        flyToFocused(state.river, state.pois || [], state.polyline || null, animate2);
       }
       currentMode = 'focused';
     }
@@ -302,6 +358,8 @@ export default function MapScreen() {
 
   const [selectedRiverId, setSelectedRiverId] = useState<string | null>(null);
   const [focusedPois, setFocusedPois] = useState<OsmPoi[] | null>(null);
+  const [focusedPolyline, setFocusedPolyline] = useState<Polyline | null>(null);
+  const [poiSource, setPoiSource] = useState<string | null>(null);
   const [focusLoading, setFocusLoading] = useState(false);
 
   const selectedRiver = useMemo(
@@ -330,20 +388,51 @@ export default function MapScreen() {
     load();
   }, [load]);
 
-  // When a river is selected, fetch its OSM POIs
+  // When a river is selected, fetch its POIs + (optional) curated polyline
   useEffect(() => {
     if (!selectedRiverId) {
       setFocusedPois(null);
+      setFocusedPolyline(null);
+      setPoiSource(null);
       return;
     }
     let cancelled = false;
     setFocusLoading(true);
     setFocusedPois(null);
+    setFocusedPolyline(null);
+    setPoiSource(null);
     (async () => {
       try {
-        const r = await fetch(`${API}/rivers/${selectedRiverId}/osm-poi`);
-        const j = await r.json();
-        if (!cancelled) setFocusedPois(j.pois || []);
+        const [poiRes, polyRes] = await Promise.all([
+          fetch(`${API}/rivers/${selectedRiverId}/osm-poi`),
+          fetch(`${API}/rivers/${selectedRiverId}/polyline`),
+        ]);
+        const poiJson = await poiRes.json();
+        if (!cancelled) {
+          setFocusedPois(poiJson.pois || []);
+          setPoiSource(poiJson.source || "osm");
+        }
+        if (polyRes.ok) {
+          const polyJson = await polyRes.json();
+          const feat = polyJson?.features?.[0];
+          const geom = feat?.geometry;
+          if (geom) {
+            let coords: number[][][];
+            if (geom.type === "LineString") {
+              coords = [geom.coordinates];
+            } else if (geom.type === "MultiLineString") {
+              coords = geom.coordinates;
+            } else {
+              coords = [];
+            }
+            if (!cancelled && coords.length) {
+              setFocusedPolyline({
+                coordinates: coords,
+                length_mi: feat?.properties?.length_mi,
+              });
+            }
+          }
+        }
       } catch {
         if (!cancelled) setFocusedPois([]);
       } finally {
@@ -388,6 +477,7 @@ export default function MapScreen() {
           take_out_name: selectedRiver.take_out.name,
         },
         pois: focusedPois || [],
+        polyline: focusedPolyline,
       };
     }
     return {
@@ -399,7 +489,7 @@ export default function MapScreen() {
         plon: r.put_in.lon,
       })),
     };
-  }, [selectedRiver, focusedPois, filteredRivers]);
+  }, [selectedRiver, focusedPois, focusedPolyline, filteredRivers]);
 
   const prevModeRef = useRef<"overview" | "focused" | null>(null);
 
@@ -543,6 +633,12 @@ export default function MapScreen() {
             <LegendIcon kind="hazard" label="Hazard / falls" />
             <LegendIcon kind="portage" label="Portage" />
             <LegendIcon kind="camp" label="Campground" />
+            {poiSource === "curated" && (
+              <>
+                <LegendIcon kind="boat" label="Boat ramp" />
+                <LegendIcon kind="note" label="Note" />
+              </>
+            )}
           </View>
         )}
       </View>
@@ -551,8 +647,11 @@ export default function MapScreen() {
         <View style={styles.detailBar} testID="map-detail-bar">
           <View style={{ flex: 1 }}>
             <Text style={styles.detailLabel}>
-              {focusedPois?.length || 0} feature{(focusedPois?.length || 0) === 1 ? "" : "s"} from
-              OpenStreetMap
+              {focusedPois?.length || 0} feature{(focusedPois?.length || 0) === 1 ? "" : "s"}
+              {poiSource === "curated" ? " · Curated" : " from OpenStreetMap"}
+              {focusedPolyline?.length_mi
+                ? ` · ${focusedPolyline.length_mi.toFixed(1)} mi`
+                : ""}
             </Text>
             <Text style={styles.detailSub} numberOfLines={1}>
               {selectedRiver.put_in.name} → {selectedRiver.take_out.name}
@@ -611,7 +710,7 @@ function LegendIcon({
   rapidColor,
   label,
 }: {
-  kind: "start" | "finish" | "rapid" | "hazard" | "portage" | "camp";
+  kind: "start" | "finish" | "rapid" | "hazard" | "portage" | "camp" | "boat" | "note";
   rapidColor?: string;
   label: string;
 }) {
@@ -635,6 +734,10 @@ function LegendIcon({
       ? rapidColor || COLORS.primary
       : kind === "portage"
       ? COLORS.warning
+      : kind === "boat"
+      ? "#1D4E89"
+      : kind === "note"
+      ? "#6C757D"
       : "#8B5E34";
   const iconName: any =
     kind === "start"
@@ -645,6 +748,10 @@ function LegendIcon({
       ? "water"
       : kind === "portage"
       ? "footsteps"
+      : kind === "boat"
+      ? "boat"
+      : kind === "note"
+      ? "information"
       : "bonfire";
   return (
     <View style={styles.legendRow}>

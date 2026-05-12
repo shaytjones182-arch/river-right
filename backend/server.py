@@ -9,9 +9,44 @@ import asyncio
 import httpx
 import math
 import time
+import json
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
+
+# Curated per-river data (clean GeoJSON polylines + POI layers ingested from user uploads).
+# See backend/ingest_geojson.py for the ingestion pipeline.
+CURATED_RUNS_DIR = ROOT_DIR.parent / "data" / "runs"
+_curated_cache: Dict[str, Dict[str, Any]] = {}  # river_id -> {polyline, pois, meta}
+
+
+def _load_curated(river_id: str) -> Optional[Dict[str, Any]]:
+    """Load curated polyline + POIs for a river from disk. Cached in memory."""
+    if river_id in _curated_cache:
+        return _curated_cache[river_id]
+    run_dir = CURATED_RUNS_DIR / river_id
+    poly_file = run_dir / "polyline.geojson"
+    poi_file = run_dir / "poi.geojson"
+    meta_file = run_dir / "meta.json"
+    if not poly_file.exists() and not poi_file.exists():
+        return None
+    bundle: Dict[str, Any] = {}
+    try:
+        if poly_file.exists():
+            with poly_file.open() as f:
+                bundle["polyline"] = json.load(f)
+        if poi_file.exists():
+            with poi_file.open() as f:
+                bundle["pois"] = json.load(f)
+        if meta_file.exists():
+            with meta_file.open() as f:
+                bundle["meta"] = json.load(f)
+    except Exception as e:
+        logging.warning(f"Failed to load curated data for {river_id}: {e}")
+        return None
+    _curated_cache[river_id] = bundle
+    return bundle
+
 
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
@@ -1489,7 +1524,25 @@ async def root():
 
 @api_router.get("/rivers/featured")
 async def get_featured_rivers():
-    return {"rivers": FEATURED_RIVERS}
+    # Annotate which rivers have curated GeoJSON data available
+    out = []
+    for r in FEATURED_RIVERS:
+        rr = dict(r)
+        rr["has_curated_data"] = (CURATED_RUNS_DIR / r["id"]).exists()
+        out.append(rr)
+    return {"rivers": out}
+
+
+@api_router.get("/rivers/{river_id}/polyline")
+async def get_river_polyline(river_id: str):
+    """Return curated river polyline as GeoJSON (WGS84). 404 if not curated yet."""
+    river = next((r for r in FEATURED_RIVERS if r["id"] == river_id), None)
+    if not river:
+        raise HTTPException(404, "River not found")
+    bundle = _load_curated(river_id)
+    if not bundle or "polyline" not in bundle:
+        raise HTTPException(404, "No curated polyline for this run")
+    return bundle["polyline"]
 
 
 @api_router.get("/rivers/{river_id}")
@@ -1677,11 +1730,107 @@ async def get_river_osm_pois(river_id: str):
     """Fetch dynamic POIs (whitewater/waterfall/dam/rapids/campgrounds) from
     OpenStreetMap via the Overpass API for the named river. Cached for 24h.
     Distance is computed along the actual river polyline (not haversine).
+
+    If a curated GeoJSON dataset exists for this river (see /app/data/runs/<id>/),
+    we serve that directly — much faster and higher quality than live Overpass.
     """
     river = next((r for r in FEATURED_RIVERS if r["id"] == river_id), None)
     if not river:
         raise HTTPException(404, "River not found")
 
+    # --- Curated path: prefer high-quality user-supplied data when available ---
+    curated = _load_curated(river_id)
+    if curated and curated.get("pois"):
+        # Build along-river positions using curated polyline if we have it
+        river_pts: List[tuple] = []
+        poly = curated.get("polyline")
+        if poly:
+            for feat in poly.get("features", []) or []:
+                geom = feat.get("geometry") or {}
+                gtype = geom.get("type")
+                coords = geom.get("coordinates") or []
+                if gtype == "LineString":
+                    for pt in coords:
+                        river_pts.append((pt[1], pt[0]))
+                elif gtype == "MultiLineString":
+                    for seg in coords:
+                        for pt in seg:
+                            river_pts.append((pt[1], pt[0]))
+
+        cum_miles: List[float] = [0.0]
+        for i in range(1, len(river_pts)):
+            cum_miles.append(
+                cum_miles[-1] + haversine_miles(river_pts[i - 1][0], river_pts[i - 1][1], river_pts[i][0], river_pts[i][1])
+            )
+
+        def project_to_river_curated(lat: float, lon: float) -> Optional[float]:
+            if len(river_pts) < 2:
+                return None
+            best_dist = float("inf")
+            best_pos = 0.0
+            for i in range(len(river_pts) - 1):
+                a = river_pts[i]
+                b = river_pts[i + 1]
+                dx = b[1] - a[1]
+                dy = b[0] - a[0]
+                seg_len_sq = dx * dx + dy * dy
+                if seg_len_sq == 0:
+                    t = 0.0
+                    px, py = a[1], a[0]
+                else:
+                    t = ((lon - a[1]) * dx + (lat - a[0]) * dy) / seg_len_sq
+                    t = max(0.0, min(1.0, t))
+                    px = a[1] + t * dx
+                    py = a[0] + t * dy
+                d = haversine_miles(lat, lon, py, px)
+                if d < best_dist:
+                    best_dist = d
+                    seg_len_mi = cum_miles[i + 1] - cum_miles[i]
+                    best_pos = cum_miles[i] + t * seg_len_mi
+            return best_pos
+
+        putin_pos = project_to_river_curated(river["put_in"]["lat"], river["put_in"]["lon"])
+
+        pois_out: List[Dict[str, Any]] = []
+        for p in curated["pois"].get("pois", []) or []:
+            lat = p.get("lat")
+            lon = p.get("lon")
+            if lat is None or lon is None:
+                continue
+            poi_pos = project_to_river_curated(lat, lon)
+            if poi_pos is not None and putin_pos is not None:
+                dist = abs(poi_pos - putin_pos)
+            else:
+                dist = haversine_miles(river["put_in"]["lat"], river["put_in"]["lon"], lat, lon)
+            kind = p.get("kind") or "rapid"
+            name = p.get("name")
+            if not name:
+                if kind == "rapid":
+                    name = "Unnamed rapid"
+                elif kind == "note":
+                    name = "Note"
+                else:
+                    name = kind.replace("_", " ").title()
+            pois_out.append({
+                "name": name,
+                "category": p.get("category") or kind,
+                "kind": kind,
+                "lat": lat,
+                "lon": lon,
+                "distance_from_putin_mi": round(dist, 2),
+                "grade": p.get("grade"),
+                "description": p.get("description"),
+                "source": "curated",
+            })
+        pois_out.sort(key=lambda x: x["distance_from_putin_mi"])
+        return {
+            "pois": pois_out,
+            "cached": True,
+            "count": len(pois_out),
+            "source": "curated",
+        }
+
+    # --- Fallback: live OSM Overpass query ---
     cached = _osm_poi_cache.get(river_id)
     now = time.time()
     if cached and cached[0] > now:
@@ -1866,6 +2015,9 @@ async def warm_osm_poi_cache():
         # Wait a few seconds so the app is responsive first
         await asyncio.sleep(3)
         for r in FEATURED_RIVERS:
+            # Skip rivers with curated data — they serve instantly from disk
+            if (CURATED_RUNS_DIR / r["id"]).exists():
+                continue
             try:
                 await get_river_osm_pois(r["id"])
             except Exception as e:

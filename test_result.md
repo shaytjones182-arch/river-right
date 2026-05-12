@@ -210,22 +210,81 @@ test_plan:
   test_all: false
   test_priority: "high_first"
 
+  - task: "Curated GeoJSON ingestion + serving (Phase 1)"
+    implemented: true
+    working: true
+    file: "backend/ingest_geojson.py, backend/server.py, data/runs/green-river-desolation/"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          Built ingestion pipeline for user-supplied GeoJSON polylines + POI layers.
+          • ingest_geojson.py reprojects any CRS → WGS84 (verified EPSG:6350 NAD83 Conus
+            Albers → EPSG:4326 produced expected 83.0 mi for Desolation Canyon).
+          • Normalizes POI properties (waterway → kind, class formats → Roman numerals).
+          • Writes /app/data/runs/<id>/polyline.geojson + poi.geojson + meta.json.
+          • New endpoint GET /api/rivers/{id}/polyline returns the curated MultiLineString
+            (404 if not curated).
+          • GET /api/rivers/{id}/osm-poi now prefers curated data when present
+            (source: "curated") with along-river distance computed against the curated
+            polyline. Falls back to live Overpass for non-curated rivers — non-breaking.
+          • GET /api/rivers/featured now annotates each river with has_curated_data.
+          • Startup warm-up skips curated rivers (no Overpass needed).
+          • Verified: Desolation returns 38 curated POIs (33 rapids, 2 boat ramps, 1
+            campground, 1 access, 1 BLM permit note) with 83.0 mi polyline served from disk.
+      - working: true
+        agent: "testing"
+        comment: |
+          Backend test suite executed via /app/backend_test.py against the public
+          REACT_APP_BACKEND_URL (https://whitewater-guide.preview.emergentagent.com/api).
+          All 8 test cases PASS — no regressions, no failures:
+          1. GET /api/rivers/featured → 65 rivers, exactly ['green-river-desolation']
+             has has_curated_data=true, the other 64 false. All required fields
+             (id, name, state, class_rating, type) preserved.
+          2. GET /api/rivers/green-river-desolation/polyline → 200; FeatureCollection
+             with 1 feature, geometry.type='MultiLineString', 1 segment with 1079
+             points, properties.length_mi=83.04, properties.name='Green River —
+             Desolation Canyon'. All sampled coordinates in valid WGS84 range
+             (lon≈-110, lat≈39).
+          3. GET /api/rivers/gauley-river/polyline and /api/rivers/ocoee-river/polyline
+             → 404 with detail='No curated polyline for this run'.
+          4. GET /api/rivers/invalid-id/polyline → 404 with detail='River not found'.
+          5. GET /api/rivers/green-river-desolation/osm-poi → 200 in ~143ms, source='curated',
+             count=38; kinds present: {rapid:33, boat_ramp, camp, note, access};
+             'note' POI has populated description; POIs sorted ascending by
+             distance_from_putin_mi.
+          6. GET /api/rivers/gauley-river/osm-poi → 200, served from cache,
+             source is NOT 'curated' (None), pois array present (15 items).
+          7. GET /api/rivers/green-river-desolation → 200, returns {river, flow}
+             with full river details + live USGS flow data — no regression.
+          Curated path is correctly served from disk (no Overpass call made for
+          Desolation), and the fallback path remains intact for non-curated rivers.
+
 agent_communication:
   - agent: "main"
     message: |
-      Round 2 of feedback applied: rebrand to RiverRight, Gauges→Map tab with USA hydrography overlay
-      and per-river markers, fixed Ocoee USGS 404 (03566425 → 03559500), polished filter button padding,
-      verified POIs render on river detail. Ran curl + screenshot smoke checks. All 8 featured rivers
-      now return live USGS flow data.
-  - agent: "main"
+      Round 4: Curated GeoJSON data pipeline.
+      • User supplied 2 clean GeoJSON files for Desolation Canyon (Green River, UT) — a
+        polyline (EPSG:6350) and a POI layer with 38 named features. Both ingested via
+        new ingest_geojson.py script and stored under /app/data/runs/green-river-desolation/.
+      • Backend now serves curated data instead of hitting Overpass for that run. Map and
+        bottom bar show "Curated · 83.0 mi" when curated source is active.
+      • Frontend renders the curated polyline as a blue river path with white halo, plus
+        new POI kinds (boat_ramp/access/note) with distinct icons. Legend updated
+        conditionally when source is curated. Non-curated rivers unchanged.
+      • Next data uploads can drop into /app/data/runs/<id>/ — same script handles them.
+  - agent: "testing"
     message: |
-      Round 3: Native marker tap + dynamic POIs.
-      • Refactored map.tsx HTML to bind popup CTA via addEventListener (not inline onclick) — fixes
-        ReactNativeWebView.postMessage on iOS/Android. MapView already had onMessage prop wired.
-      • New endpoint GET /api/rivers/{id}/osm-poi: queries Overpass (kumi/de/fr fallback chain) for
-        whitewater=*, waterway=waterfall|rapids|dam|weir within river bbox. 24h in-memory TTL cache,
-        12s timeout per provider, 60-item cap, sorted by distance from put-in. Verified live data
-        for ocoee (13), gauley (19), colorado (60), rogue (50) etc.
-      • River detail screen fetches OSM POIs in parallel (non-blocking) and renders a "More features
-        (OpenStreetMap)" section with category icons (rapid/waterfall/hazard/portage/etc), grade,
-        and distance.
+      Round 4 backend retest complete. Ran /app/backend_test.py against the public
+      backend URL; all 8 curated-pipeline assertions PASS:
+        • /api/rivers/featured returns has_curated_data with exactly green-river-desolation=true (1 of 65)
+        • /api/rivers/green-river-desolation/polyline → MultiLineString, 1079 pts, length_mi=83.04, valid WGS84 (lon≈-110, lat≈39)
+        • /api/rivers/gauley-river/polyline + /api/rivers/ocoee-river/polyline → 404 "No curated polyline for this run"
+        • /api/rivers/invalid-id/polyline → 404 "River not found"
+        • /api/rivers/green-river-desolation/osm-poi → 200 in ~143ms (no Overpass call); source="curated"; count=38; kinds={rapid:33, boat_ramp, camp, note(with description), access}; sorted asc by distance_from_putin_mi
+        • /api/rivers/gauley-river/osm-poi → 200, source != "curated" (live Overpass fallback intact, 15 POIs served from cache)
+        • /api/rivers/green-river-desolation → 200 with river details + live USGS flow data (no regression)
+      No critical issues. No mocked endpoints encountered. The curated GeoJSON pipeline is fully working and backwards-compatible.
