@@ -1,0 +1,28 @@
+{
+"type": "FeatureCollection",
+"name": "final_pois(change_name)",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "name": "Swallow Canyon Boat Ramp", "properties.waterway": "slipway" }, "geometry": { "type": "Point", "coordinates": [ -109.0822999, 40.8442088 ] } },
+{ "type": "Feature", "properties": { "name": "Deadman Rapids", "properties.waterway": "rapids" }, "geometry": { "type": "Point", "coordinates": [ -109.3466988, 40.9047999 ] } },
+{ "type": "Feature", "properties": { "name": "Little Steamboat Rapids", "properties.waterway": "rapids" }, "geometry": { "type": "Point", "coordinates": [ -109.3939331, 40.8994384 ] } },
+{ "type": "Feature", "properties": { "name": "Spillway Boat Launch", "properties.waterway": "slipway" }, "geometry": { "type": "Point", "coordinates": [ -109.4224583, 40.9086388 ] } },
+{ "type": "Feature", "properties": { "name": "Bridge Rapids", "properties.waterway": "rapids" }, "geometry": { "type": "Point", "coordinates": [ -109.3854984, 40.9019996 ] } },
+{ "type": "Feature", "properties": { "name": "Bridge Hollow Campground (BLM)", "properties.waterway": "camp_site" }, "geometry": { "type": "Point", "coordinates": [ -109.170153, 40.8985979 ] } },
+{ "type": "Feature", "properties": { "name": "Little Hole Boat Ramp (west)", "properties.waterway": "slipway" }, "geometry": { "type": "Point", "coordinates": [ -109.3152107, 40.9106395 ] } },
+{ "type": "Feature", "properties": { "name": "Red Creek Camp", "properties.waterway": "camp_site" }, "geometry": { "type": "Point", "coordinates": [ -109.2531699, 40.9058854 ] } },
+{ "type": "Feature", "properties": { "name": "Big Tree Camp", "properties.waterway": "camp_site" }, "geometry": { "type": "Point", "coordinates": [ -109.1448731, 40.9013119 ] } },
+{ "type": "Feature", "properties": { "name": "Diving Board Rapids", "properties.waterway": "rapids" }, "geometry": { "type": "Point", "coordinates": [ -109.3668897, 40.8972928 ] } },
+{ "type": "Feature", "properties": { "name": "Indian Crossing Boat Ramp", "properties.waterway": "slipway" }, "geometry": { "type": "Point", "coordinates": [ -109.185404, 40.8969192 ] } },
+{ "type": "Feature", "properties": { "name": "Pipeline Crossing", "properties.waterway": "slipway" }, "geometry": { "type": "Point", "coordinates": [ -109.139691, 40.8642016 ] } },
+{ "type": "Feature", "properties": { "name": "Roller Coaster Rapids", "properties.waterway": "rapids" }, "geometry": { "type": "Point", "coordinates": [ -109.3787696, 40.9040154 ] } },
+{ "type": "Feature", "properties": { "name": "Bridge Hollow Boat Ramp", "properties.waterway": "slipway" }, "geometry": { "type": "Point", "coordinates": [ -109.1724865, 40.8986952 ] } },
+{ "type": "Feature", "properties": { "name": "Dripping Springs Rapids", "properties.waterway": "rapids" }, "geometry": { "type": "Point", "coordinates": [ -109.3388559, 40.9110386 ] } },
+{ "type": "Feature", "properties": { "name": "Bridgeport", "properties.waterway": "slipway" }, "geometry": { "type": "Point", "coordinates": [ -109.1494795, 40.9022179 ] } },
+{ "type": "Feature", "properties": { "name": "Mother-In-Law Rapids", "properties.waterway": "rapids" }, "geometry": { "type": "Point", "coordinates": [ -109.3535883, 40.9001716 ] } },
+{ "type": "Feature", "properties": { "name": "Anticipation Rapids", "properties.waterway": "rapids" }, "geometry": { "type": "Point", "coordinates": [ -109.3973633, 40.9006337 ] } },
+{ "type": "Feature", "properties": { "name": "Red Creek Camp 1, 2", "properties.waterway": "camp_site" }, "geometry": { "type": "Point", "coordinates": [ -109.251131, 40.8953818 ] } },
+{ "type": "Feature", "properties": { "name": null, "properties.waterway": "slipway" }, "geometry": { "type": "Point", "coordinates": [ -109.1358069, 40.8784998 ] } },
+{ "type": "Feature", "properties": { "name": "River Overlook Primitive Camp", "properties.waterway": "camp_site" }, "geometry": { "type": "Point", "coordinates": [ -109.1965646, 40.8919978 ] } }
+]
+}

@@ -741,6 +741,27 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "image": "https://images.unsplash.com/photo-1626594995085-36b551227b9a?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
+        "id": "green-river-flaming-gorge",
+        "name": "Green River — Flaming Gorge",
+        "state": "UT",
+        "class_rating": "II–III",
+        "type": "mixed",
+        "osm_names": ["Green River"],
+        "description": "Tailwater run below Flaming Gorge Dam. A/B/C sections take you from icy emerald water through Red Canyon and Browns Park — popular for kayak instruction, fishing, and family rafting.",
+        "hazards": ["Cold tailwater — wear neoprene", "Red Creek Rapid (III) below Little Hole"],
+        "points_of_interest": [
+            "Red Creek Rapid (III): biggest drop, just below Little Hole",
+            "Bridge Rapid (II): below Spillway",
+            "Bridge Hollow Campground (BLM): mid-run camp",
+            "Little Hole: classic take-out for the 7-mile A section",
+            "Swallow Canyon: end of C section with sandstone cliffs",
+        ],
+        "put_in": {"name": "Spillway Boat Launch", "lat": 40.9092, "lon": -109.4225},
+        "take_out": {"name": "Swallow Canyon Boat Ramp", "lat": 40.8442, "lon": -109.0819},
+        "usgs_site_id": "09234500",
+        "image": "https://images.unsplash.com/photo-1626594995085-36b551227b9a?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
+    },
+    {
         "id": "merced-river",
         "name": "Merced River",
         "state": "CA",
