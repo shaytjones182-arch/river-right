@@ -50,10 +50,18 @@ export default function TermsOfService() {
               judgment on the water.
             </Text>{" "}
             River conditions, water levels, hazards, access points, rapid
-            difficulty ratings, and points of interest can change rapidly,
-            without warning, and may be inaccurate, incomplete, or missing
+            difficulty ratings, and points of interest{" "}
+            <Text style={styles.bold}>
+              can change in a matter of hours
+            </Text>
+            , without warning, and may be inaccurate, incomplete, or missing
             entirely from this app. You assume all risks associated with
-            using this app and any river activity you undertake.
+            using this app and any river activity you undertake.{" "}
+            <Text style={styles.bold}>
+              Always perform your own visual scout of every rapid from shore
+              — your eyes on the water always override anything you see in
+              this app.
+            </Text>
           </Text>
         </View>
 
@@ -90,32 +98,77 @@ export default function TermsOfService() {
         </Section>
 
         <Section title="4. Assumption of Risk">
-          You expressly acknowledge that:
+          You expressly acknowledge and agree that:
           {"\n\n"}(a) River activities — including but not limited to rafting,
-          kayaking, canoeing, packrafting, swimming, fishing, hiking near
-          rivers, and operating any watercraft — are inherently dangerous
-          and may result in property damage, serious bodily injury, drowning,
-          or death;
-          {"\n\n"}(b) River conditions including water level, flow rate, water
-          temperature, debris, hazards, weather, and access can change
-          rapidly and unpredictably;
-          {"\n\n"}(c) The Content may be inaccurate, incomplete, outdated,
-          stale, missing, or otherwise unreliable;
+          kayaking, canoeing, packrafting, stand-up paddleboarding, swimming,
+          fishing, hiking near rivers, and operating any watercraft — are
+          inherently dangerous and may result in property damage, serious
+          bodily injury, drowning, or death;
+          {"\n\n"}(b){" "}
+          <Text style={styles.bold}>
+            River conditions can change in a matter of hours
+          </Text>{" "}
+          — water level, flow rate, water temperature, strainers, sieves,
+          newly-fallen wood, rockfall, ice, weather, lightning, wildfire
+          smoke, access restrictions, and other hazards can appear or shift
+          rapidly and without warning between the time the Content was last
+          updated and the moment you are on the water;
+          {"\n\n"}(c) The Content — including river flow data, gauge
+          readings, polylines, points of interest, hazard markers, mileage,
+          campground locations, and access points — may be inaccurate,
+          incomplete, outdated, stale, missing, or otherwise unreliable;
           {"\n\n"}(d) GPS, cellular service, satellite coverage, and the App
           itself may fail or be unavailable, including without warning,
           while you are on or near the water;
-          {"\n\n"}(e) Difficulty ratings (e.g. Class I–VI) reflect general
-          observations under typical conditions and may not reflect actual
-          difficulty at any given time;
-          {"\n\n"}(f){" "}
+          {"\n\n"}(e){" "}
           <Text style={styles.bold}>
             You voluntarily assume any and all risk of loss, injury, or death
           </Text>{" "}
-          arising from your use of the App or your participation in any
-          activity informed by the Content.
+          to yourself, your guests, your equipment, and any third party
+          arising from your use of the App, your reliance on the Content,
+          or your participation in any river activity informed by the
+          Content.
         </Section>
 
-        <Section title="5. License to Use the App">
+        <Section title='5. "Ground Truth" — Your Eyes Override the App'>
+          The App is a planning and reference aid. It is{" "}
+          <Text style={styles.bold}>
+            not a real-time scout, guide, or safety system
+          </Text>
+          . You must always perform your own visual scout of every rapid,
+          horizon line, strainer, and hazard from shore before committing to
+          a line. If what you see on the water disagrees with anything shown
+          in the App — including a rapid&apos;s class, its location, its
+          marked line, its name, the presence or absence of hazards, or any
+          other detail —{" "}
+          <Text style={styles.bold}>
+            your own on-the-ground (or on-the-water) observation always wins
+          </Text>
+          . Portage when in doubt. Do not run anything you have not visually
+          confirmed.
+        </Section>
+
+        <Section title="6. No Warranty of Accuracy">
+          GPS coordinates, distance and mileage calculations, river flow
+          values, gauge readings, weather information, and{" "}
+          <Text style={styles.bold}>
+            rapid classifications (e.g. Class I, II, III, IV, V, VI)
+          </Text>{" "}
+          shown in the App are provided{" "}
+          <Text style={styles.bold}>for reference only</Text>. Rapid grades
+          reflect general observations at typical flows and may not reflect
+          the actual difficulty of any given rapid at the flow, weather,
+          time of year, or condition you encounter. Class ratings are
+          subjective, vary between sources, and change with water level —
+          a Class III at one flow can become a Class IV or V at another.
+          The App makes{" "}
+          <Text style={styles.bold}>no representation or warranty</Text>{" "}
+          that any data point is accurate, current, complete, or fit for
+          any purpose, and you agree not to rely on the App as your sole
+          source of decision-making information for any river activity.
+        </Section>
+
+        <Section title="7. License to Use the App">
           Subject to your compliance with these Terms, RiverRight grants you a
           limited, non-exclusive, non-transferable, non-sublicensable,
           revocable license to use the App on devices you own or control,
@@ -130,7 +183,7 @@ export default function TermsOfService() {
           purchase controls.
         </Section>
 
-        <Section title="6. In-App Purchases">
+        <Section title="8. In-App Purchases">
           Certain river runs, features, or content within the App are made
           available only after a one-time in-app purchase processed through
           the Apple App Store. Pricing is shown in the App before purchase
@@ -145,7 +198,7 @@ export default function TermsOfService() {
           Apple directly per its App Store Terms of Sale.
         </Section>
 
-        <Section title="7. User-Generated Data">
+        <Section title="9. User-Generated Data">
           The App may record GPS-based trip tracking data (location, speed,
           distance, time) on your device. This data is stored locally on
           your device by default; we do not collect or transmit it to our
@@ -154,7 +207,7 @@ export default function TermsOfService() {
           loss of that data due to device damage, deletion, or uninstall.
         </Section>
 
-        <Section title='8. "AS IS" — No Warranties'>
+        <Section title='10. "AS IS" — No Warranties'>
           THE APP AND ALL CONTENT ARE PROVIDED{" "}
           <Text style={styles.bold}>&ldquo;AS IS&rdquo; AND &ldquo;AS AVAILABLE&rdquo;</Text>{" "}
           WITHOUT WARRANTY OF ANY KIND, WHETHER EXPRESS, IMPLIED, STATUTORY,
@@ -168,7 +221,7 @@ export default function TermsOfService() {
           APP WILL MEET YOUR REQUIREMENTS.
         </Section>
 
-        <Section title="9. Limitation of Liability">
+        <Section title="11. Limitation of Liability">
           TO THE MAXIMUM EXTENT PERMITTED BY LAW, IN NO EVENT SHALL
           RIVERRIGHT LLC, ITS MEMBERS, OFFICERS, EMPLOYEES, CONTRACTORS,
           AGENTS, LICENSORS, OR SUPPLIERS BE LIABLE FOR ANY{" "}
@@ -193,7 +246,7 @@ export default function TermsOfService() {
           LIMITED TO THE FULLEST EXTENT PERMITTED BY LAW.
         </Section>
 
-        <Section title="10. Indemnification">
+        <Section title="12. Indemnification">
           You agree to defend, indemnify, and hold harmless RiverRight LLC
           and its members, officers, employees, contractors, agents,
           licensors, and suppliers from and against any and all claims,
@@ -206,7 +259,7 @@ export default function TermsOfService() {
           violation of any law or third-party right.
         </Section>
 
-        <Section title="11. Third-Party Data Sources">
+        <Section title="13. Third-Party Data Sources">
           The App incorporates data from third parties (including but not
           limited to the U.S. Geological Survey and OpenStreetMap). RiverRight
           does not control, verify, or warrant the accuracy of third-party
@@ -214,7 +267,7 @@ export default function TermsOfService() {
           Attributions section of the App for details and links.
         </Section>
 
-        <Section title="12. Modifications">
+        <Section title="14. Modifications">
           We reserve the right to modify the App, the Content, pricing, and
           these Terms at any time. Material changes to the Terms will be
           surfaced in-app and will become effective when posted. Your
@@ -223,60 +276,56 @@ export default function TermsOfService() {
           remedy is to stop using the App.
         </Section>
 
-        <Section title="13. Termination">
+        <Section title="15. Termination">
           We may suspend or terminate your access to the App, with or without
           notice, for any reason including violation of these Terms. Upon
           termination, all rights granted to you under these Terms cease
-          immediately. Sections 4 (Assumption of Risk), 8 (No Warranties), 9
-          (Limitation of Liability), 10 (Indemnification), 14 (Governing
-          Law), and 15 (Dispute Resolution) survive any termination.
+          immediately. Sections 4 (Assumption of Risk), 5 (Ground Truth), 6
+          (No Warranty of Accuracy), 10 (No Warranties), 11 (Limitation of
+          Liability), 12 (Indemnification), 16 (Governing Law), and 17
+          (Dispute Resolution) survive any termination.
         </Section>
 
-        <Section title="14. Governing Law">
-          These Terms are governed by the laws of the State of Wyoming, USA,
-          without regard to its conflict-of-laws principles. The United
-          Nations Convention on Contracts for the International Sale of
-          Goods does not apply.{" "}
-          <Text style={styles.bold}>
-            [Adjust to the state where RiverRight LLC is formed before
-            publishing.]
-          </Text>
+        <Section title="16. Governing Law">
+          These Terms are governed by the laws of the{" "}
+          <Text style={styles.bold}>State of Colorado, USA</Text>, without
+          regard to its conflict-of-laws principles. The United Nations
+          Convention on Contracts for the International Sale of Goods does
+          not apply.
         </Section>
 
-        <Section title="15. Dispute Resolution & Class-Action Waiver">
+        <Section title="17. Dispute Resolution & Class-Action Waiver">
           Any dispute arising out of or relating to these Terms or the App
           shall be resolved exclusively by{" "}
-          <Text style={styles.bold}>
-            individual, binding arbitration
-          </Text>{" "}
+          <Text style={styles.bold}>individual, binding arbitration</Text>{" "}
           administered by the American Arbitration Association under its
-          Consumer Arbitration Rules, in the state where RiverRight LLC is
-          formed. You and RiverRight each waive any right to a jury trial
-          and any right to participate in a{" "}
+          Consumer Arbitration Rules, seated in the State of Colorado. You
+          and RiverRight each waive any right to a jury trial and any right
+          to participate in a{" "}
           <Text style={styles.bold}>class action</Text>, class arbitration,
           or representative action. Either party may seek injunctive relief
-          in court for intellectual property or in-app purchase enforcement.
+          in a court of competent jurisdiction in Colorado for intellectual
+          property or in-app purchase enforcement.
         </Section>
 
-        <Section title="16. Severability">
+        <Section title="18. Severability">
           If any provision of these Terms is found unenforceable, the
           remaining provisions remain in full effect.
         </Section>
 
-        <Section title="17. Entire Agreement">
+        <Section title="19. Entire Agreement">
           These Terms, together with the Privacy Policy (when published) and
           any in-app purchase terms, constitute the entire agreement between
           you and RiverRight regarding the App.
         </Section>
 
-        <Section title="18. Contact">
+        <Section title="20. Contact">
           Questions, notices, or concerns may be sent to:
           {"\n\n"}RiverRight LLC
-          {"\n"}Email: support@riverright.app
-          {"\n"}
-          <Text style={styles.bold}>
-            [Replace with your company address and email before publishing.]
-          </Text>
+          {"\n"}State of Colorado, USA
+          {"\n"}Email:{" "}
+          <Text style={styles.bold}>[support@riverright.app]</Text>{" "}
+          (placeholder — replace before publishing)
         </Section>
 
         <Text style={styles.footerNote}>© 2025 RiverRight LLC. All rights reserved.</Text>

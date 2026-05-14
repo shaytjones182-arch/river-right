@@ -73,6 +73,18 @@ export default function RootLayout() {
             name="trips/[id]"
             options={{ href: null }}
           />
+          <Tabs.Screen
+            name="about/index"
+            options={{ href: null }}
+          />
+          <Tabs.Screen
+            name="about/terms"
+            options={{ href: null }}
+          />
+          <Tabs.Screen
+            name="about/attributions"
+            options={{ href: null }}
+          />
         </Tabs>
       </SafeAreaProvider>
     </GestureHandlerRootView>

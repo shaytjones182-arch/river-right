@@ -10,7 +10,6 @@ import {
   TouchableOpacity,
   Modal,
   Pressable,
-  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -86,17 +85,7 @@ export default function ProfileMenu({ testID }: ProfileMenuProps) {
               testID="profile-menu-about"
               icon="information-circle-outline"
               label="About RiverRight"
-              onPress={() => {
-                setOpen(false);
-                setTimeout(
-                  () =>
-                    Alert.alert(
-                      "RiverRight",
-                      "Read the river. Run it right.\n\nLive USGS flow data + curated river runs across the lower 48.\n\nMade for paddlers."
-                    ),
-                  100
-                );
-              }}
+              onPress={() => go("/about")}
               divider={false}
             />
           </Pressable>

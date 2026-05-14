@@ -130,7 +130,9 @@ export default function Attributions() {
 
         <Text style={styles.footerNote}>
           If you believe a source is missing or misattributed, please contact
-          us at support@riverright.app and we&apos;ll correct it promptly.
+          us at{" "}
+          <Text style={styles.bold}>[support@riverright.app]</Text>{" "}
+          (placeholder) and we&apos;ll correct it promptly.
         </Text>
       </ScrollView>
     </SafeAreaView>
