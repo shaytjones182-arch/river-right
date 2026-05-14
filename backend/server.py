@@ -67,6 +67,34 @@ _OSM_TTL_SECONDS = 24 * 60 * 60  # 24h
 
 # ---------------- Featured Rivers (curated USA whitewater + calm) ----------------
 FEATURED_RIVERS: List[Dict[str, Any]] = [
+    # Only released runs are active here. To release another run from the
+    # _UNRELEASED_RIVERS list below, cut its dict and paste it into this list.
+    {
+        "id": "green-river-desolation",
+        "name": "Green River — Desolation Canyon",
+        "state": "UT",
+        "class_rating": "II–III",
+        "type": "mixed",
+        "osm_names": ["Green River"],
+        "description": "84-mile permitted multi-day through one of the deepest canyons in Utah. Class II–III with side-canyon hikes and stunning desert camping.",
+        "hazards": ["Permit required", "Long shuttle from Sand Wash to Swasey's Beach"],
+        "points_of_interest": [
+            "Jack Creek Rapid (II+): first named drop",
+            "Three Fords (III): biggest rapid in Desolation",
+            "Coal Creek (II+): playful wave train",
+            "Rock Creek (II+): named rapid above Florence Creek",
+            "Joe Hutch Canyon (II+): final big rapid",
+        ],
+        "put_in": {"name": "Sand Wash", "lat": 39.7969, "lon": -109.9847},
+        "take_out": {"name": "Swasey's Beach", "lat": 39.0686, "lon": -110.1322},
+        "usgs_site_id": "09315000",
+        "image": "https://images.unsplash.com/photo-1626594995085-36b551227b9a?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
+    },
+]
+
+# Rivers that are documented but NOT yet polished/curated enough for release.
+# When a run is ready, move its dict into FEATURED_RIVERS above.
+_UNRELEASED_RIVERS: List[Dict[str, Any]] = [
     {
         "id": "colorado-grand-canyon",
         "name": "Colorado River — Grand Canyon",
@@ -718,27 +746,6 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "take_out": {"name": "Banks", "lat": 44.0789, "lon": -116.1183},
         "usgs_site_id": "13235000",
         "image": "https://images.unsplash.com/photo-1762943107260-d080e13266b3?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
-    },
-    {
-        "id": "green-river-desolation",
-        "name": "Green River — Desolation Canyon",
-        "state": "UT",
-        "class_rating": "II–III",
-        "type": "mixed",
-        "osm_names": ["Green River"],
-        "description": "84-mile permitted multi-day through one of the deepest canyons in Utah. Class II–III with side-canyon hikes and stunning desert camping.",
-        "hazards": ["Permit required", "Long shuttle from Sand Wash to Swasey's Beach"],
-        "points_of_interest": [
-            "Jack Creek Rapid (II+): first named drop",
-            "Three Fords (III): biggest rapid in Desolation",
-            "Coal Creek (II+): playful wave train",
-            "Rock Creek (II+): named rapid above Florence Creek",
-            "Joe Hutch Canyon (II+): final big rapid",
-        ],
-        "put_in": {"name": "Sand Wash", "lat": 39.7969, "lon": -109.9847},
-        "take_out": {"name": "Swasey's Beach", "lat": 39.0686, "lon": -110.1322},
-        "usgs_site_id": "09315000",
-        "image": "https://images.unsplash.com/photo-1626594995085-36b551227b9a?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
     {
         "id": "green-river-flaming-gorge",
