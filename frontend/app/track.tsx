@@ -113,9 +113,28 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
 .leaflet-popup-content{margin:8px 12px;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;}
 .pop-title{font-weight:800;font-size:13px;color:#0A1128;}
 .pop-meta{font-size:11px;color:#5C6B73;margin-top:2px;}
+/* Tile-unavailable banner */
+.tile-banner{
+  position:absolute;top:10px;left:50%;transform:translate(-50%,-150%);
+  z-index:1000;pointer-events:none;
+  background:#0A1128;color:#fff;
+  padding:8px 14px;border-radius:999px;
+  font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+  font-size:12px;font-weight:700;letter-spacing:0.2px;
+  box-shadow:0 4px 14px rgba(0,0,0,0.35);
+  display:flex;align-items:center;gap:8px;
+  max-width:88%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  opacity:0;transition:transform 220ms ease-out, opacity 220ms ease-out;
+}
+.tile-banner.show{transform:translate(-50%,0);opacity:1;}
+.tile-banner svg{width:14px;height:14px;flex-shrink:0;}
 </style></head>
 <body>
 <div id="m"></div>
+<div id="tile-banner" class="tile-banner" role="status" aria-live="polite">
+  <svg viewBox="0 0 24 24" fill="none" stroke="#F4A261" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l10 18H2L12 3z"/><path d="M12 10v5"/><path d="M12 18v.01"/></svg>
+  <span>Map tiles unavailable — check your connection.</span>
+</div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 (function(){
@@ -127,6 +146,20 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
     { maxZoom: 16 }
   );
   usgsTopo.addTo(map);
+
+  // Show banner if USGS tiles repeatedly fail; auto-hide when they recover.
+  var __tileErrCount = 0;
+  var __tileBanner = document.getElementById('tile-banner');
+  usgsTopo.on('tileerror', function(){
+    __tileErrCount++;
+    if (__tileErrCount >= 3 && __tileBanner) __tileBanner.classList.add('show');
+  });
+  usgsTopo.on('tileload', function(){
+    if (__tileErrCount > 0) {
+      __tileErrCount = 0;
+      if (__tileBanner) __tileBanner.classList.remove('show');
+    }
+  });
   L.control.zoom({ position:'topright' }).addTo(map);
 
   var path = L.polyline([], { color:'#0077B6', weight:5, opacity:0.95 }).addTo(map);
