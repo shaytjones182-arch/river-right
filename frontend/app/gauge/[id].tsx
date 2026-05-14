@@ -32,8 +32,11 @@ const buildHtml = (lat: number, lon: number, name: string) => `<!DOCTYPE html>
 </head><body><div id="m"></div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-var m = L.map('m', { zoomControl:false, attributionControl:false }).setView([${lat}, ${lon}], 11);
-L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19 }).addTo(m);
+var m = L.map('m', { zoomControl:false, attributionControl:false, maxZoom:16 }).setView([${lat}, ${lon}], 11);
+var _t = L.tileLayer('https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/{z}/{y}/{x}', { maxZoom:16 });
+var _f = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:16 });
+_t.on('tileerror', function(){ if(!m.hasLayer(_f)) _f.addTo(m); });
+_t.addTo(m);
 L.marker([${lat}, ${lon}]).addTo(m).bindPopup(${JSON.stringify(name)});
 </script></body></html>`;
 

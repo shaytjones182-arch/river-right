@@ -130,13 +130,20 @@ const buildMapHtml = () => `<!DOCTYPE html>
   // Lower 48 bounds — fits the map regardless of screen aspect
   var LOWER_48_BOUNDS = L.latLngBounds([24.5, -125], [49.5, -66]);
 
-  var map = L.map('m', { zoomControl:false, attributionControl:false, minZoom:3, maxZoom:15 });
+  var map = L.map('m', { zoomControl:false, attributionControl:false, minZoom:3, maxZoom:16 });
   map.fitBounds(LOWER_48_BOUNDS, { animate: false, padding: [10, 10] });
 
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png',
-    { subdomains:'abcd', maxZoom:19 }).addTo(map);
-  L.tileLayer('https://basemap.nationalmap.gov/arcgis/rest/services/USGSHydroCached/MapServer/tile/{z}/{y}/{x}',
-    { maxZoom:16, opacity:0.85 }).addTo(map);
+  // USGS Topo basemap — free, public-domain, hydrography baked in.
+  // Falls back to OpenStreetMap if USGS tiles fail to load.
+  var usgsTopo = L.tileLayer(
+    'https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/{z}/{y}/{x}',
+    { maxZoom: 16 }
+  );
+  var osmFallback = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 16 });
+  usgsTopo.on('tileerror', function(){
+    if (!map.hasLayer(osmFallback)) osmFallback.addTo(map);
+  });
+  usgsTopo.addTo(map);
   L.control.zoom({ position:'topright' }).addTo(map);
 
   var overviewLayer = L.layerGroup().addTo(map);
