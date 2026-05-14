@@ -133,16 +133,14 @@ const buildMapHtml = () => `<!DOCTYPE html>
   var map = L.map('m', { zoomControl:false, attributionControl:false, minZoom:3, maxZoom:16 });
   map.fitBounds(LOWER_48_BOUNDS, { animate: false, padding: [10, 10] });
 
-  // USGS Topo basemap — free, public-domain, hydrography baked in.
-  // Falls back to OpenStreetMap if USGS tiles fail to load.
+  // USGS Topo basemap — free, U.S. public-domain, hydrography baked in.
+  // No fallback tile provider: OSM's tile servers explicitly disallow app use,
+  // and we don't want a paid dependency. If USGS Topo ever fails, the user
+  // sees grey tiles; map data (polyline + POIs) still renders on top.
   var usgsTopo = L.tileLayer(
     'https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/{z}/{y}/{x}',
     { maxZoom: 16 }
   );
-  var osmFallback = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 16 });
-  usgsTopo.on('tileerror', function(){
-    if (!map.hasLayer(osmFallback)) osmFallback.addTo(map);
-  });
   usgsTopo.addTo(map);
   L.control.zoom({ position:'topright' }).addTo(map);
 

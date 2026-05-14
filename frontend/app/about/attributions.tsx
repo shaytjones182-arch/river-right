@@ -40,7 +40,7 @@ const DATA_SOURCES: Credit[] = [
   {
     title: "OpenStreetMap contributors",
     blurb:
-      "OpenStreetMap data is used as a fallback basemap and as a source for live points of interest (rapids, campgrounds, boat ramps, hazards) queried via the Overpass API. © OpenStreetMap contributors.",
+      "We use OpenStreetMap data — not OSM map tiles — as a source for points of interest (rapids, campgrounds, boat ramps, hazards) queried via the Overpass API. POI data only; map tiles come exclusively from USGS. © OpenStreetMap contributors.",
     license: "Open Database License (ODbL) 1.0",
     url: "https://www.openstreetmap.org/copyright",
     required: true,

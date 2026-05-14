@@ -121,14 +121,11 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
 (function(){
   var SVG = ${JSON.stringify(SVG_TRACK)};
   var map = L.map('m', { zoomControl:false, attributionControl:false, maxZoom:16 }).setView([${lat}, ${lon}], 14);
+  // USGS Topo basemap only — OSM tile servers disallow app use.
   var usgsTopo = L.tileLayer(
     'https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/{z}/{y}/{x}',
     { maxZoom: 16 }
   );
-  var osmFallback = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 16 });
-  usgsTopo.on('tileerror', function(){
-    if (!map.hasLayer(osmFallback)) osmFallback.addTo(map);
-  });
   usgsTopo.addTo(map);
   L.control.zoom({ position:'topright' }).addTo(map);
 
