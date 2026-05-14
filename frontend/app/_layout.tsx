@@ -3,8 +3,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import TermsAcceptanceModal from "../src/TermsAcceptanceModal";
+import { useTermsAcceptance } from "../src/useTermsAcceptance";
 
 export default function RootLayout() {
+  const { status, accept } = useTermsAcceptance();
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
@@ -86,6 +90,10 @@ export default function RootLayout() {
             options={{ href: null }}
           />
         </Tabs>
+        <TermsAcceptanceModal
+          visible={status === "needs-acceptance"}
+          onAccept={accept}
+        />
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
