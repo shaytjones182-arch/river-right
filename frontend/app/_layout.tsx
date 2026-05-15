@@ -67,11 +67,7 @@ export default function RootLayout() {
             }}
           />
           <Tabs.Screen
-            name="trips/index"
-            options={{ href: null }}
-          />
-          <Tabs.Screen
-            name="trips/[id]"
+            name="trips"
             options={{ href: null }}
           />
           <Tabs.Screen
