@@ -12,7 +12,7 @@ import {
   Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useRouter, usePathname } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { COLORS } from "./theme";
 import { restorePurchasesLocally } from "./iap/useUnlocks";
@@ -24,11 +24,24 @@ type ProfileMenuProps = {
 export default function ProfileMenu({ testID }: ProfileMenuProps) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
   const insets = useSafeAreaInsets();
+
+  // Snapshot the tab the user is currently viewing so destinations opened
+  // from the profile menu (Past Trips, About, etc.) can route the user back
+  // to that same tab when they tap the back arrow — instead of always
+  // popping out to the Home tab.
+  const tabRoot = (() => {
+    if (pathname?.startsWith("/map")) return "/map";
+    if (pathname?.startsWith("/track")) return "/track";
+    return "/";
+  })();
 
   const go = (path: string) => {
     setOpen(false);
-    setTimeout(() => router.push(path as any), 60);
+    const sep = path.includes("?") ? "&" : "?";
+    const url = `${path}${sep}from=${encodeURIComponent(tabRoot)}`;
+    setTimeout(() => router.push(url as any), 60);
   };
 
   return (

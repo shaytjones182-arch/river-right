@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter, useFocusEffect } from "expo-router";
+import { useRouter, useFocusEffect, useLocalSearchParams } from "expo-router";
 import {
   getAllTrips,
   deleteTrip,
@@ -24,8 +24,19 @@ import { COLORS } from "../../src/theme";
 
 export default function PastTrips() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ from?: string }>();
   const [trips, setTrips] = useState<SavedTrip[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Return to whichever tab the user opened Past Trips from. With bottom
+  // tabs, router.back() always pops to the default tab (Home), which feels
+  // wrong if they came from Map or Trip Tracker. The originating route is
+  // passed in as a ?from=… query param by ProfileMenu.
+  const handleBack = () => {
+    const raw = (typeof params.from === "string" && params.from) || "/";
+    const target = ["/", "/map", "/track"].includes(raw) ? raw : "/";
+    router.replace(target as any);
+  };
 
   const load = useCallback(async () => {
     const all = await getAllTrips();
@@ -72,7 +83,7 @@ export default function PastTrips() {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backBtn}
-          onPress={() => router.back()}
+          onPress={handleBack}
           activeOpacity={0.7}
           testID="trips-back"
           hitSlop={10}
