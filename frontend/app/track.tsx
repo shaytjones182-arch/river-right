@@ -11,6 +11,8 @@ import {
   TextInput,
   Keyboard,
   KeyboardAvoidingView,
+  Animated,
+  PanResponder,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -634,6 +636,72 @@ export default function Track() {
     return rivers.filter((r) => r.name.toLowerCase().includes(q));
   }, [rivers, pickerQuery]);
 
+  // ─── Swipe-up stats sheet ────────────────────────────────────────────────
+  // The bottom panel toggles between PEEK (just the action buttons) and
+  // FULL (all 6 metric tiles + buttons + hints). It auto-collapses when the
+  // user starts tracking so the map dominates the screen, and auto-expands
+  // when they pause / end / haven't started yet.
+  const PEEK_H = 132;
+  const FULL_H = 408;
+  const sheetAnim = useRef(new Animated.Value(1)).current; // 1 = full, 0 = peek
+  const sheetValueRef = useRef(1);
+  useEffect(() => {
+    const id = sheetAnim.addListener(({ value }) => {
+      sheetValueRef.current = value;
+    });
+    return () => sheetAnim.removeListener(id);
+  }, [sheetAnim]);
+
+  const animateSheetTo = useCallback(
+    (toValue: number) => {
+      Animated.timing(sheetAnim, {
+        toValue,
+        duration: 280,
+        useNativeDriver: false,
+      }).start();
+    },
+    [sheetAnim]
+  );
+
+  // Auto-collapse on tracking, auto-expand on idle/paused.
+  useEffect(() => {
+    animateSheetTo(tripState === "tracking" ? 0 : 1);
+  }, [tripState, animateSheetTo]);
+
+  // Drag-to-toggle gesture on the handle bar (swipe up = expand, down = collapse).
+  const sheetPanResp = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => true,
+        onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dy) > 4,
+        onPanResponderMove: (_, g) => {
+          const range = FULL_H - PEEK_H;
+          const next = Math.max(
+            0,
+            Math.min(1, sheetValueRef.current - g.dy / range)
+          );
+          sheetAnim.setValue(next);
+        },
+        onPanResponderRelease: (_, g) => {
+          const v = sheetValueRef.current;
+          // Snap based on velocity first, then on position.
+          if (g.vy < -0.4) animateSheetTo(1);
+          else if (g.vy > 0.4) animateSheetTo(0);
+          else animateSheetTo(v > 0.5 ? 1 : 0);
+        },
+      }),
+    [sheetAnim, animateSheetTo]
+  );
+
+  const sheetHeight = sheetAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [PEEK_H, FULL_H],
+  });
+  const statsOpacity = sheetAnim.interpolate({
+    inputRange: [0, 0.55, 1],
+    outputRange: [0, 0, 1],
+  });
+
   return (
     <SafeAreaView style={styles.safe} edges={["top"]} testID="track-screen">
       <View style={styles.headerBar}>
@@ -683,90 +751,111 @@ export default function Track() {
         )}
       </View>
 
-      <View style={styles.panel}>
-        <View style={styles.metricsRow}>
-          <Metric testID="track-metric-speed" label="SPEED" value={speedMph.toFixed(1)} unit="MPH" />
-          <Metric testID="track-metric-distance" label="DIST" value={distMiles.toFixed(2)} unit="MI" />
-        </View>
-        <View style={styles.metricsRow}>
-          <Metric testID="track-metric-avg" label="AVG" value={liveAvgMph.toFixed(1)} unit="MPH" small />
-          <Metric testID="track-metric-max" label="MAX" value={maxMph.toFixed(1)} unit="MPH" small />
-        </View>
-        <View style={styles.metricsRow}>
-          <Metric testID="track-metric-moving" label="MOVING" value={fmtTime(movingSec)} unit="" small />
-          <Metric testID="track-metric-time" label="TIME" value={fmtTime(totalSec)} unit="" small />
+      <Animated.View
+        style={[styles.panel, { height: sheetHeight }]}
+        testID="track-stats-sheet"
+      >
+        {/* Drag handle — tap or swipe to toggle */}
+        <View
+          style={styles.dragHandleHit}
+          {...sheetPanResp.panHandlers}
+          testID="track-sheet-handle"
+        >
+          <View style={styles.dragHandleBar} />
         </View>
 
-        {tripState === "idle" && (
-          <TouchableOpacity
-            testID="track-start-btn"
-            style={[styles.bigBtn, { backgroundColor: COLORS.primary }]}
-            onPress={handleStartTrip}
-            activeOpacity={0.85}
-          >
-            <Ionicons name="play" size={22} color="#fff" />
-            <Text style={styles.bigBtnText}>
-              {loggedDays.length > 0 ? `START DAY ${loggedDays.length + 1}` : "START TRIP"}
-            </Text>
-          </TouchableOpacity>
-        )}
-
-        {tripState === "tracking" && (
-          <TouchableOpacity
-            testID="track-pause-btn"
-            style={[styles.bigBtn, { backgroundColor: COLORS.warning }]}
-            onPress={handlePause}
-            activeOpacity={0.85}
-          >
-            <Ionicons name="pause" size={22} color="#fff" />
-            <Text style={styles.bigBtnText}>PAUSE TRIP</Text>
-          </TouchableOpacity>
-        )}
-
-        {tripState === "paused" && (
-          <View style={styles.threeBtnRow}>
-            <TouchableOpacity
-              testID="track-resume-btn"
-              style={[styles.thirdBtn, { backgroundColor: COLORS.primary }]}
-              onPress={handleResume}
-              activeOpacity={0.85}
-            >
-              <Ionicons name="play" size={18} color="#fff" />
-              <Text style={styles.thirdBtnText}>RESUME</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              testID="track-log-day-btn"
-              style={[styles.thirdBtn, { backgroundColor: COLORS.safe }]}
-              onPress={handleLogDay}
-              activeOpacity={0.85}
-            >
-              <Ionicons name="bookmark" size={18} color="#fff" />
-              <Text style={styles.thirdBtnText}>LOG DAY {loggedDays.length + 1}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              testID="track-end-btn"
-              style={[styles.thirdBtn, { backgroundColor: COLORS.danger }]}
-              onPress={handleEndTrip}
-              activeOpacity={0.85}
-            >
-              <Ionicons name="stop" size={18} color="#fff" />
-              <Text style={styles.thirdBtnText}>END TRIP</Text>
-            </TouchableOpacity>
+        {/* Stats grid — fades out as the sheet collapses */}
+        <Animated.View
+          style={[styles.statsGrid, { opacity: statsOpacity }]}
+          pointerEvents="box-none"
+        >
+          <View style={styles.metricsRow}>
+            <Metric testID="track-metric-speed" label="SPEED" value={speedMph.toFixed(1)} unit="MPH" />
+            <Metric testID="track-metric-distance" label="DIST" value={distMiles.toFixed(2)} unit="MI" />
           </View>
-        )}
+          <View style={styles.metricsRow}>
+            <Metric testID="track-metric-avg" label="AVG" value={liveAvgMph.toFixed(1)} unit="MPH" small />
+            <Metric testID="track-metric-max" label="MAX" value={maxMph.toFixed(1)} unit="MPH" small />
+          </View>
+          <View style={styles.metricsRow}>
+            <Metric testID="track-metric-moving" label="MOVING" value={fmtTime(movingSec)} unit="" small />
+            <Metric testID="track-metric-time" label="TIME" value={fmtTime(totalSec)} unit="" small />
+          </View>
+        </Animated.View>
 
-        {loggedDays.length > 0 && tripState === "idle" && (
-          <Text style={styles.loggedDaysHint}>
-            {loggedDays.length} day{loggedDays.length === 1 ? "" : "s"} logged on this trip
-          </Text>
-        )}
+        {/* Action buttons — always visible (even when peeked) */}
+        <View style={styles.actionArea}>
+          {tripState === "idle" && (
+            <TouchableOpacity
+              testID="track-start-btn"
+              style={[styles.bigBtn, { backgroundColor: COLORS.primary }]}
+              onPress={handleStartTrip}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="play" size={22} color="#fff" />
+              <Text style={styles.bigBtnText}>
+                {loggedDays.length > 0 ? `START DAY ${loggedDays.length + 1}` : "START TRIP"}
+              </Text>
+            </TouchableOpacity>
+          )}
 
-        {permGranted === false && (
-          <Text style={styles.permWarn} testID="track-permission-warning">
-            Location permission denied. Showing demo location only.
-          </Text>
-        )}
-      </View>
+          {tripState === "tracking" && (
+            <TouchableOpacity
+              testID="track-pause-btn"
+              style={[styles.bigBtn, { backgroundColor: COLORS.warning }]}
+              onPress={handlePause}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="pause" size={22} color="#fff" />
+              <Text style={styles.bigBtnText}>PAUSE TRIP</Text>
+            </TouchableOpacity>
+          )}
+
+          {tripState === "paused" && (
+            <View style={styles.threeBtnRow}>
+              <TouchableOpacity
+                testID="track-resume-btn"
+                style={[styles.thirdBtn, { backgroundColor: COLORS.primary }]}
+                onPress={handleResume}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="play" size={18} color="#fff" />
+                <Text style={styles.thirdBtnText}>RESUME</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                testID="track-log-day-btn"
+                style={[styles.thirdBtn, { backgroundColor: COLORS.safe }]}
+                onPress={handleLogDay}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="bookmark" size={18} color="#fff" />
+                <Text style={styles.thirdBtnText}>LOG DAY {loggedDays.length + 1}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                testID="track-end-btn"
+                style={[styles.thirdBtn, { backgroundColor: COLORS.danger }]}
+                onPress={handleEndTrip}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="stop" size={18} color="#fff" />
+                <Text style={styles.thirdBtnText}>END TRIP</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {loggedDays.length > 0 && tripState === "idle" && (
+            <Text style={styles.loggedDaysHint}>
+              {loggedDays.length} day{loggedDays.length === 1 ? "" : "s"} logged on this trip
+            </Text>
+          )}
+
+          {permGranted === false && (
+            <Text style={styles.permWarn} testID="track-permission-warning">
+              Location permission denied. Showing demo location only.
+            </Text>
+          )}
+        </View>
+      </Animated.View>
 
       <Modal
         visible={pickerOpen}
@@ -1017,10 +1106,37 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     marginTop: 12,
-    padding: 16,
-    paddingTop: 18,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    overflow: "hidden",
     borderWidth: 1,
     borderColor: COLORS.border,
+    // Anchor children to the BOTTOM so when the sheet height shrinks the
+    // metrics get pushed up and clipped — buttons remain visible.
+    justifyContent: "flex-end",
+  },
+  dragHandleHit: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 10,
+    paddingTop: 6,
+  },
+  dragHandleBar: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: COLORS.border,
+  },
+  statsGrid: {
+    marginBottom: 8,
+  },
+  actionArea: {
+    paddingTop: 4,
   },
   metricsRow: { flexDirection: "row", gap: 10, marginBottom: 10 },
   metric: {
