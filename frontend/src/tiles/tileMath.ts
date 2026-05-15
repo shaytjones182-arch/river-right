@@ -118,11 +118,143 @@ export function planTiles(
   };
 }
 
+/** Width of a single 256×256 tile at the given latitude/zoom, in meters.
+ *  Used to convert a buffer-in-meters into a buffer-in-tiles. NB: the
+ *  Web-Mercator constant 156543.03 is meters-per-PIXEL at z=0 — so we
+ *  multiply by 256 here to get the per-tile width. */
+export function tileWidthMeters(lat: number, zoom: number): number {
+  return (
+    ((156543.03 * Math.cos((lat * Math.PI) / 180)) / Math.pow(2, zoom)) * 256
+  );
+}
+
+const METERS_PER_MILE = 1609.344;
+
+/** Returns all tile keys (as "z/x/y" strings) at `zoom` that are within
+ *  `bufferMeters` of any vertex on the polyline. Implementation: for each
+ *  vertex, compute its containing tile + a square radius derived from the
+ *  buffer-in-meters / tile-width-in-meters, and union the result. The
+ *  polyline is densely sampled on our curated runs (~1000+ vertices for
+ *  Desolation), so this approximation produces a tight thick polyline buffer
+ *  with no per-segment math needed. */
+export function tilesAroundPolyline(
+  coords: number[][],
+  zoom: number,
+  bufferMeters: number
+): Set<string> {
+  const out = new Set<string>();
+  if (!coords || coords.length === 0) return out;
+  for (const c of coords) {
+    if (!Array.isArray(c) || c.length < 2) continue;
+    const lon = c[0];
+    const lat = c[1];
+    if (typeof lat !== "number" || typeof lon !== "number") continue;
+    const tx = lonToTileX(lon, zoom);
+    const ty = latToTileY(lat, zoom);
+    const tw = tileWidthMeters(lat, zoom);
+    // Round up so even a zero-buffer call still includes the tile the
+    // vertex is in; clamp to a sensible upper bound to avoid blowing up
+    // memory if someone passes a huge buffer at a low zoom.
+    const r = Math.max(1, Math.min(64, Math.ceil(bufferMeters / tw)));
+    for (let dx = -r; dx <= r; dx++) {
+      for (let dy = -r; dy <= r; dy++) {
+        const x = tx + dx;
+        const y = ty + dy;
+        if (x < 0 || y < 0) continue;
+        out.add(`${zoom}/${x}/${y}`);
+      }
+    }
+  }
+  return out;
+}
+
+/** One tier of the tiered offline plan: either a "wide" full-bbox zoom range
+ *  (used for context/overview zooms 10–13) or a focused per-zoom polyline
+ *  buffer (used at higher zooms 14–16). */
+export type ZoomTier =
+  | { kind: "bbox"; zoomMin: number; zoomMax: number }
+  | { kind: "buffer"; zoom: number; bufferMi: number };
+
+/** The default tiered plan used by "Download offline map":
+ *    z=10–13 → entire bbox (overview / context)
+ *    z=14    → 5 mi each side of polyline
+ *    z=15    → 2 mi each side of polyline
+ *    z=16    → 0.5 mi each side of polyline (just the immediate river)
+ *  Picked so the on-river view at full zoom covers the entire phone screen
+ *  even on the widest devices, while keeping the download to ~70 MB. */
+export const DEFAULT_OFFLINE_TIERS: ZoomTier[] = [
+  { kind: "bbox", zoomMin: 10, zoomMax: 13 },
+  { kind: "buffer", zoom: 14, bufferMi: 5.0 },
+  { kind: "buffer", zoom: 15, bufferMi: 2.0 },
+  { kind: "buffer", zoom: 16, bufferMi: 0.5 },
+];
+
+/** Builds a TilePlan from a polyline + its bbox using a tiered config. */
+export function planTilesTiered(
+  coords: number[][],
+  bbox: Bbox,
+  tiers: ZoomTier[] = DEFAULT_OFFLINE_TIERS
+): TilePlan {
+  const seen = new Set<string>();
+  const tiles: TileKey[] = [];
+  const perZoom: TilePlan["perZoom"] = {};
+
+  const add = (z: number, x: number, y: number) => {
+    const k = `${z}/${x}/${y}`;
+    if (seen.has(k)) return;
+    seen.add(k);
+    tiles.push({ z, x, y });
+    let pz = perZoom[z];
+    if (!pz) {
+      pz = { xMin: x, xMax: x, yMin: y, yMax: y, count: 0 };
+      perZoom[z] = pz;
+    }
+    if (x < pz.xMin) pz.xMin = x;
+    if (x > pz.xMax) pz.xMax = x;
+    if (y < pz.yMin) pz.yMin = y;
+    if (y > pz.yMax) pz.yMax = y;
+    pz.count += 1;
+  };
+
+  for (const t of tiers) {
+    if (t.kind === "bbox") {
+      for (let z = t.zoomMin; z <= t.zoomMax; z++) {
+        const xMin = lonToTileX(bbox.swLon, z);
+        const xMax = lonToTileX(bbox.neLon, z);
+        const yMin = latToTileY(bbox.neLat, z);
+        const yMax = latToTileY(bbox.swLat, z);
+        for (let x = xMin; x <= xMax; x++) {
+          for (let y = yMin; y <= yMax; y++) {
+            add(z, x, y);
+          }
+        }
+      }
+    } else {
+      const set = tilesAroundPolyline(
+        coords,
+        t.zoom,
+        t.bufferMi * METERS_PER_MILE
+      );
+      for (const k of set) {
+        const [zs, xs, ys] = k.split("/");
+        add(+zs, +xs, +ys);
+      }
+    }
+  }
+
+  return {
+    count: tiles.length,
+    perZoom,
+    estimatedMB: (tiles.length * 25) / 1024,
+    tiles,
+  };
+}
+
 /** Default zoom range used by the app's "Download offline map" button.
  *  z=10 = wide overview (river fits comfortably on screen)
- *  z=14 = close enough to read individual rapids and side canyons */
+ *  z=16 = close enough to read individual eddies & rapid features */
 export const DEFAULT_OFFLINE_ZOOM_MIN = 10;
-export const DEFAULT_OFFLINE_ZOOM_MAX = 14;
+export const DEFAULT_OFFLINE_ZOOM_MAX = 16;
 
 /** Tile-key string used everywhere as the canonical identifier. */
 export function tileKeyString(z: number, x: number, y: number): string {

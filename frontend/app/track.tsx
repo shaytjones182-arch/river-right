@@ -152,16 +152,34 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
 (function(){
   var SVG = ${JSON.stringify(SVG_TRACK)};
   var map = L.map('m', { zoomControl:false, attributionControl:false, maxZoom:16 }).setView([${lat}, ${lon}], 14);
+
+  // 1x1 transparent PNG used when the user pans/zooms outside the
+  // downloaded offline coverage. The Leaflet img loads cleanly (no tileerror
+  // fired) and we instead surface a debounced banner explaining what
+  // happened. Without this, missing tiles render as Leaflet's default
+  // "broken image" placeholder.
+  var BLANK_TILE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNgAAIAAAUAAeImBZsAAAAASUVORK5CYII=';
+
   // USGS Topo basemap with optional offline-tile fallback.
   var OFFLINE_TILES = ${offlineTiles ? JSON.stringify(offlineTiles.tileToUrl) : "null"};
+  var HAVE_OFFLINE = OFFLINE_TILES && Object.keys(OFFLINE_TILES).length > 0;
   var usgsTopo;
-  if (OFFLINE_TILES) {
+  if (HAVE_OFFLINE) {
     var OfflineFirstLayer = L.TileLayer.extend({
       getTileUrl: function(coords) {
         var key = coords.z + "/" + coords.x + "/" + coords.y;
         if (OFFLINE_TILES[key]) return OFFLINE_TILES[key];
-        return 'https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/'
-          + coords.z + "/" + coords.y + "/" + coords.x;
+        // Not in the offline pack. If the device looks online, fall through
+        // to USGS so the user still sees current tiles when they have
+        // service. If we're offline, paint a transparent placeholder and
+        // raise the "outside coverage" banner.
+        var online = (typeof navigator === 'undefined') || (navigator.onLine !== false);
+        if (online) {
+          return 'https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/'
+            + coords.z + "/" + coords.y + "/" + coords.x;
+        }
+        showOutsideCoverageBanner();
+        return BLANK_TILE;
       }
     });
     usgsTopo = new OfflineFirstLayer('', { maxZoom: 16 });
@@ -173,12 +191,29 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
   }
   usgsTopo.addTo(map);
 
-  // Show banner if USGS tiles repeatedly fail; auto-hide when they recover.
+  // Two banners share the same DOM element. Generic offline banner is shown
+  // when the network fails; the "outside coverage" banner is shown when the
+  // user has offline tiles but has zoomed/panned outside what was saved.
   var __tileErrCount = 0;
   var __tileBanner = document.getElementById('tile-banner');
+  var __outsideShownAt = 0;
+  function showOutsideCoverageBanner() {
+    if (!__tileBanner) return;
+    var now = Date.now();
+    if (now - __outsideShownAt < 6000) return; // 6s cooldown
+    __outsideShownAt = now;
+    var span = __tileBanner.querySelector('span');
+    if (span) span.textContent = "Downloaded offline data doesn't cover this level of detail for this area. Pan toward the river or zoom out.";
+    __tileBanner.classList.add('show');
+    setTimeout(function(){ __tileBanner.classList.remove('show'); }, 4500);
+  }
   usgsTopo.on('tileerror', function(){
     __tileErrCount++;
-    if (__tileErrCount >= 3 && __tileBanner) __tileBanner.classList.add('show');
+    if (__tileErrCount >= 3 && __tileBanner) {
+      var span = __tileBanner.querySelector('span');
+      if (span) span.textContent = 'Map tiles unavailable — check your connection.';
+      __tileBanner.classList.add('show');
+    }
   });
   usgsTopo.on('tileload', function(){
     if (__tileErrCount > 0) {

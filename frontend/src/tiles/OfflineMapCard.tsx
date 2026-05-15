@@ -11,7 +11,7 @@ import { fetchPolylineWithCache, saveRiverOfflineBundle, deleteRiverOfflineBundl
 import {
   bboxFromPolyline,
   padBbox,
-  planTiles,
+  planTilesTiered,
   DEFAULT_OFFLINE_ZOOM_MIN,
   DEFAULT_OFFLINE_ZOOM_MAX,
   TilePlan,
@@ -55,11 +55,10 @@ export default function OfflineMapCard({ riverId }: Props) {
       const bb = bboxFromPolyline(coords);
       if (!bb) return;
       const padded = padBbox(bb, 0.06);
-      const p = planTiles(
-        padded,
-        DEFAULT_OFFLINE_ZOOM_MIN,
-        DEFAULT_OFFLINE_ZOOM_MAX
-      );
+      // Tiered plan: full bbox at z=10–13, then 5 mi / 2 mi / 0.5 mi
+      // polyline-buffered tiles at z=14 / 15 / 16. See DEFAULT_OFFLINE_TIERS
+      // in ./tileMath for the exact buffer config.
+      const p = planTilesTiered(coords, padded);
       if (!cancelled) setPlan(p);
     })();
     return () => {
