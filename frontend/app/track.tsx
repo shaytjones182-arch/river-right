@@ -106,9 +106,9 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
 .pin svg{width:14px;height:14px;}
 .pin.start{background:#2A9D8F;}
 .pin.finish{background:#0A1128;}
-.pin.rapid-mild{background:#457B9D;}
+.pin.rapid-mild{background:#F4A261;}
 .pin.rapid-mod{background:#F4A261;}
-.pin.rapid-hard{background:#D62828;}
+.pin.rapid-hard{background:#F4A261;}
 .pin.portage{background:#F4A261;}
 .pin.play{background:#2A9D8F;}
 .pin.camp{background:#8B5E34;}

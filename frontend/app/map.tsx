@@ -106,9 +106,9 @@ const buildMapHtml = (
   .pin svg{width:14px;height:14px;}
   .pin.start{background:#2A9D8F;}
   .pin.finish{background:#0A1128;}
-  .pin.rapid-mild{background:#457B9D;}
+  .pin.rapid-mild{background:#F4A261;}
   .pin.rapid-mod{background:#F4A261;}
-  .pin.rapid-hard{background:#D62828;}
+  .pin.rapid-hard{background:#F4A261;}
   .pin.hazard{background:#D62828;}
   .pin.portage{background:#F4A261;}
   .pin.play{background:#2A9D8F;}
@@ -770,13 +770,7 @@ export default function MapScreen() {
             <Text style={styles.legendTitle}>ON THIS RUN</Text>
             <LegendIcon
               kind="rapid"
-              rapidColor={
-                /V|IV/.test((selectedRiver.class_rating || "").toUpperCase())
-                  ? COLORS.danger
-                  : /III/.test((selectedRiver.class_rating || "").toUpperCase())
-                  ? COLORS.warning
-                  : COLORS.info
-              }
+              rapidColor={COLORS.warning}
               label="Rapid"
             />
             <LegendIcon kind="hazard" label="Hazard / falls" />

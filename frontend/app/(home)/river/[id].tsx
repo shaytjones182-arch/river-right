@@ -313,7 +313,7 @@ export default function RiverDetail() {
                       ? COLORS.safe
                       : p.kind === "note"
                       ? COLORS.textMuted
-                      : COLORS.primary;
+                      : COLORS.warning; // rapids (and anything else) — unified yellow
                   return (
                     <View key={`${p.lat}-${p.lon}-${i}`} style={styles.hazard}>
                       <Ionicons
