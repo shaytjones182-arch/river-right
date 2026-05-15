@@ -222,31 +222,18 @@ export default function OfflineMapCard({ riverId }: Props) {
     );
   }
 
-  // ── Nothing yet — show the download CTA ──
+  // ── Nothing yet — show just the download button (no surrounding card) ──
   return (
-    <View style={styles.card}>
-      <View style={styles.row}>
-        <Ionicons name="cloud-download-outline" size={18} color={COLORS.primary} />
-        <Text style={styles.title}>Download for offline use</Text>
-      </View>
-      <Text style={styles.subtitle}>
-        Save USGS Topo map tiles to your phone so the river map works without
-        cell service.
-        {plan
-          ? `\n\n~${plan.count.toLocaleString()} tiles · ~${plan.estimatedMB.toFixed(0)} MB`
-          : "\n\nCalculating size…"}
-      </Text>
-      <TouchableOpacity
-        testID="offline-tiles-download"
-        style={[styles.btn, styles.btnPrimary, !plan && styles.btnDisabled]}
-        onPress={handleStart}
-        disabled={!plan}
-        activeOpacity={0.85}
-      >
-        <Ionicons name="cloud-download" size={14} color="#fff" />
-        <Text style={styles.btnPrimaryText}>Download offline map</Text>
-      </TouchableOpacity>
-    </View>
+    <TouchableOpacity
+      testID="offline-tiles-download"
+      style={[styles.bareBtn, styles.btnPrimary, !plan && styles.btnDisabled]}
+      onPress={handleStart}
+      disabled={!plan}
+      activeOpacity={0.85}
+    >
+      <Ionicons name="cloud-download" size={14} color="#fff" />
+      <Text style={styles.btnPrimaryText}>Download offline map</Text>
+    </TouchableOpacity>
   );
 }
 
@@ -302,6 +289,18 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     gap: 6,
     flex: 1,
+  },
+  // Same shape as `btn` but standalone (no flex:1) and with a top margin so
+  // it sits cleanly under the surrounding content when rendered without a
+  // wrapping card.
+  bareBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 13,
+    borderRadius: 10,
+    gap: 6,
+    marginTop: 12,
   },
   btnPrimary: { backgroundColor: COLORS.primary },
   btnPrimaryText: {
