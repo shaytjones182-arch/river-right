@@ -16,9 +16,9 @@ import {
   fetchRiverWithCache,
   fetchPoisWithCache,
   prefetchRiverBundle,
-  hasOfflineBundle,
 } from "../../../src/offlineCache";
 import OfflineMapCard from "../../../src/tiles/OfflineMapCard";
+import { getTileManifest } from "../../../src/tiles/tileDownloader";
 
 type RiverDetail = {
   river: {
@@ -74,21 +74,25 @@ export default function RiverDetail() {
   const [osmError, setOsmError] = useState(false);
   const [offlineReady, setOfflineReady] = useState(false);
 
-  // Poll cache state — when the prefetch finishes the badge flips on.
+  // The "Saved offline" badge is gated on the EXPLICIT tile-download
+  // manifest — i.e. the user actually tapped "Download offline map" and the
+  // USGS Topo tiles are now on disk. Previously this was tied to the
+  // auto-cached river meta + polyline, which is populated silently the
+  // moment you open a river online, making the badge appear by default.
   useEffect(() => {
     let cancelled = false;
     let interval: any = null;
     const check = async () => {
-      const ok = await hasOfflineBundle(id as string);
-      if (!cancelled) setOfflineReady(ok);
+      const m = await getTileManifest(id as string);
+      if (!cancelled) setOfflineReady(!!m && m.tileKeys.length > 0);
     };
     check();
-    // Re-check a couple of times after mount in case the prefetch is still
-    // in flight; once true we can stop polling.
+    // Re-poll briefly after mount so the badge flips on as soon as a
+    // download in progress completes.
     interval = setInterval(async () => {
       if (cancelled) return;
-      const ok = await hasOfflineBundle(id as string);
-      if (!cancelled && ok) {
+      const m = await getTileManifest(id as string);
+      if (!cancelled && m && m.tileKeys.length > 0) {
         setOfflineReady(true);
         clearInterval(interval);
       }
@@ -228,8 +232,8 @@ export default function RiverDetail() {
             <View style={styles.offlineBadge} testID="river-offline-badge">
               <Ionicons name="cloud-done" size={14} color={COLORS.safe} />
               <Text style={styles.offlineBadgeText}>
-                Saved offline — river map, rapids & POIs available without
-                cell service.
+                Offline map saved — USGS Topo tiles, rapids &amp; POIs work
+                without cell service.
               </Text>
             </View>
           )}
