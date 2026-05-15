@@ -200,6 +200,82 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
   var meMarker = L.marker([${lat}, ${lon}], { icon: meIcon, zIndexOffset: 2000 }).addTo(map);
   var poiLayer = L.layerGroup().addTo(map);
 
+  // ── Along-the-river distance helpers ────────────────────────────────────
+  // Build a cumulative-distance index of the polyline so we can:
+  //   1) project the user's GPS onto the line and find their "river mile"
+  //   2) project each POI onto the line for its own river-mile
+  //   3) report |user_cum - poi_cum| as the along-the-river distance.
+  // The projection uses a local equirectangular plane (accurate enough for
+  // a single river run; rivers run < ~100 mi long).
+  var polyXY = [];        // [{x, y}, ...] vertices in local meters
+  var polyCum = [];       // cumulative meters at each vertex (polyCum[0]=0)
+  var polyRefLat = null;  // reference latitude for the local plane
+  var currentUserLat = ${lat};
+  var currentUserLon = ${lon};
+  var DIST_GATE_M = 30.48;   // 100 ft — user must be this close to the line
+  var MI_PER_M = 1 / 1609.344;
+
+  function llToXYRef(lat, lon, refLat){
+    var R = 6378137;
+    var lat0 = refLat * Math.PI / 180;
+    return {
+      x: R * (lon * Math.PI / 180) * Math.cos(lat0),
+      y: R * (lat * Math.PI / 180)
+    };
+  }
+  function rebuildPolyIndex(coords){
+    if (!coords || coords.length < 2) {
+      polyXY = []; polyCum = []; polyRefLat = null;
+      return;
+    }
+    var sumLat = 0;
+    for (var i = 0; i < coords.length; i++) sumLat += coords[i][0];
+    polyRefLat = sumLat / coords.length;
+    polyXY = new Array(coords.length);
+    for (var i = 0; i < coords.length; i++){
+      polyXY[i] = llToXYRef(coords[i][0], coords[i][1], polyRefLat);
+    }
+    polyCum = new Array(polyXY.length);
+    polyCum[0] = 0;
+    for (var i = 1; i < polyXY.length; i++){
+      var dx = polyXY[i].x - polyXY[i-1].x;
+      var dy = polyXY[i].y - polyXY[i-1].y;
+      polyCum[i] = polyCum[i-1] + Math.sqrt(dx*dx + dy*dy);
+    }
+  }
+  // Returns { cum: meters from start to projection, dist: perpendicular m }
+  function projectOnPoly(lat, lon){
+    if (polyXY.length < 2 || polyRefLat === null) return null;
+    var pt = llToXYRef(lat, lon, polyRefLat);
+    var bestDist = Infinity, bestCum = 0;
+    for (var i = 1; i < polyXY.length; i++){
+      var a = polyXY[i-1], b = polyXY[i];
+      var dx = b.x - a.x, dy = b.y - a.y;
+      var segLen2 = dx*dx + dy*dy;
+      var t = segLen2 > 0 ? ((pt.x - a.x)*dx + (pt.y - a.y)*dy) / segLen2 : 0;
+      if (t < 0) t = 0; else if (t > 1) t = 1;
+      var px = a.x + t*dx, py = a.y + t*dy;
+      var ddx = pt.x - px, ddy = pt.y - py;
+      var d = Math.sqrt(ddx*ddx + ddy*ddy);
+      if (d < bestDist){
+        bestDist = d;
+        bestCum = polyCum[i-1] + t * Math.sqrt(segLen2);
+      }
+    }
+    return { cum: bestCum, dist: bestDist };
+  }
+  // Returns '' if no polyline OR user is farther than DIST_GATE_M from it.
+  // Otherwise returns a label like "0.34 mi along river".
+  function computePoiDistanceLabel(poiLat, poiLon){
+    if (polyXY.length < 2) return '';
+    var u = projectOnPoly(currentUserLat, currentUserLon);
+    if (!u || u.dist > DIST_GATE_M) return '';
+    var p = projectOnPoly(poiLat, poiLon);
+    if (!p) return '';
+    var miles = Math.abs(u.cum - p.cum) * MI_PER_M;
+    return miles.toFixed(2) + ' mi along river';
+  }
+
   function pin(cls, svg){
     return L.divIcon({
       className:'',
@@ -225,6 +301,8 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
   }
 
   window.updatePos = function(lat, lon, follow) {
+    currentUserLat = lat;
+    currentUserLon = lon;
     meMarker.setLatLng([lat, lon]);
     var ll = path.getLatLngs(); ll.push([lat, lon]); path.setLatLngs(ll);
     if (follow) map.panTo([lat, lon], { animate:true });
@@ -296,7 +374,27 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
         marker = L.marker([p.lat, p.lon], { icon: pin(cls, SVG.wave) })
           .bindPopup(popupHtml(name, classLabel ? 'Class ' + classLabel : ''));
       }
-      if (marker) marker.addTo(poiLayer);
+      if (marker) {
+        // Parse the original title/meta from the static popup HTML so we can
+        // re-render it with a live "X.XX mi along river" suffix every time
+        // the popup opens. Names from curated data never contain raw HTML.
+        // NOTE: regexes use doubled backslashes because this entire script
+        // lives inside a JS template literal, where \s / \S / \/ would
+        // otherwise have their backslashes stripped.
+        var __src = marker.getPopup() ? marker.getPopup().getContent() : '';
+        var __tm = __src.match(/<div class="pop-title">([\\s\\S]*?)<\\/div>/);
+        var __mm = __src.match(/<div class="pop-meta">([\\s\\S]*?)<\\/div>/);
+        marker.__baseTitle = __tm ? __tm[1] : '';
+        marker.__baseMeta = __mm ? __mm[1] : '';
+        marker.on('popupopen', function(){
+          var ll = this.getLatLng();
+          var extra = computePoiDistanceLabel(ll.lat, ll.lng);
+          var meta2 = this.__baseMeta || '';
+          if (extra) meta2 = meta2 ? (meta2 + ' · ' + extra) : extra;
+          this.setPopupContent(popupHtml(this.__baseTitle, meta2));
+        });
+        marker.addTo(poiLayer);
+      }
     });
 
     if (pts.length){
@@ -313,14 +411,37 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
     if (!coords || !coords.length) {
       runHalo.setLatLngs([]);
       runLine.setLatLngs([]);
+      rebuildPolyIndex([]);
       return;
     }
     runHalo.setLatLngs(coords);
     runLine.setLatLngs(coords);
+    rebuildPolyIndex(coords);
   };
   window.clearRunPolyline = function(){
     runHalo.setLatLngs([]);
     runLine.setLatLngs([]);
+    rebuildPolyIndex([]);
+  };
+
+  // Tiny debug hook so automated tests can verify the along-river distance
+  // logic without needing to reach into closure scope. Pure read-only.
+  window.__rrDebug = {
+    polyLen: function(){ return polyXY.length; },
+    user: function(){ return [currentUserLat, currentUserLon]; },
+    userProj: function(){ return projectOnPoly(currentUserLat, currentUserLon); },
+    distLabel: function(lat, lon){ return computePoiDistanceLabel(lat, lon); },
+    poiCount: function(){ return poiLayer.getLayers().length; },
+    openFirstPopup: function(idx){
+      var layers = poiLayer.getLayers().filter(function(l){ return l.getLatLng; });
+      var m = layers[idx || 0];
+      if (!m) return null;
+      m.openPopup();
+      return {
+        latlng: [m.getLatLng().lat, m.getLatLng().lng],
+        content: m.getPopup().getContent()
+      };
+    }
   };
 })();
 </script>

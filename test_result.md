@@ -210,7 +210,37 @@ test_plan:
   test_all: false
   test_priority: "high_first"
 
-  - task: "Curated GeoJSON ingestion + serving (Phase 1)"
+  - task: "POI tracker popups: along-the-river distance from user"
+    implemented: true
+    working: true
+    file: "frontend/app/track.tsx"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          When the user is within 100 ft (30.48 m) of the run polyline on the
+          Trip Tracker map, tapping any POI now appends "X.XX mi along river"
+          to the popup meta line (in addition to name + class). The distance is
+          computed as |cum(user_proj_on_poly) − cum(poi_proj_on_poly)| using a
+          cumulative-distance index over the polyline (local equirectangular
+          projection — accurate for a single river run). Always shown in miles
+          with 2 decimals; suppressed entirely when the user is farther than
+          100 ft from the polyline. Verified via Playwright with a Desolation
+          Canyon run: user snapped to a marker on the polyline (proj dist
+          0.21 m) → popups show 67.50 / 37.91 / 17.67 / 0.00 / 15.61 mi along
+          river — all geographically reasonable. User moved to Denver (419 km
+          off polyline) → popups revert to plain name + class. Implementation
+          lives inside the Leaflet WebView/iframe; debug surface
+          `window.__rrDebug` exposed for diagnostics.
+          NOTE: while implementing, fixed a pre-existing regex-escape pitfall —
+          JS template literals strip unrecognized escape sequences (`\\s`,
+          `\\S`, `\\/`), so any regex literals inside `buildHtml` MUST use
+          doubled backslashes.
+
+
     implemented: true
     working: true
     file: "backend/ingest_geojson.py, backend/server.py, data/runs/green-river-desolation/"
