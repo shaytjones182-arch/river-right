@@ -239,8 +239,6 @@ export default function RiverDetail() {
             </View>
           )}
 
-          <OfflineMapCard riverId={r.id} />
-
           <TouchableOpacity
             testID="river-view-on-map"
             style={styles.viewOnMapBtn}
@@ -250,6 +248,8 @@ export default function RiverDetail() {
             <Ionicons name="map" size={18} color="#fff" />
             <Text style={styles.viewOnMapBtnText}>View on Map</Text>
           </TouchableOpacity>
+
+          <OfflineMapCard riverId={r.id} />
 
           <Text style={styles.h3}>About this run</Text>
           <Text style={styles.body1}>{r.description}</Text>
