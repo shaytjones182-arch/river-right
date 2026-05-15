@@ -22,6 +22,7 @@ import MapView from "../src/MapView";
 import { COLORS, API } from "../src/theme";
 import ProfileMenu from "../src/ProfileMenu";
 import { getMergedOfflineManifest } from "../src/tiles/tileDownloader";
+import { fetchPoisWithCache } from "../src/offlineCache";
 import {
   rollupTrip,
   saveTrip,
@@ -411,8 +412,7 @@ export default function Track() {
     let cancelled = false;
     (async () => {
       try {
-        const r = await fetch(`${API}/rivers/${selectedRiver.id}/osm-poi`);
-        const j = await r.json();
+        const j = await fetchPoisWithCache(selectedRiver.id);
         if (cancelled) return;
         const pois: OsmPoi[] = j.pois || [];
         setPoiCount(pois.length);
