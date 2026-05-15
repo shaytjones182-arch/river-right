@@ -1,6 +1,5 @@
 // Reusable circular profile button + dropdown menu used in every tab header.
-// No auth yet — the menu surfaces local features (past trips, about) and a
-// "Plus account" placeholder for when we add subscriptions later.
+// Surfaces local features (past trips, restore purchases, about).
 
 import React, { useState } from "react";
 import {
@@ -10,11 +9,13 @@ import {
   TouchableOpacity,
   Modal,
   Pressable,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { COLORS } from "./theme";
+import { restorePurchasesLocally } from "./iap/useUnlocks";
 
 type ProfileMenuProps = {
   testID?: string;
@@ -65,20 +66,29 @@ export default function ProfileMenu({ testID }: ProfileMenuProps) {
               onPress={() => go("/trips")}
             />
             <MenuRow
-              testID="profile-menu-plus"
-              icon="star-outline"
-              label="Plus account"
-              hint="Coming soon"
-              onPress={() => {
+              testID="profile-menu-restore"
+              icon="refresh-outline"
+              label="Restore Purchases"
+              onPress={async () => {
                 setOpen(false);
-                setTimeout(
-                  () =>
+                // Small delay so the dropdown close animation finishes
+                // before the Alert pops.
+                setTimeout(async () => {
+                  try {
+                    const count = await restorePurchasesLocally();
                     Alert.alert(
-                      "Plus — Coming soon",
-                      "Plus members will get offline GPS and downloadable river runs. Stay tuned!"
-                    ),
-                  100
-                );
+                      "Restore Purchases",
+                      count > 0
+                        ? `Restored ${count} run${count === 1 ? "" : "s"}.`
+                        : "No previous purchases found on this device."
+                    );
+                  } catch (e: any) {
+                    Alert.alert(
+                      "Restore failed",
+                      e?.message || "Please try again."
+                    );
+                  }
+                }, 120);
               }}
             />
             <MenuRow

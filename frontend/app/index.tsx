@@ -18,6 +18,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import ProfileMenu from "../src/ProfileMenu";
 import { COLORS, API } from "../src/theme";
+import PaywallSheet from "../src/iap/PaywallSheet";
+import { useUnlocks } from "../src/iap/useUnlocks";
+import { productForRiver } from "../src/iap/products";
 
 type River = {
   id: string;
@@ -27,6 +30,8 @@ type River = {
   type: "whitewater" | "calm" | "mixed" | string;
   description: string;
   image: string;
+  /** Optional — set on backend river dicts to gate behind an IAP. */
+  locked?: boolean;
 };
 
 export default function Home() {
@@ -35,6 +40,8 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [query, setQuery] = useState("");
+  const { isUnlocked } = useUnlocks();
+  const [paywallRiver, setPaywallRiver] = useState<River | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -140,49 +147,80 @@ export default function Home() {
               </Text>
             </View>
           ) : (
-            visible.map((r) => (
-              <TouchableOpacity
-                key={r.id}
-                testID={`home-river-card-${r.id}`}
-                style={styles.riverCard}
-                onPress={() => router.push(`/river/${r.id}`)}
-                activeOpacity={0.9}
-              >
-                <Image source={{ uri: r.image }} style={styles.riverImg} />
-                <View style={styles.riverOverlay} />
-                <View style={styles.riverContent}>
-                  <View style={styles.riverBadgeRow}>
-                    <View
-                      style={[
-                        styles.classBadge,
-                        {
-                          backgroundColor:
-                            r.type === "whitewater"
-                              ? COLORS.danger
-                              : r.type === "calm"
-                              ? COLORS.safe
-                              : COLORS.warning,
-                        },
-                      ]}
-                    >
-                      <Text style={styles.classBadgeText}>
-                        CLASS {r.class_rating}
-                      </Text>
+            visible.map((r) => {
+              const locked = !!r.locked && !isUnlocked(r.id);
+              return (
+                <TouchableOpacity
+                  key={r.id}
+                  testID={`home-river-card-${r.id}`}
+                  style={styles.riverCard}
+                  onPress={() => {
+                    if (locked) {
+                      setPaywallRiver(r);
+                    } else {
+                      router.push(`/river/${r.id}`);
+                    }
+                  }}
+                  activeOpacity={0.9}
+                >
+                  <Image source={{ uri: r.image }} style={styles.riverImg} />
+                  <View style={styles.riverOverlay} />
+                  {locked ? (
+                    <View style={styles.lockBadgeRow}>
+                      <View style={styles.lockBadge}>
+                        <Ionicons name="lock-closed" size={11} color="#fff" />
+                        <Text style={styles.lockBadgeText}>
+                          {productForRiver(r.id).displayPrice}
+                        </Text>
+                      </View>
                     </View>
-                    <Text style={styles.riverState}>{r.state}</Text>
+                  ) : null}
+                  <View style={styles.riverContent}>
+                    <View style={styles.riverBadgeRow}>
+                      <View
+                        style={[
+                          styles.classBadge,
+                          {
+                            backgroundColor:
+                              r.type === "whitewater"
+                                ? COLORS.danger
+                                : r.type === "calm"
+                                ? COLORS.safe
+                                : COLORS.warning,
+                          },
+                        ]}
+                      >
+                        <Text style={styles.classBadgeText}>
+                          CLASS {r.class_rating}
+                        </Text>
+                      </View>
+                      <Text style={styles.riverState}>{r.state}</Text>
+                    </View>
+                    <Text style={styles.riverName}>{r.name}</Text>
+                    <Text style={styles.riverDesc} numberOfLines={2}>
+                      {r.description}
+                    </Text>
                   </View>
-                  <Text style={styles.riverName}>{r.name}</Text>
-                  <Text style={styles.riverDesc} numberOfLines={2}>
-                    {r.description}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            ))
+                </TouchableOpacity>
+              );
+            })
           )}
 
           <View style={{ height: 32 }} />
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <PaywallSheet
+        visible={paywallRiver !== null}
+        riverId={paywallRiver?.id ?? null}
+        riverName={paywallRiver?.name ?? null}
+        onClose={() => setPaywallRiver(null)}
+        onUnlocked={(rid) => {
+          setPaywallRiver(null);
+          // Tiny defer so the modal-close animation finishes first.
+          setTimeout(() => router.push(`/river/${rid}`), 220);
+        }}
+      />
     </SafeAreaView>
   );
 }
@@ -323,4 +361,27 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   emptySub: { fontSize: 13, color: COLORS.textMuted, textAlign: "center" },
+  lockBadgeRow: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+    zIndex: 5,
+  },
+  lockBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: "rgba(10,17,40,0.85)",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.15)",
+  },
+  lockBadgeText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "900",
+    letterSpacing: 0.3,
+  },
 });
