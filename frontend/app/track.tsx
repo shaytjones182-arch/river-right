@@ -916,12 +916,6 @@ export default function Track() {
         )}
       </View>
 
-      {selectedRiver && poiCount > 0 && (
-        <Text style={styles.runHint}>
-          {poiCount} POI{poiCount === 1 ? "" : "s"} loaded · tap any icon for details
-        </Text>
-      )}
-
       <View style={styles.mapWrap} testID="track-map">
         {html ? (
           <MapView webViewRef={webRef} iframeRef={iframeRef} html={html} style={styles.map} />
