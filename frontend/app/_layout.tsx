@@ -16,6 +16,11 @@ export default function RootLayout() {
         <Tabs
           screenOptions={{
             headerShown: false,
+            // Keep state when switching tabs. These match React Navigation's
+            // defaults but we set them explicitly so this never regresses.
+            unmountOnBlur: false,
+            freezeOnBlur: false,
+            lazy: true,
             tabBarActiveTintColor: "#0077B6",
             tabBarInactiveTintColor: "#5C6B73",
             tabBarStyle: {

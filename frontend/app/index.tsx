@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import {
   View,
   Text,
@@ -15,12 +15,13 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import ProfileMenu from "../src/ProfileMenu";
 import { COLORS, API } from "../src/theme";
 import PaywallSheet from "../src/iap/PaywallSheet";
 import { useUnlocks } from "../src/iap/useUnlocks";
 import { productForRiver } from "../src/iap/products";
+import { getHomeScrollY, setHomeScrollY } from "../src/tabState";
 
 type River = {
   id: string;
@@ -42,6 +43,23 @@ export default function Home() {
   const [query, setQuery] = useState("");
   const { isUnlocked } = useUnlocks();
   const [paywallRiver, setPaywallRiver] = useState<River | null>(null);
+  const scrollRef = useRef<ScrollView>(null);
+
+  // Restore scroll position whenever this tab regains focus. On native this
+  // is a no-op (ScrollView retains its own position), but on the web preview
+  // the component remounts so we restore manually.
+  useFocusEffect(
+    useCallback(() => {
+      const y = getHomeScrollY();
+      if (y > 0) {
+        // requestAnimationFrame so the ScrollView has laid out its children
+        const id = requestAnimationFrame(() => {
+          scrollRef.current?.scrollTo({ y, animated: false });
+        });
+        return () => cancelAnimationFrame(id);
+      }
+    }, [])
+  );
 
   const load = useCallback(async () => {
     try {
@@ -82,8 +100,11 @@ export default function Home() {
         style={{ flex: 1 }}
       >
         <ScrollView
+          ref={scrollRef}
           contentContainerStyle={styles.container}
           keyboardShouldPersistTaps="handled"
+          scrollEventThrottle={64}
+          onScroll={(e) => setHomeScrollY(e.nativeEvent.contentOffset.y)}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}

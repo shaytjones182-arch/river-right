@@ -15,6 +15,12 @@ import MapView from "../src/MapView";
 import ProfileMenu from "../src/ProfileMenu";
 import Svg, { Path, Polygon, Circle, Polyline as SvgPolyline } from "react-native-svg";
 import { COLORS, API } from "../src/theme";
+import {
+  getMapView,
+  setMapView,
+  getMapSelectedRiverId,
+  setMapSelectedRiverId,
+} from "../src/tabState";
 
 type RiverType = "whitewater" | "mixed" | "calm";
 
@@ -66,7 +72,7 @@ const SVG_ICONS = {
     '<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v.01"/><path d="M11 12h1v4h1"/></svg>',
 };
 
-const buildMapHtml = () => `<!DOCTYPE html>
+const buildMapHtml = (initialView?: { lat: number; lng: number; zoom: number } | null) => `<!DOCTYPE html>
 <html><head>
 <meta name="viewport" content="initial-scale=1.0,maximum-scale=1.0,user-scalable=no" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -151,7 +157,22 @@ const buildMapHtml = () => `<!DOCTYPE html>
   var LOWER_48_BOUNDS = L.latLngBounds([24.5, -125], [49.5, -66]);
 
   var map = L.map('m', { zoomControl:false, attributionControl:false, minZoom:3, maxZoom:16 });
-  map.fitBounds(LOWER_48_BOUNDS, { animate: false, padding: [10, 10] });
+  var INITIAL_VIEW = ${initialView ? JSON.stringify(initialView) : "null"};
+  if (INITIAL_VIEW) {
+    map.setView([INITIAL_VIEW.lat, INITIAL_VIEW.lng], INITIAL_VIEW.zoom);
+  } else {
+    map.fitBounds(LOWER_48_BOUNDS, { animate: false, padding: [10, 10] });
+  }
+
+  // Emit view changes so RN can persist them across tab switches.
+  // Debounced via Leaflet's own moveend (fires once at end of pan/zoom).
+  function sendView(){
+    var c = map.getCenter();
+    var z = map.getZoom();
+    send("view:" + c.lat.toFixed(6) + "," + c.lng.toFixed(6) + "," + z);
+  }
+  map.on('moveend', sendView);
+  map.on('zoomend', sendView);
 
   // USGS Topo basemap — free, U.S. public-domain, hydrography baked in.
   // No fallback tile provider: OSM's tile servers explicitly disallow app use,
@@ -388,7 +409,14 @@ export default function MapScreen() {
   const [filter, setFilter] = useState<FilterKey>("all");
   const [mapReady, setMapReady] = useState(false);
 
-  const [selectedRiverId, setSelectedRiverId] = useState<string | null>(null);
+  const [selectedRiverId, setSelectedRiverIdState] = useState<string | null>(
+    () => getMapSelectedRiverId()
+  );
+  // Wrapper that persists selection so it survives a tab switch.
+  const setSelectedRiverId = useCallback((id: string | null) => {
+    setMapSelectedRiverId(id);
+    setSelectedRiverIdState(id);
+  }, []);
   const [focusedPois, setFocusedPois] = useState<OsmPoi[] | null>(null);
   const [focusedPolyline, setFocusedPolyline] = useState<Polyline | null>(null);
   const [poiSource, setPoiSource] = useState<string | null>(null);
@@ -532,7 +560,16 @@ export default function MapScreen() {
     };
   }, [selectedRiver, focusedPois, focusedPolyline, filteredRivers]);
 
-  const prevModeRef = useRef<"overview" | "focused" | null>(null);
+  // Seed `prevModeRef` so we DON'T trigger a fitBounds on first mount when
+  // we've restored a saved view (otherwise the saved view would be clobbered
+  // by an unnecessary "fit" animation back to LOWER_48 / river bounds).
+  const prevModeRef = useRef<"overview" | "focused" | null>(
+    getMapView()
+      ? getMapSelectedRiverId()
+        ? "focused"
+        : "overview"
+      : null
+  );
 
   // Push state to map whenever map is ready or relevant state changes
   useEffect(() => {
@@ -553,8 +590,17 @@ export default function MapScreen() {
       setMapReady(true);
     } else if (msg.startsWith("select:")) {
       setSelectedRiverId(msg.slice("select:".length));
+    } else if (msg.startsWith("view:")) {
+      // "view:lat,lng,zoom" — persist so we can restore on next mount
+      const parts = msg.slice("view:".length).split(",");
+      const lat = parseFloat(parts[0]);
+      const lng = parseFloat(parts[1]);
+      const zoom = parseFloat(parts[2]);
+      if (!isNaN(lat) && !isNaN(lng) && !isNaN(zoom)) {
+        setMapView({ lat, lng, zoom });
+      }
     }
-  }, []);
+  }, [setSelectedRiverId]);
 
   // Web: listen for postMessage from iframe
   useEffect(() => {
@@ -573,7 +619,9 @@ export default function MapScreen() {
     };
   }, [handleMessage]);
 
-  const html = useMemo(() => buildMapHtml(), []);
+  // HTML is generated ONCE per mount. On first mount we seed the map with
+  // any previously-saved view so the user lands where they left off.
+  const html = useMemo(() => buildMapHtml(getMapView()), []);
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]} testID="map-screen">
