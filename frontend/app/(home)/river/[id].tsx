@@ -15,7 +15,6 @@ import { COLORS, STATUS_COLORS, API } from "../../../src/theme";
 import {
   fetchRiverWithCache,
   fetchPoisWithCache,
-  prefetchRiverBundle,
 } from "../../../src/offlineCache";
 import OfflineMapCard from "../../../src/tiles/OfflineMapCard";
 import { getTileManifest } from "../../../src/tiles/tileDownloader";
@@ -109,8 +108,10 @@ export default function RiverDetail() {
       try {
         const j = await fetchRiverWithCache(id as string);
         if (!cancelled) setData(j);
-        // Also warm the polyline cache so the map can render this run offline.
-        prefetchRiverBundle(id as string).catch(() => {});
+        // NOTE: we intentionally do NOT eagerly cache the polyline / POIs
+        // here. Offline data is now gated behind the explicit "Download
+        // offline map" flow on this same screen — keeping all offline
+        // capability behind the $5 paywall.
       } catch {
         if (!cancelled) setData(null);
       } finally {

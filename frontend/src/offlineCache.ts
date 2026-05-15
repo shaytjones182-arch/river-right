@@ -5,9 +5,14 @@
 //   2. Polyline GeoJSON (the curated river line + mile geometry)
 //   3. POIs (rapids, campsites, hazards from /osm-poi — curated or OSM)
 //
-// Strategy: NETWORK-FIRST with CACHE FALLBACK.
-//   - Online: hit the network, write through to cache, return fresh data.
-//   - Offline / fetch error: read from cache; if present, return; else throw.
+// Strategy: NETWORK-FIRST with EXPLICIT-WRITE caching.
+//   - Every normal viewer fetch goes straight to the network.
+//   - We DO NOT auto-populate the offline cache. The user must explicitly
+//     hit "Download offline map" on a river to save the bundle — that flow
+//     lives behind the $5 IAP paywall (the download button only renders on
+//     the river-detail page, which is reached only after unlocking the run).
+//   - On any later network failure we *read* from cache and serve that. If
+//     the user never explicitly downloaded, there is no cache to read.
 //
 // We DO NOT cache USGS flow data — it's live by definition and a stale flow
 // reading is dangerous. The river-detail screen falls back to "Flow data
@@ -69,15 +74,24 @@ export type RiverMetaResponse = {
     | null;
 };
 
+/** Options for the fetch helpers below. */
+export type FetchOpts = {
+  /** When true, write the successful response to the offline cache. Default
+   *  is `false` — viewer fetches do NOT pollute the offline cache. Only the
+   *  explicit "Download offline map" flow passes `true`. */
+  writeCache?: boolean;
+};
+
 /** Fetch river meta + flow. On network error, return cached meta + null flow. */
 export async function fetchRiverWithCache(
-  id: string
+  id: string,
+  opts: FetchOpts = {}
 ): Promise<RiverMetaResponse> {
   try {
     const r = await fetch(`${API}/rivers/${id}`);
     if (!r.ok) throw new Error("HTTP " + r.status);
     const j: RiverMetaResponse = await r.json();
-    if (j.river) {
+    if (j.river && opts.writeCache) {
       await setJson(META_PREFIX + id, j.river);
       await setJson(TS_PREFIX + id, Date.now());
     }
@@ -91,8 +105,11 @@ export async function fetchRiverWithCache(
   }
 }
 
-/** Fetch the curated polyline GeoJSON, cache it, fall back to cache offline. */
-export async function fetchPolylineWithCache(id: string): Promise<any | null> {
+/** Fetch the curated polyline GeoJSON. Only writes to cache when opts.writeCache. */
+export async function fetchPolylineWithCache(
+  id: string,
+  opts: FetchOpts = {}
+): Promise<any | null> {
   try {
     const r = await fetch(`${API}/rivers/${id}/polyline`);
     if (!r.ok) {
@@ -100,7 +117,9 @@ export async function fetchPolylineWithCache(id: string): Promise<any | null> {
       throw new Error("HTTP " + r.status);
     }
     const j = await r.json();
-    await setJson(POLY_PREFIX + id, j);
+    if (opts.writeCache) {
+      await setJson(POLY_PREFIX + id, j);
+    }
     return j;
   } catch (err) {
     const cached = await getJson<any>(POLY_PREFIX + id);
@@ -110,11 +129,14 @@ export async function fetchPolylineWithCache(id: string): Promise<any | null> {
 }
 
 /** Fetch /osm-poi (which returns curated POIs when curated data exists). */
-export async function fetchPoisWithCache(id: string): Promise<any> {
+export async function fetchPoisWithCache(
+  id: string,
+  opts: FetchOpts = {}
+): Promise<any> {
   try {
     const r = await fetch(`${API}/rivers/${id}/osm-poi`);
     const j = await r.json();
-    if (!j.error) {
+    if (!j.error && opts.writeCache) {
       await setJson(POIS_PREFIX + id, j);
     }
     return j;
@@ -125,8 +147,10 @@ export async function fetchPoisWithCache(id: string): Promise<any> {
   }
 }
 
-/** Fetch the featured-rivers list. On network error, return last cached
- *  list so users can at least see their unlocked rivers offline. */
+/** Fetch the featured-rivers list. The home-tab list itself is harmless to
+ *  cache (it's just names + thumbnails), so this still auto-writes the cache
+ *  so users see *something* if they open the app offline. The per-river
+ *  detailed bundles are still gated by the explicit download flow. */
 export async function fetchFeaturedWithCache(): Promise<{ rivers: any[] }> {
   try {
     const r = await fetch(`${API}/rivers/featured`);
@@ -159,12 +183,25 @@ export async function getCacheTimestamp(id: string): Promise<number | null> {
   return await getJson<number>(TS_PREFIX + id);
 }
 
-/** Eagerly pre-cache all three pieces for a river. Used right after IAP
- *  unlock so the user can go straight to the river offline. */
-export async function prefetchRiverBundle(id: string): Promise<void> {
+/** Explicit "save offline" — called by the Download offline-map flow.
+ *  Writes meta + polyline + POIs to disk so they are available without
+ *  network. Behind the $5 paywall by virtue of where the trigger lives. */
+export async function saveRiverOfflineBundle(id: string): Promise<void> {
   await Promise.allSettled([
-    fetchRiverWithCache(id),
-    fetchPolylineWithCache(id),
-    fetchPoisWithCache(id),
+    fetchRiverWithCache(id, { writeCache: true }),
+    fetchPolylineWithCache(id, { writeCache: true }),
+    fetchPoisWithCache(id, { writeCache: true }),
+  ]);
+}
+
+/** Explicit "wipe offline" — called when the user deletes an offline map.
+ *  Removes meta + poly + POIs + timestamp. (Tiles are handled separately by
+ *  `deleteOfflineTiles` in tileDownloader.) */
+export async function deleteRiverOfflineBundle(id: string): Promise<void> {
+  await Promise.allSettled([
+    AsyncStorage.removeItem(META_PREFIX + id),
+    AsyncStorage.removeItem(POLY_PREFIX + id),
+    AsyncStorage.removeItem(POIS_PREFIX + id),
+    AsyncStorage.removeItem(TS_PREFIX + id),
   ]);
 }

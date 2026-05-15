@@ -7,7 +7,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "../theme";
-import { fetchPolylineWithCache } from "../offlineCache";
+import { fetchPolylineWithCache, saveRiverOfflineBundle, deleteRiverOfflineBundle } from "../offlineCache";
 import {
   bboxFromPolyline,
   padBbox,
@@ -81,6 +81,14 @@ export default function OfflineMapCard({ riverId }: Props) {
 
   const handleStart = () => {
     if (!plan) return;
+    // Kick off the data-bundle save IN PARALLEL with the tile download. This
+    // is the ONLY place that writes the river meta + polyline + POIs to the
+    // offline cache, so the whole feature stays behind the $5 paywall (this
+    // card is rendered only on the river-detail page, which itself is gated
+    // by the unlock flow).
+    saveRiverOfflineBundle(riverId).catch(() => {
+      /* best-effort; tiles are the main payload */
+    });
     const { cancel } = startTileDownload(
       riverId,
       plan,
@@ -117,6 +125,9 @@ export default function OfflineMapCard({ riverId }: Props) {
           style: "destructive",
           onPress: async () => {
             await deleteOfflineTiles(riverId);
+            // Also drop the data bundle (meta/poly/POIs) so a "delete"
+            // truly returns the user to the pre-download state.
+            await deleteRiverOfflineBundle(riverId);
             setManifest(null);
             setProgress(null);
           },
