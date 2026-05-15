@@ -27,6 +27,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "../theme";
 import { productForRiver } from "./products";
 import { unlockRunLocally, restorePurchasesLocally } from "./useUnlocks";
+import { prefetchRiverBundle } from "../offlineCache";
 
 type Props = {
   visible: boolean;
@@ -56,6 +57,9 @@ export default function PaywallSheet({
       // and only call unlockRunLocally on a successful, finished transaction.
       await new Promise((r) => setTimeout(r, 700)); // fake StoreKit latency
       await unlockRunLocally(riverId);
+      // Pre-cache the curated data so the user is offline-ready immediately
+      // after the purchase, before they ever leave cell coverage.
+      prefetchRiverBundle(riverId).catch(() => {});
       onUnlocked?.(riverId);
       onClose();
     } catch (e: any) {

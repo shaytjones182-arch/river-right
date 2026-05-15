@@ -12,6 +12,12 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { COLORS, STATUS_COLORS, API } from "../../../src/theme";
+import {
+  fetchRiverWithCache,
+  fetchPoisWithCache,
+  prefetchRiverBundle,
+  hasOfflineBundle,
+} from "../../../src/offlineCache";
 
 type RiverDetail = {
   river: {
@@ -65,26 +71,58 @@ export default function RiverDetail() {
   const [osmPois, setOsmPois] = useState<OsmPoi[] | null>(null);
   const [osmLoading, setOsmLoading] = useState(true);
   const [osmError, setOsmError] = useState(false);
+  const [offlineReady, setOfflineReady] = useState(false);
 
+  // Poll cache state — when the prefetch finishes the badge flips on.
   useEffect(() => {
-    (async () => {
-      try {
-        const r = await fetch(`${API}/rivers/${id}`);
-        const j = await r.json();
-        setData(j);
-      } finally {
-        setLoading(false);
+    let cancelled = false;
+    let interval: any = null;
+    const check = async () => {
+      const ok = await hasOfflineBundle(id as string);
+      if (!cancelled) setOfflineReady(ok);
+    };
+    check();
+    // Re-check a couple of times after mount in case the prefetch is still
+    // in flight; once true we can stop polling.
+    interval = setInterval(async () => {
+      if (cancelled) return;
+      const ok = await hasOfflineBundle(id as string);
+      if (!cancelled && ok) {
+        setOfflineReady(true);
+        clearInterval(interval);
       }
-    })();
+    }, 1500);
+    return () => {
+      cancelled = true;
+      if (interval) clearInterval(interval);
+    };
   }, [id]);
 
   useEffect(() => {
-    // Fetch OSM POIs in parallel — non-blocking, falls back gracefully
     let cancelled = false;
     (async () => {
       try {
-        const r = await fetch(`${API}/rivers/${id}/osm-poi`);
-        const j = await r.json();
+        const j = await fetchRiverWithCache(id as string);
+        if (!cancelled) setData(j);
+        // Also warm the polyline cache so the map can render this run offline.
+        prefetchRiverBundle(id as string).catch(() => {});
+      } catch {
+        if (!cancelled) setData(null);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  useEffect(() => {
+    // Fetch curated/OSM POIs — cache-aware, non-blocking, graceful fallback
+    let cancelled = false;
+    (async () => {
+      try {
+        const j = await fetchPoisWithCache(id as string);
         if (cancelled) return;
         if (j.error) {
           setOsmError(true);
@@ -178,7 +216,22 @@ export default function RiverDetail() {
             {flow?.updated_at && (
               <Text style={styles.subtle}>Updated {new Date(flow.updated_at).toLocaleString()}</Text>
             )}
+            {flow === null && (
+              <Text style={styles.subtle}>
+                Live flow unavailable — connect to network for current readings.
+              </Text>
+            )}
           </View>
+
+          {offlineReady && (
+            <View style={styles.offlineBadge} testID="river-offline-badge">
+              <Ionicons name="cloud-done" size={14} color={COLORS.safe} />
+              <Text style={styles.offlineBadgeText}>
+                Saved offline — river map, rapids & POIs available without
+                cell service.
+              </Text>
+            </View>
+          )}
 
           <TouchableOpacity
             testID="river-view-on-map"
@@ -380,6 +433,25 @@ const styles = StyleSheet.create({
   statusPill: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999 },
   statusText: { color: "#fff", fontWeight: "900", letterSpacing: 1, fontSize: 13 },
   subtle: { color: COLORS.textMuted, fontSize: 12, marginTop: 4 },
+  offlineBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: COLORS.safe + "14",
+    borderColor: COLORS.safe + "60",
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginTop: 12,
+  },
+  offlineBadgeText: {
+    flex: 1,
+    color: COLORS.textMain,
+    fontSize: 12.5,
+    fontWeight: "600",
+    lineHeight: 17,
+  },
   h3: { fontSize: 18, fontWeight: "900", color: COLORS.textMain, marginBottom: 8, marginTop: 8, letterSpacing: -0.3 },
   body1: { color: COLORS.textMain, lineHeight: 22, marginBottom: 16, fontSize: 15 },
   hazard: { flexDirection: "row", gap: 10, alignItems: "flex-start", paddingVertical: 6 },

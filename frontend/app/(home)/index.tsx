@@ -22,6 +22,7 @@ import PaywallSheet from "../../src/iap/PaywallSheet";
 import { useUnlocks } from "../../src/iap/useUnlocks";
 import { productForRiver } from "../../src/iap/products";
 import { getHomeScrollY, setHomeScrollY } from "../../src/tabState";
+import { fetchFeaturedWithCache } from "../../src/offlineCache";
 
 type River = {
   id: string;
@@ -63,8 +64,7 @@ export default function Home() {
 
   const load = useCallback(async () => {
     try {
-      const r = await fetch(`${API}/rivers/featured`);
-      const j = await r.json();
+      const j = await fetchFeaturedWithCache();
       setRivers(j.rivers || []);
     } catch (e) {
       console.warn("featured rivers", e);

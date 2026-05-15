@@ -16,6 +16,11 @@ import ProfileMenu from "../src/ProfileMenu";
 import Svg, { Path, Polygon, Circle, Polyline as SvgPolyline } from "react-native-svg";
 import { COLORS, API } from "../src/theme";
 import {
+  fetchPolylineWithCache,
+  fetchPoisWithCache,
+  fetchFeaturedWithCache,
+} from "../src/offlineCache";
+import {
   getMapView,
   setMapView,
   getMapSelectedRiverId,
@@ -432,11 +437,10 @@ export default function MapScreen() {
     return rivers.filter((r) => r.type === filter);
   }, [rivers, filter]);
 
-  // Initial featured-river fetch
+  // Initial featured-river fetch (cache-aware — works offline)
   const load = useCallback(async () => {
     try {
-      const r = await fetch(`${API}/rivers/featured`);
-      const j = await r.json();
+      const j = await fetchFeaturedWithCache();
       setRivers(j.rivers || []);
     } catch (e) {
       console.warn("map rivers", e);
@@ -472,17 +476,15 @@ export default function MapScreen() {
     setPoiSource(null);
     (async () => {
       try {
-        const [poiRes, polyRes] = await Promise.all([
-          fetch(`${API}/rivers/${selectedRiverId}/osm-poi`),
-          fetch(`${API}/rivers/${selectedRiverId}/polyline`),
+        const [poiJson, polyJson] = await Promise.all([
+          fetchPoisWithCache(selectedRiverId),
+          fetchPolylineWithCache(selectedRiverId).catch(() => null),
         ]);
-        const poiJson = await poiRes.json();
         if (!cancelled) {
           setFocusedPois(poiJson.pois || []);
           setPoiSource(poiJson.source || "osm");
         }
-        if (polyRes.ok) {
-          const polyJson = await polyRes.json();
+        if (polyJson) {
           const feat = polyJson?.features?.[0];
           const geom = feat?.geometry;
           if (geom) {
