@@ -320,8 +320,10 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
     if (!payload) return;
     var river = payload.river;
     var pois = payload.pois || [];
-    var rapidIntensity = intensityFromClass(river && river.class_rating);
-    var rapidClass = 'rapid-' + rapidIntensity;
+    // Rapid styling is purely data-driven: per-POI p.grade decides the icon
+    // class. No fallback to the run-level class_rating — if the data file
+    // doesn't supply a grade, the rapid renders as a plain (uncolored) rapid
+    // marker and the popup shows just the name.
     var pts = [];
 
     if (river){
@@ -364,13 +366,17 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
           .bindPopup(popupHtml(p.name || (p.kind === 'putin' ? 'Put-in' : 'Take-out'), 'Boat Ramp'));
       } else {
         var grade = (p.grade || '').toUpperCase();
-        var cls = rapidClass;
+        // Per-POI grade decides the icon color. If the data file omits a
+        // grade we render a plain (mild-styled) rapid icon — no fallback to
+        // the run-level class rating, so absolutely nothing in the popup
+        // comes from anywhere except the data file.
+        var cls = 'rapid-mild';
         if (/V/.test(grade) || /IV/.test(grade)) cls = 'rapid-hard';
         else if (/III/.test(grade)) cls = 'rapid-mod';
         else if (grade) cls = 'rapid-mild';
         var name = p.name;
         if (!name || /^rapids?$/i.test(name)) name = 'Unnamed rapid';
-        var classLabel = (p.grade || (river && river.class_rating) || '');
+        var classLabel = p.grade || '';
         marker = L.marker([p.lat, p.lon], { icon: pin(cls, SVG.wave) })
           .bindPopup(popupHtml(name, classLabel ? 'Class ' + classLabel : ''));
       }

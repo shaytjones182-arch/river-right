@@ -309,7 +309,9 @@ const buildMapHtml = (
     // boat ramps from the curated POI layer serve as the effective access points.
 
     function classLabel(grade){
-      var g = (grade || river.class_rating || '').toString();
+      // Purely data-driven: only show "Class X" if the data file provides a
+      // grade for this specific POI. No fallback to the run-level rating.
+      var g = (grade || '').toString();
       return g ? 'Class ' + g : '';
     }
     function esc(s){
@@ -317,7 +319,6 @@ const buildMapHtml = (
         .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     }
 
-    var rapidClass = 'rapid-' + river.intensity; // mild | mod | hard
     pois.forEach(function(p){
       var marker;
       if (p.kind === 'waterfall'){
@@ -351,7 +352,9 @@ const buildMapHtml = (
           .bindPopup(popupHtml(esc(p.name || (p.kind === 'putin' ? 'Put-in' : 'Take-out')), 'Boat Ramp'));
       } else {
         var grade = (p.grade || '').toUpperCase();
-        var cls = rapidClass;
+        // Default to a plain (mild-styled) rapid pin when the data file
+        // doesn't supply a grade. No fallback to the run-level rating.
+        var cls = 'rapid-mild';
         if (/V/.test(grade) || /IV/.test(grade)) cls = 'rapid-hard';
         else if (/III/.test(grade)) cls = 'rapid-mod';
         else if (grade) cls = 'rapid-mild';
