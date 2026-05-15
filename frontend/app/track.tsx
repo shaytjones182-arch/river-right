@@ -22,7 +22,7 @@ import MapView from "../src/MapView";
 import { COLORS, API } from "../src/theme";
 import ProfileMenu from "../src/ProfileMenu";
 import { getMergedOfflineManifest } from "../src/tiles/tileDownloader";
-import { fetchPoisWithCache } from "../src/offlineCache";
+import { fetchPoisWithCache, fetchPolylineWithCache } from "../src/offlineCache";
 import {
   rollupTrip,
   saveTrip,
@@ -188,6 +188,13 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
   });
   L.control.zoom({ position:'topright' }).addTo(map);
 
+  // Curated river polyline — drawn BEFORE the GPS path so the user's trip
+  // line always renders on top. Two layers: white halo + blue line, matching
+  // the styling on the Map tab so a paddler reading both screens sees the
+  // same blue reference river.
+  var runHalo = L.polyline([], { color:'#ffffff', weight:7, opacity:0.85, lineCap:'round', lineJoin:'round' }).addTo(map);
+  var runLine = L.polyline([], { color:'#1D6FB8', weight:4, opacity:0.95, lineCap:'round', lineJoin:'round' }).addTo(map);
+
   var path = L.polyline([], { color:'#0077B6', weight:5, opacity:0.95 }).addTo(map);
   var meIcon = L.divIcon({ className:'me', iconSize:[18,18] });
   var meMarker = L.marker([${lat}, ${lon}], { icon: meIcon, zIndexOffset: 2000 }).addTo(map);
@@ -300,6 +307,21 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
   window.clearRunPois = function(){
     poiLayer.clearLayers();
   };
+  window.setRunPolyline = function(coords){
+    // coords: array of [lat, lon] pairs (multiple line segments are flattened
+    // by the caller). Updates both halo and main line.
+    if (!coords || !coords.length) {
+      runHalo.setLatLngs([]);
+      runLine.setLatLngs([]);
+      return;
+    }
+    runHalo.setLatLngs(coords);
+    runLine.setLatLngs(coords);
+  };
+  window.clearRunPolyline = function(){
+    runHalo.setLatLngs([]);
+    runLine.setLatLngs([]);
+  };
 })();
 </script>
 </body></html>`;
@@ -402,19 +424,22 @@ export default function Track() {
     }
   }, []);
 
-  // When a run is picked, fetch its POIs and inject into map
+  // When a run is picked, fetch its POIs + polyline and inject into map
   useEffect(() => {
     if (!selectedRiver) {
       setPoiCount(0);
-      sendJs("if (window.clearRunPois) window.clearRunPois();");
+      sendJs("if (window.clearRunPois) window.clearRunPois(); if (window.clearRunPolyline) window.clearRunPolyline();");
       return;
     }
     let cancelled = false;
     (async () => {
       try {
-        const j = await fetchPoisWithCache(selectedRiver.id);
+        const [poiJson, polyJson] = await Promise.all([
+          fetchPoisWithCache(selectedRiver.id),
+          fetchPolylineWithCache(selectedRiver.id).catch(() => null),
+        ]);
         if (cancelled) return;
-        const pois: OsmPoi[] = j.pois || [];
+        const pois: OsmPoi[] = poiJson.pois || [];
         setPoiCount(pois.length);
         const payload = {
           river: {
@@ -429,6 +454,30 @@ export default function Track() {
           pois,
         };
         sendJs(`if (window.setRunPois) window.setRunPois(${JSON.stringify(payload)});`);
+
+        // Build a flattened [lat, lon] array from the polyline GeoJSON.
+        if (polyJson) {
+          const feat = polyJson?.features?.[0];
+          const geom = feat?.geometry;
+          let coords: number[][] = [];
+          if (geom?.type === "LineString") {
+            // GeoJSON is [lon, lat]; Leaflet wants [lat, lon].
+            coords = (geom.coordinates as number[][]).map((c) => [c[1], c[0]]);
+          } else if (geom?.type === "MultiLineString") {
+            for (const seg of geom.coordinates as number[][][]) {
+              for (const c of seg) coords.push([c[1], c[0]]);
+            }
+          }
+          if (coords.length > 0) {
+            sendJs(
+              `if (window.setRunPolyline) window.setRunPolyline(${JSON.stringify(coords)});`
+            );
+          } else {
+            sendJs("if (window.clearRunPolyline) window.clearRunPolyline();");
+          }
+        } else {
+          sendJs("if (window.clearRunPolyline) window.clearRunPolyline();");
+        }
       } catch {
         if (!cancelled) setPoiCount(0);
       }
