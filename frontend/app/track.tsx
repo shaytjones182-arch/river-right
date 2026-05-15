@@ -79,6 +79,10 @@ const SVG_TRACK = {
     '<svg viewBox="0 0 24 24" fill="white"><circle cx="8" cy="8" r="3"/><circle cx="16" cy="14" r="3"/><circle cx="9" cy="18" r="2"/></svg>',
   tent:
     '<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M12 4L3 20"/><path d="M12 4l9 16"/><path d="M12 11l-3 9"/><path d="M12 11l3 9"/></svg>',
+  boat:
+    '<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16c2 2 4 2 6 0s4-2 6 0 4 2 6 0"/><path d="M5 13l1-4h12l1 4"/><path d="M12 9V4"/></svg>',
+  info:
+    '<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v.01"/><path d="M11 12h1v4h1"/></svg>',
 };
 
 const buildHtml = (
@@ -235,14 +239,9 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
     var pts = [];
 
     if (river){
-      L.marker([river.put_in_lat, river.put_in_lon], { icon: pin('start', SVG.play), zIndexOffset: 1000 })
-        .addTo(poiLayer)
-        .bindPopup(popupHtml('Put-in: ' + river.put_in_name, 'Start of run'));
-      L.marker([river.take_out_lat, river.take_out_lon], { icon: pin('finish', SVG.flag), zIndexOffset: 1000 })
-        .addTo(poiLayer)
-        .bindPopup(popupHtml('Take-out: ' + river.take_out_name, 'End of run'));
-      pts.push([river.put_in_lat, river.put_in_lon]);
-      pts.push([river.take_out_lat, river.take_out_lon]);
+      // Note: put-in/take-out markers are NOT drawn here. All POIs come
+      // from the curated data file (boat_ramp / access kinds) so the map
+      // stays purely data-driven and consistent with the Map / Home tabs.
     }
 
     pois.forEach(function(p){
@@ -263,8 +262,20 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
       } else if (p.kind === 'camp'){
         marker = L.marker([p.lat, p.lon], { icon: pin('camp', SVG.tent) })
           .bindPopup(popupHtml(p.name || 'Campground', 'Campground'));
+      } else if (p.kind === 'boat_ramp'){
+        marker = L.marker([p.lat, p.lon], { icon: pin('boat', SVG.boat) })
+          .bindPopup(popupHtml(p.name || 'Boat Ramp', 'Boat Ramp'));
+      } else if (p.kind === 'access'){
+        marker = L.marker([p.lat, p.lon], { icon: pin('access', SVG.boat) })
+          .bindPopup(popupHtml(p.name || 'Access Point', 'Access Point'));
+      } else if (p.kind === 'note'){
+        marker = L.marker([p.lat, p.lon], { icon: pin('note', SVG.info) })
+          .bindPopup(popupHtml(p.name || 'Note', p.description || ''));
       } else if (p.kind === 'putin' || p.kind === 'takeout'){
-        return;
+        // Legacy data may still set these — render as boat-ramp markers so
+        // every POI on the map comes from the data file, never hardcoded.
+        marker = L.marker([p.lat, p.lon], { icon: pin('boat', SVG.boat) })
+          .bindPopup(popupHtml(p.name || (p.kind === 'putin' ? 'Put-in' : 'Take-out'), 'Boat Ramp'));
       } else {
         var grade = (p.grade || '').toUpperCase();
         var cls = rapidClass;

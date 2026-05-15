@@ -260,28 +260,29 @@ export default function RiverDetail() {
           <View style={styles.osmHeaderRow}>
             <View>
               <Text style={styles.h3}>Points of interest</Text>
-              <Text style={styles.subtle}>from OpenStreetMap</Text>
+              <Text style={styles.subtle}>
+                {osmPois && osmPois.length > 0
+                  ? `${osmPois.length} POI${osmPois.length === 1 ? "" : "s"} from curated data`
+                  : "from curated data"}
+              </Text>
             </View>
             {osmLoading && <ActivityIndicator size="small" color={COLORS.textMuted} />}
           </View>
 
-          {/* Put-in (always first) */}
-          <View style={styles.hazard}>
-            <Ionicons name="ellipse" size={8} color={COLORS.safe} style={{ marginTop: 8 }} />
-            <Text style={styles.hazardText}>
-              <Text style={styles.poiLead}>Put-in: </Text>
-              {r.put_in.name}
-            </Text>
-          </View>
-
-          {/* OSM POIs (sorted by distance from put-in on the backend) */}
+          {/* All POIs come purely from the curated data file — no hardcoded
+              put-in / take-out cards. They're rendered here in distance order
+              alongside rapids, hazards, camps, and access points. */}
           {!osmLoading && !osmError && osmPois && osmPois.length > 0 && (
             <View testID="osm-poi-list">
-              {osmPois
-                .filter((p) => p.kind !== "putin" && p.kind !== "takeout")
-                .map((p, i) => {
+              {osmPois.map((p, i) => {
                   let name = p.name;
-                  if (!name || /^rapids?$/i.test(name)) name = "Unnamed rapid";
+                  if (!name || /^rapids?$/i.test(name)) {
+                    if (p.kind === "boat_ramp") name = "Boat Ramp";
+                    else if (p.kind === "access") name = "Access Point";
+                    else if (p.kind === "camp") name = "Campground";
+                    else if (p.kind === "note") name = "Note";
+                    else name = "Unnamed rapid";
+                  }
                   const cat = p.category || "";
                   const nameLower = name.toLowerCase();
                   // Skip the category if it's redundant (e.g., name="Summersville Dam"
@@ -305,6 +306,13 @@ export default function RiverDetail() {
                       ? COLORS.safe
                       : p.kind === "camp"
                       ? "#8B5E34"
+                      : p.kind === "boat_ramp" ||
+                        p.kind === "access" ||
+                        p.kind === "putin" ||
+                        p.kind === "takeout"
+                      ? COLORS.safe
+                      : p.kind === "note"
+                      ? COLORS.textMuted
                       : COLORS.primary;
                   return (
                     <View key={`${p.lat}-${p.lon}-${i}`} style={styles.hazard}>
@@ -326,23 +334,9 @@ export default function RiverDetail() {
             </View>
           )}
 
-          {/* Take-out (always last) */}
-          <View style={styles.hazard}>
-            <Ionicons
-              name="ellipse"
-              size={8}
-              color={COLORS.textMain}
-              style={{ marginTop: 8 }}
-            />
-            <Text style={styles.hazardText}>
-              <Text style={styles.poiLead}>Take-out: </Text>
-              {r.take_out.name}
-            </Text>
-          </View>
-
           {!osmLoading && osmError && (
             <Text style={[styles.subtle, { marginTop: 6 }]}>
-              OpenStreetMap data temporarily unavailable.
+              Curated POI data temporarily unavailable.
             </Text>
           )}
 

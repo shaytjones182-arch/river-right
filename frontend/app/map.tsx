@@ -345,7 +345,10 @@ const buildMapHtml = (
         marker = L.marker([p.lat, p.lon], { icon: pin('note', SVG.info) })
           .bindPopup(popupHtml(esc(p.name || 'Note'), esc(p.description || '')));
       } else if (p.kind === 'putin' || p.kind === 'takeout'){
-        return;
+        // Legacy kinds — render as boat-ramp pins so they show up like any
+        // other data-file POI instead of being silently dropped.
+        marker = L.marker([p.lat, p.lon], { icon: pin('boat', SVG.boat) })
+          .bindPopup(popupHtml(esc(p.name || (p.kind === 'putin' ? 'Put-in' : 'Take-out')), 'Boat Ramp'));
       } else {
         var grade = (p.grade || '').toUpperCase();
         var cls = rapidClass;
