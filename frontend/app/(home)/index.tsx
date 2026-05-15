@@ -16,12 +16,12 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useFocusEffect } from "expo-router";
-import ProfileMenu from "../src/ProfileMenu";
-import { COLORS, API } from "../src/theme";
-import PaywallSheet from "../src/iap/PaywallSheet";
-import { useUnlocks } from "../src/iap/useUnlocks";
-import { productForRiver } from "../src/iap/products";
-import { getHomeScrollY, setHomeScrollY } from "../src/tabState";
+import ProfileMenu from "../../src/ProfileMenu";
+import { COLORS, API } from "../../src/theme";
+import PaywallSheet from "../../src/iap/PaywallSheet";
+import { useUnlocks } from "../../src/iap/useUnlocks";
+import { productForRiver } from "../../src/iap/products";
+import { getHomeScrollY, setHomeScrollY } from "../../src/tabState";
 
 type River = {
   id: string;

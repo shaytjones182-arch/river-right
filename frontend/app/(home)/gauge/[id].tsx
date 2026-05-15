@@ -10,8 +10,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import MapView from "../../src/MapView";
-import { COLORS, STATUS_COLORS, API } from "../../src/theme";
+import MapView from "../../../src/MapView";
+import { COLORS, STATUS_COLORS, API } from "../../../src/theme";
 
 type SiteData = {
   site_id: string;

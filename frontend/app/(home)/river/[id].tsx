@@ -11,7 +11,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { COLORS, STATUS_COLORS, API } from "../../src/theme";
+import { COLORS, STATUS_COLORS, API } from "../../../src/theme";
 
 type RiverDetail = {
   river: {
