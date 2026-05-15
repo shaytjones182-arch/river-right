@@ -37,13 +37,18 @@ export default function MapView({ html, style, testID, webViewRef, iframeRef, on
   return (
     <WebView
       ref={webViewRef}
-      originWhitelist={["*"]}
+      originWhitelist={["*", "file://"]}
       source={{ html }}
       style={[styles.fill, style]}
       javaScriptEnabled
       domStorageEnabled
       scalesPageToFit={false}
       mixedContentMode="always"
+      // Required so offline USGS Topo tiles stored via expo-file-system can
+      // be loaded by Leaflet via file:// URLs.
+      allowFileAccess
+      allowFileAccessFromFileURLs
+      allowUniversalAccessFromFileURLs
       onMessage={(e) => {
         if (onMessage && e?.nativeEvent?.data) onMessage(e.nativeEvent.data);
       }}

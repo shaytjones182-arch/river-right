@@ -18,6 +18,7 @@ import {
   prefetchRiverBundle,
   hasOfflineBundle,
 } from "../../../src/offlineCache";
+import OfflineMapCard from "../../../src/tiles/OfflineMapCard";
 
 type RiverDetail = {
   river: {
@@ -232,6 +233,8 @@ export default function RiverDetail() {
               </Text>
             </View>
           )}
+
+          <OfflineMapCard riverId={r.id} />
 
           <TouchableOpacity
             testID="river-view-on-map"

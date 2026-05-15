@@ -21,6 +21,10 @@ import {
   fetchFeaturedWithCache,
 } from "../src/offlineCache";
 import {
+  getTileManifest,
+  TileManifest,
+} from "../src/tiles/tileDownloader";
+import {
   getMapView,
   setMapView,
   getMapSelectedRiverId,
@@ -77,7 +81,10 @@ const SVG_ICONS = {
     '<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v.01"/><path d="M11 12h1v4h1"/></svg>',
 };
 
-const buildMapHtml = (initialView?: { lat: number; lng: number; zoom: number } | null) => `<!DOCTYPE html>
+const buildMapHtml = (
+  initialView?: { lat: number; lng: number; zoom: number } | null,
+  offlineTiles?: { basePath: string; keys: string[] } | null
+) => `<!DOCTYPE html>
 <html><head>
 <meta name="viewport" content="initial-scale=1.0,maximum-scale=1.0,user-scalable=no" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -187,6 +194,26 @@ const buildMapHtml = (initialView?: { lat: number; lng: number; zoom: number } |
     'https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/{z}/{y}/{x}',
     { maxZoom: 16 }
   );
+  // ── Offline-tile support ──
+  // If we've downloaded tiles for the active run, prefer them over the
+  // network. We build a Set of "z/x/y" keys and a base path; the custom
+  // tile layer checks both and falls back to USGS HTTPS otherwise.
+  var OFFLINE_BASE = ${offlineTiles ? JSON.stringify(offlineTiles.basePath) : "null"};
+  var OFFLINE_KEYS = new Set(${offlineTiles ? JSON.stringify(offlineTiles.keys) : "[]"});
+  if (OFFLINE_BASE && OFFLINE_KEYS.size > 0) {
+    var OfflineFirstLayer = L.TileLayer.extend({
+      getTileUrl: function(coords) {
+        var key = coords.z + "/" + coords.x + "/" + coords.y;
+        if (OFFLINE_KEYS.has(key)) {
+          // Local file:// URL — requires WebView's allowFileAccess flags
+          return OFFLINE_BASE + coords.z + "/" + coords.x + "/" + coords.y + ".png";
+        }
+        return 'https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/'
+          + coords.z + "/" + coords.y + "/" + coords.x;
+      }
+    });
+    usgsTopo = new OfflineFirstLayer('', { maxZoom: 16 });
+  }
   usgsTopo.addTo(map);
 
   // Show banner if USGS tiles repeatedly fail; auto-hide when they recover.
@@ -621,9 +648,38 @@ export default function MapScreen() {
     };
   }, [handleMessage]);
 
+  // Synchronously load any cached tile manifest for the saved-selected river,
+  // so the very first paint of the WebView already routes file:// for tiles
+  // we have on disk. Async refresh below catches changes mid-session.
+  const [offlineTiles, setOfflineTiles] = useState<{
+    basePath: string;
+    keys: string[];
+  } | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const id = getMapSelectedRiverId();
+      if (!id) return;
+      const m = await getTileManifest(id);
+      if (!cancelled && m && m.tileKeys.length > 0) {
+        setOfflineTiles({ basePath: m.basePath, keys: m.tileKeys });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // HTML is generated ONCE per mount. On first mount we seed the map with
   // any previously-saved view so the user lands where they left off.
-  const html = useMemo(() => buildMapHtml(getMapView()), []);
+  const html = useMemo(
+    () => buildMapHtml(getMapView(), offlineTiles),
+    // We intentionally rebuild only when offlineTiles transitions from
+    // null → loaded so the WebView picks up file:// URLs on its first paint
+    // after the manifest is read.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [offlineTiles]
+  );
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]} testID="map-screen">

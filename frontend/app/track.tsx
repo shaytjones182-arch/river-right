@@ -19,6 +19,7 @@ import { WebView } from "react-native-webview";
 import MapView from "../src/MapView";
 import { COLORS, API } from "../src/theme";
 import ProfileMenu from "../src/ProfileMenu";
+import { getMergedOfflineManifest } from "../src/tiles/tileDownloader";
 import {
   rollupTrip,
   saveTrip,
@@ -78,7 +79,11 @@ const SVG_TRACK = {
     '<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M12 4L3 20"/><path d="M12 4l9 16"/><path d="M12 11l-3 9"/><path d="M12 11l3 9"/></svg>',
 };
 
-const buildHtml = (lat: number, lon: number) => `<!DOCTYPE html>
+const buildHtml = (
+  lat: number,
+  lon: number,
+  offlineTiles?: { tileToUrl: Record<string, string> } | null
+) => `<!DOCTYPE html>
 <html><head>
 <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -140,11 +145,25 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
 (function(){
   var SVG = ${JSON.stringify(SVG_TRACK)};
   var map = L.map('m', { zoomControl:false, attributionControl:false, maxZoom:16 }).setView([${lat}, ${lon}], 14);
-  // USGS Topo basemap only — OSM tile servers disallow app use.
-  var usgsTopo = L.tileLayer(
-    'https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/{z}/{y}/{x}',
-    { maxZoom: 16 }
-  );
+  // USGS Topo basemap with optional offline-tile fallback.
+  var OFFLINE_TILES = ${offlineTiles ? JSON.stringify(offlineTiles.tileToUrl) : "null"};
+  var usgsTopo;
+  if (OFFLINE_TILES) {
+    var OfflineFirstLayer = L.TileLayer.extend({
+      getTileUrl: function(coords) {
+        var key = coords.z + "/" + coords.x + "/" + coords.y;
+        if (OFFLINE_TILES[key]) return OFFLINE_TILES[key];
+        return 'https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/'
+          + coords.z + "/" + coords.y + "/" + coords.x;
+      }
+    });
+    usgsTopo = new OfflineFirstLayer('', { maxZoom: 16 });
+  } else {
+    usgsTopo = L.tileLayer(
+      'https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/{z}/{y}/{x}',
+      { maxZoom: 16 }
+    );
+  }
   usgsTopo.addTo(map);
 
   // Show banner if USGS tiles repeatedly fail; auto-hide when they recover.
@@ -591,7 +610,23 @@ export default function Track() {
     [distMiles, movingSec]
   );
 
-  const html = useMemo(() => (coord ? buildHtml(coord.lat, coord.lon) : null), [coord]);
+  const [trackOfflineTiles, setTrackOfflineTiles] = useState<{
+    tileToUrl: Record<string, string>;
+  } | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const m = await getMergedOfflineManifest();
+      if (!cancelled && m) setTrackOfflineTiles(m);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  const html = useMemo(
+    () => (coord ? buildHtml(coord.lat, coord.lon, trackOfflineTiles) : null),
+    [coord, trackOfflineTiles]
+  );
 
   const visiblePickerRivers = useMemo(() => {
     const q = pickerQuery.trim().toLowerCase();
