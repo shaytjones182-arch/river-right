@@ -864,7 +864,10 @@ export default function Track() {
   // user starts tracking so the map dominates the screen, and auto-expands
   // when they pause / end / haven't started yet.
   const PEEK_H = 132;
-  const FULL_H = 408;
+  // Two rows of metric tiles (~85px each + 10px gap) + drag handle (24px) +
+  // action button (~64px) + padding ≈ 320px. Previously 408px to fit a 3rd
+  // metric row (MAX / MOVING), which has since been removed.
+  const FULL_H = 320;
   const sheetAnim = useRef(new Animated.Value(1)).current; // 1 = full, 0 = peek
   const sheetValueRef = useRef(1);
   useEffect(() => {
@@ -991,12 +994,12 @@ export default function Track() {
           </View>
           <View style={styles.metricsRow}>
             <Metric testID="track-metric-avg" label="AVG" value={liveAvgMph.toFixed(1)} unit="MPH" small />
-            <Metric testID="track-metric-max" label="MAX" value={maxMph.toFixed(1)} unit="MPH" small />
-          </View>
-          <View style={styles.metricsRow}>
-            <Metric testID="track-metric-moving" label="MOVING" value={fmtTime(movingSec)} unit="" small />
             <Metric testID="track-metric-time" label="TIME" value={fmtTime(totalSec)} unit="" small />
           </View>
+          {/* MAX speed and MOVING time are still tracked behind the scenes
+              (see maxMph / movingSec state above) and persisted with each
+              saved trip — they just don't live on this in-trip display per
+              user request. View them on a saved run via Past Trips. */}
         </Animated.View>
 
         {/* Action buttons — always visible (even when peeked) */}
