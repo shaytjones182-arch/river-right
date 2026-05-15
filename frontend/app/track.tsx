@@ -1275,6 +1275,10 @@ const styles = StyleSheet.create({
     flex: 1,
     marginHorizontal: 16,
     marginTop: 8,
+    // Reserve room at the bottom for the PEEKED sheet so the map's lower
+    // edge isn't permanently hidden behind it. The sheet still overlays the
+    // map when swiped up — it just floats; the map keeps its size.
+    marginBottom: 132,
     borderRadius: 20,
     overflow: "hidden",
     borderWidth: 1,
@@ -1283,10 +1287,17 @@ const styles = StyleSheet.create({
   },
   map: { flex: 1, ...(Platform.OS === "web" ? { minHeight: 240 } : {}) },
   panel: {
+    // Float OVER the map at the bottom of the screen instead of resizing it.
+    // Swiping up just expands the sheet upward; the underlying map is
+    // untouched (the lower portion gets covered, but the user can swipe the
+    // sheet back down to reveal it).
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: COLORS.surface,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    marginTop: 12,
     paddingHorizontal: 16,
     paddingBottom: 16,
     overflow: "hidden",
@@ -1295,6 +1306,20 @@ const styles = StyleSheet.create({
     // Anchor children to the BOTTOM so when the sheet height shrinks the
     // metrics get pushed up and clipped — buttons remain visible.
     justifyContent: "flex-end",
+    // Subtle elevation so the sheet visually "lifts" off the map.
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: -4 },
+        shadowOpacity: 0.12,
+        shadowRadius: 12,
+      },
+      android: { elevation: 12 },
+      web: {
+        // @ts-ignore - web-only CSS shorthand
+        boxShadow: "0 -4px 14px rgba(0,0,0,0.12)",
+      },
+    }),
   },
   dragHandleHit: {
     position: "absolute",
