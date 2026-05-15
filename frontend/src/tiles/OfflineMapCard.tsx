@@ -183,42 +183,35 @@ export default function OfflineMapCard({ riverId }: Props) {
   }
 
   // ── Already downloaded ──
+  // Shown as a single green "Downloaded" button mirroring the layout of the
+  // blue "Download offline map" button so the surrounding screen flow stays
+  // identical. Tapping it opens an action sheet with Re-download / Delete,
+  // so the management actions are still reachable but no longer clutter the
+  // screen.
   if (manifest && manifest.tileKeys.length > 0) {
-    const ageDays = Math.floor(
-      (Date.now() - manifest.downloadedAt) / (1000 * 60 * 60 * 24)
-    );
+    const handleManage = () => {
+      Alert.alert(
+        "Offline map",
+        `${manifest.tileKeys.length.toLocaleString()} USGS Topo tiles · ${fmtMB(
+          manifest.totalBytes
+        )} on device.`,
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Re-download", onPress: handleStart },
+          { text: "Delete", style: "destructive", onPress: handleDelete },
+        ]
+      );
+    };
     return (
-      <View style={styles.card}>
-        <View style={styles.row}>
-          <Ionicons name="checkmark-circle" size={18} color={COLORS.safe} />
-          <Text style={styles.title}>Offline map ready</Text>
-        </View>
-        <Text style={styles.subtitle}>
-          {manifest.tileKeys.length.toLocaleString()} USGS Topo tiles ·{" "}
-          {fmtMB(manifest.totalBytes)} on device
-          {ageDays >= 1 ? ` · downloaded ${ageDays} day${ageDays === 1 ? "" : "s"} ago` : " · downloaded today"}
-        </Text>
-        <View style={styles.btnRow}>
-          <TouchableOpacity
-            testID="offline-tiles-redownload"
-            style={[styles.btn, styles.btnSecondary]}
-            onPress={handleStart}
-            activeOpacity={0.85}
-          >
-            <Ionicons name="refresh" size={14} color={COLORS.primary} />
-            <Text style={styles.btnSecondaryText}>Re-download</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            testID="offline-tiles-delete"
-            style={[styles.btn, styles.btnDanger]}
-            onPress={handleDelete}
-            activeOpacity={0.85}
-          >
-            <Ionicons name="trash" size={14} color={COLORS.danger} />
-            <Text style={styles.btnDangerText}>Delete</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+      <TouchableOpacity
+        testID="offline-tiles-downloaded"
+        style={[styles.bareBtn, styles.btnDownloaded]}
+        onPress={handleManage}
+        activeOpacity={0.85}
+      >
+        <Ionicons name="checkmark-circle" size={16} color="#fff" />
+        <Text style={styles.btnPrimaryText}>Downloaded</Text>
+      </TouchableOpacity>
     );
   }
 
@@ -303,6 +296,9 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   btnPrimary: { backgroundColor: COLORS.primary },
+  // Solid green "Downloaded" state — used after a successful tile download.
+  // Mirrors the shape of btnPrimary so the layout doesn't shift.
+  btnDownloaded: { backgroundColor: COLORS.safe },
   btnPrimaryText: {
     color: "#fff",
     fontSize: 13.5,
