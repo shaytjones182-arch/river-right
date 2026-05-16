@@ -50,6 +50,8 @@ export type DownloadProgress = {
   bytes: number;
   inProgress: boolean;
   cancelled: boolean;
+  /** DEBUG: details of the first failed tile (HTTP status or exception). */
+  failDetail?: string;
 };
 
 type ProgressListener = (p: DownloadProgress) => void;
@@ -170,6 +172,11 @@ export function startTileDownload(
       const downloaded: string[] = [];
       const CONCURRENCY = 6;
       let cursor = 0;
+      // DEBUG: capture the FIRST tile failure so we can show a precise
+      // HTTP-status / exception in the alert that fires when the download
+      // wraps up. Without this, all we know is "N failed".
+      let firstFailReported = false;
+      let lastFailDetail = "";
 
       const worker = async () => {
         while (!cancelled) {
@@ -197,10 +204,8 @@ export function startTileDownload(
           await ensureDir(`${baseDirForRiver(riverId)}${t.z}/${t.x}/`);
 
           try {
-            const res = await FileSystem.downloadAsync(
-              usgsTopoTileUrl(t.z, t.x, t.y),
-              filePath
-            );
+            const tileUrl = usgsTopoTileUrl(t.z, t.x, t.y);
+            const res = await FileSystem.downloadAsync(tileUrl, filePath);
             if (res.status >= 200 && res.status < 300) {
               progress.completed += 1;
               // size header isn't always returned; getInfoAsync is reliable
@@ -215,9 +220,36 @@ export function startTileDownload(
               downloaded.push(tileKeyString(t.z, t.x, t.y));
             } else {
               progress.failed += 1;
+              // DEBUG: report the first non-2xx response so we can see why
+              // tiles are failing (e.g. 403, 429, 404, etc.).
+              if (!firstFailReported) {
+                firstFailReported = true;
+                console.warn(
+                  "[tile-fail] HTTP " +
+                    res.status +
+                    " url=" +
+                    tileUrl +
+                    " path=" +
+                    filePath
+                );
+                lastFailDetail = `HTTP ${res.status} for z=${t.z} x=${t.x} y=${t.y}`;
+                progress.failDetail = lastFailDetail;
+              }
             }
-          } catch {
+          } catch (e: any) {
             progress.failed += 1;
+            if (!firstFailReported) {
+              firstFailReported = true;
+              const msg = e?.message ?? String(e);
+              console.warn(
+                "[tile-fail] threw url=" +
+                  usgsTopoTileUrl(t.z, t.x, t.y) +
+                  " err=" +
+                  msg
+              );
+              lastFailDetail = `THREW: ${msg.substring(0, 200)}`;
+              progress.failDetail = lastFailDetail;
+            }
           }
           emit();
         }

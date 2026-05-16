@@ -134,7 +134,7 @@ export default function OfflineMapCard({ riverId }: Props) {
           firstEmitSeenRef.current = true;
           Alert.alert(
             "first emit",
-            `inProgress=${p.inProgress} completed=${p.completed} failed=${p.failed} total=${p.total}`
+            `inProgress=${p.inProgress} completed=${p.completed} failed=${p.failed} total=${p.total}\n\nfail detail: ${p.failDetail ?? "(none yet)"}`
           );
         }
         setProgress(p);
