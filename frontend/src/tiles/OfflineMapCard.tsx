@@ -71,14 +71,23 @@ export default function OfflineMapCard({ riverId }: Props) {
     let cancelled = false;
     (async () => {
       const m = await getTileManifest(riverId);
-      // TEMP DEBUG (remove once issue is diagnosed): surfaces what we
-      // actually read from AsyncStorage in the device's Metro/Expo Go log.
-      // eslint-disable-next-line no-console
-      console.log("[OfflineMapCard] readManifest for", riverId, "→", {
-        hasManifest: !!m,
-        tileKeys: m ? m.tileKeys.length : null,
-        downloadedAt: m ? m.downloadedAt : null,
-      });
+      // TEMP DEBUG (remove once issue is diagnosed): pops the raw manifest
+      // value on-device so we can see exactly what AsyncStorage returned
+      // without needing the Metro terminal.
+      Alert.alert(
+        "readManifest result",
+        JSON.stringify(
+          m
+            ? {
+                hasManifest: true,
+                tileKeys: m.tileKeys.length,
+                downloadedAt: m.downloadedAt,
+                basePath: m.basePath,
+                totalBytes: m.totalBytes,
+              }
+            : { hasManifest: false }
+        )
+      );
       if (!cancelled) setManifest(m);
     })();
     return () => {
