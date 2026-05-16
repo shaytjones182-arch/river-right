@@ -18,7 +18,13 @@
 
 import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as FileSystem from "expo-file-system";
+// NB: we deliberately import from `expo-file-system/legacy`. In Expo SDK 54
+// the top-level `expo-file-system` module flipped `downloadAsync` /
+// `getInfoAsync` / etc. from "deprecated warning" to "throws an error" so
+// they no longer work at all. The migration target is a new File/Directory
+// class API, but the legacy entry point keeps the existing function calls
+// working unchanged — perfect for our use here.
+import * as FileSystem from "expo-file-system/legacy";
 import {
   TileKey,
   TilePlan,
