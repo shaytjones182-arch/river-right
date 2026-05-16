@@ -38,6 +38,9 @@ export default function OfflineMapCard({ riverId }: Props) {
   const [manifest, setManifest] = useState<TileManifest | null>(null);
   const [progress, setProgress] = useState<DownloadProgress | null>(null);
   const cancelRef = useRef<(() => void) | null>(null);
+  // DEBUG: tracks whether we've shown the "first emit" alert yet so we can
+  // confirm the download progress callback is actually firing.
+  const firstEmitSeenRef = useRef(false);
 
   // Build the tile plan from the polyline bbox.
   useEffect(() => {
@@ -96,6 +99,8 @@ export default function OfflineMapCard({ riverId }: Props) {
   }, [riverId]);
 
   const handleStart = () => {
+    // Reset the first-emit alert flag so re-downloads also surface the alert.
+    firstEmitSeenRef.current = false;
     // DEBUG: unmistakable confirmation that the button-tap is reaching this
     // function. If you see this alert, the click is wired correctly and the
     // failure is downstream in the actual download. If you DON'T see this
@@ -122,6 +127,16 @@ export default function OfflineMapCard({ riverId }: Props) {
       DEFAULT_OFFLINE_ZOOM_MIN,
       DEFAULT_OFFLINE_ZOOM_MAX,
       async (p) => {
+        // DEBUG: alert exactly once on the FIRST progress event so we know
+        // the download actually started emitting (and isn't silently
+        // returning early). Subsequent emits just update state normally.
+        if (!firstEmitSeenRef.current) {
+          firstEmitSeenRef.current = true;
+          Alert.alert(
+            "first emit",
+            `inProgress=${p.inProgress} completed=${p.completed} failed=${p.failed} total=${p.total}`
+          );
+        }
         setProgress(p);
         if (!p.inProgress && !p.cancelled) {
           // Reload manifest once we're done.
@@ -131,6 +146,8 @@ export default function OfflineMapCard({ riverId }: Props) {
       }
     );
     cancelRef.current = cancel;
+    // DEBUG: confirm startTileDownload returned synchronously.
+    Alert.alert("startTileDownload returned", `cancel fn = ${typeof cancel}`);
   };
 
   const handleCancel = () => {
