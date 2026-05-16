@@ -96,6 +96,17 @@ export default function OfflineMapCard({ riverId }: Props) {
   }, [riverId]);
 
   const handleStart = () => {
+    // DEBUG: unmistakable confirmation that the button-tap is reaching this
+    // function. If you see this alert, the click is wired correctly and the
+    // failure is downstream in the actual download. If you DON'T see this
+    // alert, the click never made it to handleStart — point me at that and
+    // I'll trace why.
+    Alert.alert(
+      "handleStart fired",
+      `plan=${plan ? plan.count : "null"}` +
+        ` · riverId=${riverId}` +
+        ` · progress=${progress ? "set" : "null"}`
+    );
     if (!plan) return;
     // Kick off the data-bundle save IN PARALLEL with the tile download. This
     // is the ONLY place that writes the river meta + polyline + POIs to the
