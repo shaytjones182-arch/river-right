@@ -152,8 +152,12 @@ export default function OfflineMapCard({ riverId }: Props) {
     );
   };
 
+  // Build the rendered body in a local var so we can prepend the same
+  // always-visible debug strip regardless of which branch wins.
+  let body: React.ReactNode;
+
   if (!OFFLINE_TILES_SUPPORTED) {
-    return (
+    body = (
       <View style={[styles.card, styles.cardMuted]}>
         <View style={styles.row}>
           <Ionicons name="information-circle" size={18} color={COLORS.textMuted} />
@@ -164,14 +168,11 @@ export default function OfflineMapCard({ riverId }: Props) {
         </View>
       </View>
     );
-  }
-
-  // ── Active download in progress ──
-  if (progress?.inProgress) {
+  } else if (progress?.inProgress) {
     const pct = progress.total > 0
       ? Math.round((progress.completed / progress.total) * 100)
       : 0;
-    return (
+    body = (
       <View style={styles.card}>
         <View style={styles.row}>
           <Ionicons name="cloud-download" size={18} color={COLORS.primary} />
@@ -197,15 +198,9 @@ export default function OfflineMapCard({ riverId }: Props) {
         </View>
       </View>
     );
-  }
-
-  // ── Already downloaded ──
-  // Shown as a single green "Downloaded" button mirroring the layout of the
-  // blue "Download offline map" button so the surrounding screen flow stays
-  // identical. Tapping it opens an action sheet with Re-download / Delete,
-  // so the management actions are still reachable but no longer clutter the
-  // screen.
-  if (manifest && manifest.tileKeys.length > 0) {
+  } else if (manifest && manifest.tileKeys.length > 0) {
+    // ── Already downloaded — single green "Downloaded" button. Tapping it
+    // opens an action sheet with Re-download / Delete actions.
     const handleManage = () => {
       Alert.alert(
         "Offline map",
@@ -219,7 +214,7 @@ export default function OfflineMapCard({ riverId }: Props) {
         ]
       );
     };
-    return (
+    body = (
       <TouchableOpacity
         testID="offline-tiles-downloaded"
         style={[styles.bareBtn, styles.btnDownloaded]}
@@ -230,20 +225,38 @@ export default function OfflineMapCard({ riverId }: Props) {
         <Text style={styles.btnPrimaryText}>Downloaded</Text>
       </TouchableOpacity>
     );
+  } else {
+    // ── Nothing yet — bare blue "Download offline map" button.
+    body = (
+      <TouchableOpacity
+        testID="offline-tiles-download"
+        style={[styles.bareBtn, styles.btnPrimary, !plan && styles.btnDisabled]}
+        onPress={handleStart}
+        disabled={!plan}
+        activeOpacity={0.85}
+      >
+        <Ionicons name="cloud-download" size={14} color="#fff" />
+        <Text style={styles.btnPrimaryText}>Download offline map</Text>
+      </TouchableOpacity>
+    );
   }
 
-  // ── Nothing yet — show just the download button (no surrounding card) ──
+  // TEMP DEBUG STRIP — always rendered above whatever branch wins so we can
+  // see why the "Downloaded" button isn't showing without needing alerts or
+  // Metro logs. Remove this block once the bug is diagnosed.
+  const debugText =
+    `DBG manifest=${manifest ? "y" : "n"}` +
+    ` keys=${manifest ? manifest.tileKeys.length : "-"}` +
+    ` prog=${progress ? (progress.inProgress ? "running" : "done") : "none"}` +
+    ` sup=${OFFLINE_TILES_SUPPORTED ? "y" : "n"}` +
+    ` plan=${plan ? plan.count : "-"}`;
   return (
-    <TouchableOpacity
-      testID="offline-tiles-download"
-      style={[styles.bareBtn, styles.btnPrimary, !plan && styles.btnDisabled]}
-      onPress={handleStart}
-      disabled={!plan}
-      activeOpacity={0.85}
-    >
-      <Ionicons name="cloud-download" size={14} color="#fff" />
-      <Text style={styles.btnPrimaryText}>Download offline map</Text>
-    </TouchableOpacity>
+    <View>
+      <View style={styles.dbgStrip}>
+        <Text style={styles.dbgText}>{debugText}</Text>
+      </View>
+      {body}
+    </View>
   );
 }
 
@@ -339,4 +352,15 @@ const styles = StyleSheet.create({
   },
   btnDangerText: { color: COLORS.danger, fontSize: 13, fontWeight: "800" },
   btnDisabled: { opacity: 0.6 },
+  // TEMP debug strip — bright yellow so it can't be missed on screen.
+  dbgStrip: {
+    backgroundColor: "#FFE066",
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    marginTop: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#C49B00",
+  },
+  dbgText: { fontSize: 11, color: "#5B4500", fontWeight: "800" },
 });
