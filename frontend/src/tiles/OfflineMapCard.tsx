@@ -256,7 +256,7 @@ export default function OfflineMapCard({ riverId }: Props) {
   // see why the "Downloaded" button isn't showing without needing alerts or
   // Metro logs. Remove this block once the bug is diagnosed.
   const debugText =
-    `DBG manifest=${manifest ? "y" : "n"}` +
+    `v3 manifest=${manifest ? "y" : "n"}` +
     ` keys=${manifest ? manifest.tileKeys.length : "-"}` +
     ` prog=${
       progress
