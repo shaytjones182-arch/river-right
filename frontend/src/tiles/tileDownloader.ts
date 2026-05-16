@@ -232,18 +232,22 @@ export function startTileDownload(
         return;
       }
 
-      // Persist manifest. Even partial downloads are useful — Leaflet will
-      // serve from cache what we have, and fall back to network for the rest.
-      const manifest: TileManifest = {
-        riverId,
-        zoomMin,
-        zoomMax,
-        tileKeys: downloaded,
-        basePath: baseDirForRiver(riverId),
-        totalBytes: progress.bytes,
-        downloadedAt: Date.now(),
-      };
-      await writeManifest(manifest);
+      // Persist manifest. We DO NOT overwrite an existing manifest with an
+      // empty one — that would clobber a previously-successful download if
+      // a re-run happened to fail every tile (e.g. all tiles 429'd by the
+      // tile server). Only write when we actually downloaded something.
+      if (downloaded.length > 0) {
+        const manifest: TileManifest = {
+          riverId,
+          zoomMin,
+          zoomMax,
+          tileKeys: downloaded,
+          basePath: baseDirForRiver(riverId),
+          totalBytes: progress.bytes,
+          downloadedAt: Date.now(),
+        };
+        await writeManifest(manifest);
+      }
 
       progress.inProgress = false;
       emit();

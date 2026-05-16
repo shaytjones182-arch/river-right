@@ -247,13 +247,30 @@ export default function OfflineMapCard({ riverId }: Props) {
   const debugText =
     `DBG manifest=${manifest ? "y" : "n"}` +
     ` keys=${manifest ? manifest.tileKeys.length : "-"}` +
-    ` prog=${progress ? (progress.inProgress ? "running" : "done") : "none"}` +
+    ` prog=${
+      progress
+        ? `${progress.inProgress ? "run" : "done"} ` +
+          `c=${progress.completed} f=${progress.failed} t=${progress.total}`
+        : "none"
+    }` +
     ` sup=${OFFLINE_TILES_SUPPORTED ? "y" : "n"}` +
     ` plan=${plan ? plan.count : "-"}`;
   return (
     <View>
       <View style={styles.dbgStrip}>
         <Text style={styles.dbgText}>{debugText}</Text>
+        <TouchableOpacity
+          onPress={async () => {
+            await deleteRiverOfflineBundle(riverId);
+            await deleteOfflineTiles(riverId);
+            setManifest(null);
+            setProgress(null);
+            Alert.alert("Reset", "Manifest + tiles cleared. Try Download now.");
+          }}
+          style={styles.dbgBtn}
+        >
+          <Text style={styles.dbgBtnText}>RESET</Text>
+        </TouchableOpacity>
       </View>
       {body}
     </View>
@@ -361,6 +378,16 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: "#C49B00",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
-  dbgText: { fontSize: 11, color: "#5B4500", fontWeight: "800" },
+  dbgText: { fontSize: 11, color: "#5B4500", fontWeight: "800", flex: 1 },
+  dbgBtn: {
+    backgroundColor: "#5B4500",
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+  },
+  dbgBtnText: { color: "#FFE066", fontSize: 10, fontWeight: "900" },
 });
