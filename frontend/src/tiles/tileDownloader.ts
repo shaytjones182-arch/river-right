@@ -82,10 +82,26 @@ function isWeb() {
   return Platform.OS === "web";
 }
 
-/** Base FileSystem directory for a given river's tiles (with trailing slash). */
-function baseDirForRiver(riverId: string): string {
+/** Subdir within `FileSystem.documentDirectory` (no leading slash, with
+ *  trailing slash) where a river's offline tiles live.
+ *
+ *  We store ONLY this relative path in the manifest. `documentDirectory`
+ *  is intentionally NOT baked in, because in Expo Go (and after iOS
+ *  container-UUID rotations / Expo Go upgrades / Metro rebuilds) the
+ *  absolute path of `documentDirectory` can change between sessions
+ *  even though the actual on-disk files are still there. If we cached
+ *  the absolute path, the manifest's file:// URLs would point to a
+ *  stale directory and every tile would silently 404 inside the
+ *  WebView — which is exactly what was breaking offline rendering. */
+function baseDirRelativeForRiver(riverId: string): string {
   const safeId = riverId.replace(/[^a-zA-Z0-9_-]/g, "-");
-  return `${FileSystem.documentDirectory}offlineTiles/${safeId}/`;
+  return `offlineTiles/${safeId}/`;
+}
+
+/** Absolute file:// path for a river's tile dir, built against the
+ *  CURRENT documentDirectory. Use this for filesystem writes/reads. */
+function baseDirForRiver(riverId: string): string {
+  return `${FileSystem.documentDirectory}${baseDirRelativeForRiver(riverId)}`;
 }
 
 /** Local file:// URL for a single tile. USGS Topo serves JPEG bytes,
@@ -383,7 +399,14 @@ export function startTileDownload(
           zoomMin,
           zoomMax,
           tileKeys: downloaded,
-          basePath: baseDirForRiver(riverId),
+          // Store the RELATIVE path inside documentDirectory, NOT the
+          // absolute file:// path. Expo Go's documentDirectory can
+          // change between sessions (after Expo Go upgrades, iOS app
+          // container UUID rotations, Metro rebuilds, etc.), so an
+          // absolute path baked in here would become a stale 404 on
+          // the next launch even though the actual files are still
+          // on disk under the new documentDirectory.
+          basePath: baseDirRelativeForRiver(riverId),
           totalBytes: progress.bytes,
           downloadedAt: Date.now(),
         };
@@ -430,7 +453,16 @@ export async function hasAnyOfflineTiles(riverId: string): Promise<boolean> {
 /** Returns the union of all downloaded tile manifests across every river,
  *  formatted as { keys: ["z/x/y" → file://URL], … } so a single Leaflet
  *  layer can serve them. Used by the Track tab where there's no notion of
- *  a "currently selected" river. */
+ *  a "currently selected" river.
+ *
+ *  Manifest basePath handling: manifests written by the CURRENT downloader
+ *  store a RELATIVE path (e.g. `offlineTiles/<id>/`). We prepend the
+ *  current `FileSystem.documentDirectory` at read time so the file://
+ *  URLs are always valid even if the documentDirectory has rotated since
+ *  the download. Older manifests may still contain absolute paths from
+ *  before this fix — those are detected (they start with `file://`) and
+ *  used as-is for backward compatibility.
+ */
 export async function getMergedOfflineManifest(): Promise<{
   /** Map of "z/x/y" key → absolute file:// URL */
   tileToUrl: Record<string, string>;
@@ -441,13 +473,20 @@ export async function getMergedOfflineManifest(): Promise<{
     if (manifestKeys.length === 0) return null;
     const pairs = await AsyncStorage.multiGet(manifestKeys);
     const tileToUrl: Record<string, string> = {};
+    const docDir = FileSystem.documentDirectory ?? "";
     for (const [, raw] of pairs) {
       if (!raw) continue;
       try {
         const m: TileManifest = JSON.parse(raw);
+        // Resolve the manifest's basePath against the CURRENT
+        // documentDirectory. If the stored value already begins with
+        // `file://` it's a legacy absolute path — honor it as-is.
+        const isAbsolute =
+          typeof m.basePath === "string" && m.basePath.startsWith("file://");
+        const resolvedBase = isAbsolute ? m.basePath : `${docDir}${m.basePath}`;
         for (const k of m.tileKeys) {
           if (!(k in tileToUrl)) {
-            tileToUrl[k] = `${m.basePath}${k}.jpg`;
+            tileToUrl[k] = `${resolvedBase}${k}.jpg`;
           }
         }
       } catch {
