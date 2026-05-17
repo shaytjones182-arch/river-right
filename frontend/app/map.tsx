@@ -21,8 +21,7 @@ import {
   fetchFeaturedWithCache,
 } from "../src/offlineCache";
 import {
-  getTileManifest,
-  TileManifest,
+  getMergedOfflineManifest,
 } from "../src/tiles/tileDownloader";
 import {
   getMapView,
@@ -83,7 +82,7 @@ const SVG_ICONS = {
 
 const buildMapHtml = (
   initialView?: { lat: number; lng: number; zoom: number } | null,
-  offlineTiles?: { basePath: string; keys: string[] } | null
+  offlineTiles?: { tileToUrl: Record<string, string> } | null
 ) => `<!DOCTYPE html>
 <html><head>
 <meta name="viewport" content="initial-scale=1.0,maximum-scale=1.0,user-scalable=no" />
@@ -201,60 +200,77 @@ const buildMapHtml = (
   var BLANK_TILE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNgAAIAAAUAAeImBZsAAAAASUVORK5CYII=';
 
   // ── Offline-tile support ──
-  // If we've downloaded tiles for the active run, prefer them over the
-  // network. We build a Set of "z/x/y" keys and a base path; the custom
-  // tile layer checks both and falls back to USGS HTTPS otherwise.
-  var OFFLINE_BASE = ${offlineTiles ? JSON.stringify(offlineTiles.basePath) : "null"};
-  var OFFLINE_KEYS = new Set(${offlineTiles ? JSON.stringify(offlineTiles.keys) : "[]"});
-  if (OFFLINE_BASE && OFFLINE_KEYS.size > 0) {
-    var OfflineFirstLayer = L.TileLayer.extend({
-      getTileUrl: function(coords) {
-        var key = coords.z + "/" + coords.x + "/" + coords.y;
-        if (OFFLINE_KEYS.has(key)) {
-          // Local file:// URL — requires WebView's allowFileAccess flags
-          return OFFLINE_BASE + coords.z + "/" + coords.x + "/" + coords.y + ".png";
-        }
-        // Outside the downloaded coverage. If we look online, fall through
-        // to USGS so users with service still see current tiles. If we're
-        // offline, render a transparent placeholder and raise the
-        // "outside-coverage" banner.
-        var online = (typeof navigator === 'undefined') || (navigator.onLine !== false);
-        if (online) {
-          return 'https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/'
-            + coords.z + "/" + coords.y + "/" + coords.x;
-        }
-        showOutsideCoverageBanner();
-        return BLANK_TILE;
+  // If we've downloaded tiles for ANY river, prefer them over the network.
+  // OFFLINE_TILES is a { "z/x/y" -> "file://…/z/x/y.png" } map covering every
+  // river the user has cached. We always install the OfflineFirstLayer
+  // (even when the map is empty) so the boundary-check fallback below is
+  // ALWAYS reachable — otherwise an empty cache silently degrades to a
+  // plain HTTPS layer and we lose the chance to surface the
+  // "outside coverage" banner.
+  var OFFLINE_TILES = ${offlineTiles ? JSON.stringify(offlineTiles.tileToUrl) : "null"};
+  var HAVE_OFFLINE = OFFLINE_TILES && Object.keys(OFFLINE_TILES).length > 0;
+  var OfflineFirstLayer = L.TileLayer.extend({
+    getTileUrl: function(coords) {
+      var key = coords.z + "/" + coords.x + "/" + coords.y;
+      if (HAVE_OFFLINE && OFFLINE_TILES[key]) {
+        return OFFLINE_TILES[key];
       }
-    });
-    usgsTopo = new OfflineFirstLayer('', { maxZoom: 16 });
-  }
+      // Outside the downloaded coverage. If we look online, fall through
+      // to USGS so users with service still see live tiles. If we're
+      // offline, render a transparent placeholder and surface the
+      // appropriate boundary banner.
+      var online = (typeof navigator === 'undefined') || (navigator.onLine !== false);
+      if (online) {
+        return 'https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/'
+          + coords.z + "/" + coords.y + "/" + coords.x;
+      }
+      showOfflineBoundaryBanner();
+      return BLANK_TILE;
+    }
+  });
+  usgsTopo = new OfflineFirstLayer('', { maxZoom: 16 });
   usgsTopo.addTo(map);
 
-  // Both banners share the same DOM element. The generic offline banner is
-  // shown when USGS HTTPS fails several times in a row; the
-  // "outside coverage" banner is shown when the user has offline tiles but
-  // panned / zoomed past what was saved.
+  // Both banners share the same DOM element. The boundary banner is shown
+  // whenever we're offline AND a requested tile is outside the downloaded
+  // coverage (or no coverage exists at all). The generic "check your
+  // connection" banner is reserved for the ONLINE case — when the device
+  // claims to be online but USGS HTTPS keeps failing.
   var __tileErrCount = 0;
   var __tileBanner = document.getElementById('tile-banner');
-  var __outsideShownAt = 0;
-  function showOutsideCoverageBanner() {
+  var __boundaryShownAt = 0;
+  function showOfflineBoundaryBanner() {
     if (!__tileBanner) return;
     var now = Date.now();
-    if (now - __outsideShownAt < 6000) return; // 6s cooldown
-    __outsideShownAt = now;
+    if (now - __boundaryShownAt < 6000) return; // 6s cooldown
+    __boundaryShownAt = now;
     var span = __tileBanner.querySelector('span');
-    if (span) span.textContent = "Downloaded offline data doesn't cover this level of detail for this area. Pan toward the river or zoom out.";
+    if (!span) return;
+    span.textContent = HAVE_OFFLINE
+      ? "Downloaded offline data doesn't cover this level of detail for this area. Pan toward the river or zoom out."
+      : "You're offline and no map tiles have been downloaded for this area. Open a river and tap 'Download offline map' before going off the grid.";
     __tileBanner.classList.add('show');
     setTimeout(function(){ __tileBanner.classList.remove('show'); }, 4500);
   }
   usgsTopo.on('tileerror', function(){
     __tileErrCount++;
-    if (__tileErrCount >= 3 && __tileBanner) {
-      var span = __tileBanner.querySelector('span');
-      if (span) span.textContent = 'Map tiles unavailable — check your connection.';
-      __tileBanner.classList.add('show');
+    if (__tileErrCount < 3 || !__tileBanner) return;
+    var span = __tileBanner.querySelector('span');
+    if (!span) return;
+    // CRITICAL: consult the offline cache state BEFORE defaulting to a
+    // connection error. If the device is offline, "check your connection"
+    // is useless advice — surface the boundary banner instead, which
+    // tells the user something actionable based on whether they have
+    // any local coverage.
+    var isOffline = (typeof navigator !== 'undefined') && (navigator.onLine === false);
+    if (isOffline) {
+      span.textContent = HAVE_OFFLINE
+        ? "Downloaded offline data doesn't cover this level of detail for this area. Pan toward the river or zoom out."
+        : "You're offline and no map tiles have been downloaded for this area. Open a river and tap 'Download offline map' before going off the grid.";
+    } else {
+      span.textContent = 'Map tiles unavailable — check your connection.';
     }
+    __tileBanner.classList.add('show');
   });
   usgsTopo.on('tileload', function(){
     if (__tileErrCount > 0) {
@@ -687,22 +703,24 @@ export default function MapScreen() {
     };
   }, [handleMessage]);
 
-  // Synchronously load any cached tile manifest for the saved-selected river,
-  // so the very first paint of the WebView already routes file:// for tiles
-  // we have on disk. Async refresh below catches changes mid-session.
+  // Synchronously load the merged offline-tile manifest so the WebView's
+  // very first paint can route file:// for any tile we have on disk. This
+  // is the boundary-check fuel: without it, OFFLINE_TILES is empty and the
+  // layer falls back to plain HTTPS-only, causing every offline tile
+  // fetch to fail straight into the "check your connection" path.
+  //
+  // We use the MERGED manifest (union of every river's downloads) rather
+  // than only the selected river's, because the USA overview map has no
+  // notion of an "active" run — a paddler with downloads for any river
+  // should still see them here.
   const [offlineTiles, setOfflineTiles] = useState<{
-    basePath: string;
-    keys: string[];
+    tileToUrl: Record<string, string>;
   } | null>(null);
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const id = getMapSelectedRiverId();
-      if (!id) return;
-      const m = await getTileManifest(id);
-      if (!cancelled && m && m.tileKeys.length > 0) {
-        setOfflineTiles({ basePath: m.basePath, keys: m.tileKeys });
-      }
+      const merged = await getMergedOfflineManifest();
+      if (!cancelled && merged) setOfflineTiles(merged);
     })();
     return () => {
       cancelled = true;
