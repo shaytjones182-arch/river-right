@@ -38,9 +38,6 @@ export default function OfflineMapCard({ riverId }: Props) {
   const [manifest, setManifest] = useState<TileManifest | null>(null);
   const [progress, setProgress] = useState<DownloadProgress | null>(null);
   const cancelRef = useRef<(() => void) | null>(null);
-  // DEBUG: tracks whether we've shown the "first emit" alert yet so we can
-  // confirm the download progress callback is actually firing.
-  const firstEmitSeenRef = useRef(false);
 
   // Build the tile plan from the polyline bbox.
   useEffect(() => {
@@ -74,23 +71,6 @@ export default function OfflineMapCard({ riverId }: Props) {
     let cancelled = false;
     (async () => {
       const m = await getTileManifest(riverId);
-      // TEMP DEBUG (remove once issue is diagnosed): pops the raw manifest
-      // value on-device so we can see exactly what AsyncStorage returned
-      // without needing the Metro terminal.
-      Alert.alert(
-        "readManifest result",
-        JSON.stringify(
-          m
-            ? {
-                hasManifest: true,
-                tileKeys: m.tileKeys.length,
-                downloadedAt: m.downloadedAt,
-                basePath: m.basePath,
-                totalBytes: m.totalBytes,
-              }
-            : { hasManifest: false }
-        )
-      );
       if (!cancelled) setManifest(m);
     })();
     return () => {
@@ -99,19 +79,6 @@ export default function OfflineMapCard({ riverId }: Props) {
   }, [riverId]);
 
   const handleStart = () => {
-    // Reset the first-emit alert flag so re-downloads also surface the alert.
-    firstEmitSeenRef.current = false;
-    // DEBUG: unmistakable confirmation that the button-tap is reaching this
-    // function. If you see this alert, the click is wired correctly and the
-    // failure is downstream in the actual download. If you DON'T see this
-    // alert, the click never made it to handleStart — point me at that and
-    // I'll trace why.
-    Alert.alert(
-      "handleStart fired",
-      `plan=${plan ? plan.count : "null"}` +
-        ` · riverId=${riverId}` +
-        ` · progress=${progress ? "set" : "null"}`
-    );
     if (!plan) return;
     // Kick off the data-bundle save IN PARALLEL with the tile download. This
     // is the ONLY place that writes the river meta + polyline + POIs to the
@@ -127,16 +94,6 @@ export default function OfflineMapCard({ riverId }: Props) {
       DEFAULT_OFFLINE_ZOOM_MIN,
       DEFAULT_OFFLINE_ZOOM_MAX,
       async (p) => {
-        // DEBUG: alert exactly once on the FIRST progress event so we know
-        // the download actually started emitting (and isn't silently
-        // returning early). Subsequent emits just update state normally.
-        if (!firstEmitSeenRef.current) {
-          firstEmitSeenRef.current = true;
-          Alert.alert(
-            "first emit",
-            `inProgress=${p.inProgress} completed=${p.completed} failed=${p.failed} total=${p.total}\n\nfail detail: ${p.failDetail ?? "(none yet)"}`
-          );
-        }
         setProgress(p);
         if (!p.inProgress && !p.cancelled) {
           // Reload manifest once we're done.
@@ -146,8 +103,6 @@ export default function OfflineMapCard({ riverId }: Props) {
       }
     );
     cancelRef.current = cancel;
-    // DEBUG: confirm startTileDownload returned synchronously.
-    Alert.alert("startTileDownload returned", `cancel fn = ${typeof cancel}`);
   };
 
   const handleCancel = () => {
@@ -180,8 +135,7 @@ export default function OfflineMapCard({ riverId }: Props) {
     );
   };
 
-  // Build the rendered body in a local var so we can prepend the same
-  // always-visible debug strip regardless of which branch wins.
+  // Build the rendered body based on current state.
   let body: React.ReactNode;
 
   if (!OFFLINE_TILES_SUPPORTED) {
@@ -269,40 +223,7 @@ export default function OfflineMapCard({ riverId }: Props) {
     );
   }
 
-  // TEMP DEBUG STRIP — always rendered above whatever branch wins so we can
-  // see why the "Downloaded" button isn't showing without needing alerts or
-  // Metro logs. Remove this block once the bug is diagnosed.
-  const debugText =
-    `v3 manifest=${manifest ? "y" : "n"}` +
-    ` keys=${manifest ? manifest.tileKeys.length : "-"}` +
-    ` prog=${
-      progress
-        ? `${progress.inProgress ? "run" : "done"} ` +
-          `c=${progress.completed} f=${progress.failed} t=${progress.total}`
-        : "none"
-    }` +
-    ` sup=${OFFLINE_TILES_SUPPORTED ? "y" : "n"}` +
-    ` plan=${plan ? plan.count : "-"}`;
-  return (
-    <View>
-      <View style={styles.dbgStrip}>
-        <Text style={styles.dbgText}>{debugText}</Text>
-        <TouchableOpacity
-          onPress={async () => {
-            await deleteRiverOfflineBundle(riverId);
-            await deleteOfflineTiles(riverId);
-            setManifest(null);
-            setProgress(null);
-            Alert.alert("Reset", "Manifest + tiles cleared. Try Download now.");
-          }}
-          style={styles.dbgBtn}
-        >
-          <Text style={styles.dbgBtnText}>RESET</Text>
-        </TouchableOpacity>
-      </View>
-      {body}
-    </View>
-  );
+  return body;
 }
 
 const styles = StyleSheet.create({
@@ -397,25 +318,4 @@ const styles = StyleSheet.create({
   },
   btnDangerText: { color: COLORS.danger, fontSize: 13, fontWeight: "800" },
   btnDisabled: { opacity: 0.6 },
-  // TEMP debug strip — bright yellow so it can't be missed on screen.
-  dbgStrip: {
-    backgroundColor: "#FFE066",
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    marginTop: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#C49B00",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  dbgText: { fontSize: 11, color: "#5B4500", fontWeight: "800", flex: 1 },
-  dbgBtn: {
-    backgroundColor: "#5B4500",
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 6,
-  },
-  dbgBtnText: { color: "#FFE066", fontSize: 10, fontWeight: "900" },
 });

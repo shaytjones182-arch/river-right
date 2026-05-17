@@ -56,7 +56,7 @@ export type DownloadProgress = {
   bytes: number;
   inProgress: boolean;
   cancelled: boolean;
-  /** DEBUG: details of the first failed tile (HTTP status or exception). */
+  /** Details of the first failed tile (HTTP status or exception). */
   failDetail?: string;
 };
 
@@ -178,9 +178,9 @@ export function startTileDownload(
       const downloaded: string[] = [];
       const CONCURRENCY = 6;
       let cursor = 0;
-      // DEBUG: capture the FIRST tile failure so we can show a precise
-      // HTTP-status / exception in the alert that fires when the download
-      // wraps up. Without this, all we know is "N failed".
+      // Capture the FIRST tile failure so we can surface a precise
+      // HTTP-status / exception message in the progress payload. Without
+      // this, all the UI would see is "N failed".
       let firstFailReported = false;
       let lastFailDetail = "";
 
@@ -226,7 +226,7 @@ export function startTileDownload(
               downloaded.push(tileKeyString(t.z, t.x, t.y));
             } else {
               progress.failed += 1;
-              // DEBUG: report the first non-2xx response so we can see why
+              // Report the first non-2xx response so we can surface why
               // tiles are failing (e.g. 403, 429, 404, etc.).
               if (!firstFailReported) {
                 firstFailReported = true;
