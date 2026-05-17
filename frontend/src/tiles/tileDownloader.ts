@@ -4,7 +4,14 @@
 // them via `file://` URLs when the user is off the grid.
 //
 // File layout:
-//   ${documentDirectory}offlineTiles/${riverId}/${z}/${x}/${y}.png
+//   ${documentDirectory}offlineTiles/${riverId}/${z}/${x}/${y}.jpg
+//
+// USGS Topo's basemap tile cache serves JPEG bytes (NOT PNG), so we save
+// with a .jpg extension on disk. Storing JPEG bytes under a .png filename
+// — which an earlier version of this file did — caused iOS WKWebView to
+// render the tiles unreliably (MIME-sniff sometimes worked, sometimes
+// rendered the file's average color as a flat fill), which is the root
+// cause of the "uniformly colored tiles in offline mode" bug.
 //
 // Manifest (in AsyncStorage) records WHICH tiles a given river has on disk
 // plus the local base path used to construct file:// URLs. The Leaflet HTML
@@ -81,33 +88,58 @@ function baseDirForRiver(riverId: string): string {
   return `${FileSystem.documentDirectory}offlineTiles/${safeId}/`;
 }
 
-/** Local file:// URL for a single tile. */
+/** Local file:// URL for a single tile. USGS Topo serves JPEG bytes,
+ *  so we store with a .jpg extension to match the actual content type. */
 function tileFilePath(riverId: string, z: number, x: number, y: number): string {
-  return `${baseDirForRiver(riverId)}${z}/${x}/${y}.png`;
+  return `${baseDirForRiver(riverId)}${z}/${x}/${y}.jpg`;
 }
 
 /**
- * Verify that the file at `path` is actually a valid PNG and not an
- * HTML/JSON error body, an ArcGIS "tile unavailable" placeholder, or a
- * truncated download that got saved with a `.png` extension anyway.
+ * Verify that the file at `path` is actually a valid image (JPEG or PNG)
+ * and not an HTML/JSON error body, an ArcGIS "tile unavailable"
+ * placeholder, or a truncated download.
  *
- * Every real PNG starts with the same 8 magic bytes:
- *   0x89 0x50 0x4E 0x47 0x0D 0x0A 0x1A 0x0A
- * Base64-encoded those bytes are `iVBORw0KGgo=`, so we just read the
- * first 8 bytes and prefix-check. This is ~free (a single syscall, no
- * full-file read) and catches the silent-failure mode where the user
- * sees uniformly colored tiles on-device because the saved bytes are
- * not actually a USGS Topo PNG.
+ * Magic-byte prefixes (in base64):
+ *   PNG  →  bytes 89 50 4E 47 …  →  base64 "iVBORw0KGgo"
+ *   JPEG →  bytes FF D8 FF …     →  base64 "/9j/"
+ *
+ * USGS Topo currently serves JPEG, so the JPEG branch is the hot path.
+ * We still accept PNG defensively in case the service ever flips formats
+ * (some ArcGIS caches do this for partially-transparent edge tiles).
+ *
+ * We read the WHOLE file rather than using
+ * `readAsStringAsync({ position, length })`, because in
+ * expo-file-system 19.x's legacy entry point those partial-read options
+ * are honored inconsistently — on some builds they silently throw, which
+ * would make EVERY tile look invalid and freeze the download at 0%
+ * (which is exactly what happened in a previous iteration of this code).
+ * Reading the full ~25 KB tile costs <20 ms and is not worth the fragility.
  */
-async function isValidPng(path: string): Promise<boolean> {
+let _validateLoggedFirst = false;
+async function isValidImage(path: string): Promise<boolean> {
   try {
-    const head = await FileSystem.readAsStringAsync(path, {
+    const data = await FileSystem.readAsStringAsync(path, {
       encoding: FileSystem.EncodingType.Base64,
-      position: 0,
-      length: 8,
     });
-    return head.startsWith("iVBORw0KGgo");
-  } catch {
+    if (data.startsWith("/9j/")) return true;           // JPEG
+    if (data.startsWith("iVBORw0KGgo")) return true;    // PNG
+    if (!_validateLoggedFirst) {
+      _validateLoggedFirst = true;
+      console.warn(
+        "[tile-validate] not a JPEG/PNG — head=" +
+          data.substring(0, 60) +
+          " path=" +
+          path
+      );
+    }
+    return false;
+  } catch (e: any) {
+    if (!_validateLoggedFirst) {
+      _validateLoggedFirst = true;
+      console.warn(
+        "[tile-validate] read threw: " + (e?.message ?? String(e))
+      );
+    }
     return false;
   }
 }
@@ -226,7 +258,7 @@ export function startTileDownload(
               size: true,
             });
             if (info.exists && (info.size ?? 0) > 0) {
-              if (await isValidPng(filePath)) {
+              if (await isValidImage(filePath)) {
                 progress.completed += 1;
                 progress.bytes += info.size ?? 0;
                 downloaded.push(tileKeyString(t.z, t.x, t.y));
@@ -256,17 +288,17 @@ export function startTileDownload(
               // payload, or a placeholder "tile unavailable" image. We
               // confirm the bytes on disk really are a PNG before
               // counting the tile as good.
-              if (!(await isValidPng(filePath))) {
+              if (!(await isValidImage(filePath))) {
                 progress.failed += 1;
                 if (!firstFailReported) {
                   firstFailReported = true;
                   console.warn(
-                    "[tile-fail] HTTP 2xx but not a PNG url=" +
+                    "[tile-fail] HTTP 2xx but not a JPEG/PNG url=" +
                       tileUrl +
                       " path=" +
                       filePath
                   );
-                  lastFailDetail = `HTTP ${res.status} but non-PNG body for z=${t.z} x=${t.x} y=${t.y}`;
+                  lastFailDetail = `HTTP ${res.status} but non-image body for z=${t.z} x=${t.x} y=${t.y}`;
                   progress.failDetail = lastFailDetail;
                 }
                 // Delete the bogus file so a future re-run picks it up.
@@ -415,7 +447,7 @@ export async function getMergedOfflineManifest(): Promise<{
         const m: TileManifest = JSON.parse(raw);
         for (const k of m.tileKeys) {
           if (!(k in tileToUrl)) {
-            tileToUrl[k] = `${m.basePath}${k}.png`;
+            tileToUrl[k] = `${m.basePath}${k}.jpg`;
           }
         }
       } catch {
