@@ -12,11 +12,22 @@ import {
   TouchableOpacity,
   ScrollView,
   Modal,
+  LayoutAnimation,
+  Platform,
+  UIManager,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 import { COLORS } from "./theme";
+import TermsOfServiceContent from "./TermsOfServiceContent";
+
+// Enable smooth LayoutAnimation expand/collapse on Android.
+if (
+  Platform.OS === "android" &&
+  UIManager.setLayoutAnimationEnabledExperimental
+) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 type Props = {
   visible: boolean;
@@ -25,8 +36,13 @@ type Props = {
 
 export default function TermsAcceptanceModal({ visible, onAccept }: Props) {
   const [checked, setChecked] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const insets = useSafeAreaInsets();
-  const router = useRouter();
+
+  const toggleExpanded = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setExpanded((v) => !v);
+  };
 
   return (
     <Modal
@@ -100,18 +116,39 @@ export default function TermsAcceptanceModal({ visible, onAccept }: Props) {
             body="By using RiverRight you accept these terms and assume full responsibility for your safety and your group's safety."
           />
 
-          {/* Link to full ToS */}
+          {/* Expandable full Terms of Service dropdown */}
           <TouchableOpacity
-            testID="terms-acceptance-read-full"
-            style={styles.linkBtn}
+            testID="terms-acceptance-expand-toggle"
+            style={[
+              styles.dropdownHeader,
+              expanded && styles.dropdownHeaderOpen,
+            ]}
             activeOpacity={0.7}
-            onPress={() => {
-              router.push("/about/terms");
-            }}
+            onPress={toggleExpanded}
           >
-            <Ionicons name="open-outline" size={16} color={COLORS.primary} />
-            <Text style={styles.linkBtnText}>Read the full Terms of Service</Text>
+            <Ionicons
+              name="document-text-outline"
+              size={18}
+              color={COLORS.primary}
+            />
+            <Text style={styles.dropdownHeaderText}>
+              Full Terms of Service
+            </Text>
+            <Ionicons
+              name={expanded ? "chevron-up" : "chevron-down"}
+              size={20}
+              color={COLORS.primary}
+            />
           </TouchableOpacity>
+
+          {expanded ? (
+            <View
+              testID="terms-acceptance-expanded-content"
+              style={styles.dropdownBody}
+            >
+              <TermsOfServiceContent />
+            </View>
+          ) : null}
         </ScrollView>
 
         {/* Footer: checkbox + accept button */}
@@ -279,19 +316,42 @@ const styles = StyleSheet.create({
     color: COLORS.textMain,
     marginTop: 2,
   },
-  linkBtn: {
+  // Expandable "Full Terms of Service" dropdown.
+  dropdownHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    alignSelf: "flex-start",
-    paddingVertical: 8,
-    marginTop: 4,
+    gap: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    marginTop: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.primary + "40",
+    backgroundColor: COLORS.primary + "0D",
   },
-  linkBtnText: {
-    fontSize: 13,
-    fontWeight: "800",
+  dropdownHeaderOpen: {
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+    borderBottomWidth: 0,
+  },
+  dropdownHeaderText: {
+    flex: 1,
+    fontSize: 13.5,
+    fontWeight: "900",
     color: COLORS.primary,
-    textDecorationLine: "underline",
+    letterSpacing: 0.2,
+  },
+  dropdownBody: {
+    borderWidth: 1,
+    borderTopWidth: 0,
+    borderColor: COLORS.primary + "40",
+    backgroundColor: COLORS.surface,
+    borderBottomLeftRadius: 12,
+    borderBottomRightRadius: 12,
+    paddingHorizontal: 14,
+    paddingTop: 14,
+    paddingBottom: 6,
+    marginBottom: 4,
   },
   footer: {
     paddingHorizontal: 20,
