@@ -199,83 +199,86 @@ const buildMapHtml = (
   // banner instead of Leaflet's default broken-image placeholder.
   var BLANK_TILE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNgAAIAAAUAAeImBZsAAAAASUVORK5CYII=';
 
-  // ── Offline-tile support ──
-  // If we've downloaded tiles for ANY river, prefer them over the network.
-  // OFFLINE_TILES is a { "z/x/y" -> "file://…/z/x/y.png" } map covering every
-  // river the user has cached, produced by getMergedOfflineManifest().
-  //
-  // IMPORTANT: we install the custom OfflineFirstLayer ONLY when there is
-  // actual offline coverage. Wrapping an empty cache with a TileLayer that
-  // has an empty ('') URL template causes Leaflet's internal tile loader
-  // to misbehave and stop requesting tiles entirely — so when HAVE_OFFLINE
-  // is false we fall back to a plain L.tileLayer with the proper USGS
-  // URL template. The offline-aware tileerror handler below still
-  // surfaces the correct boundary banner in the no-cache-offline case.
+  // ── Offline-tile support (variable-depth pyramid aware) ──
+  // The offline pack is intentionally LOPSIDED: full coverage at the
+  // coarse z=10 level, narrowing down to just the river corridor at
+  // z=16 (see tileMath.ts for the buffer math). That means at almost
+  // every zoom level there will be edge tiles in the viewport that the
+  // user never downloaded. The two-tier strategy below handles those
+  // gaps without ever painting a broken-image square or tripping the
+  // global "check your connection" banner.
   var OFFLINE_TILES = ${offlineTiles ? JSON.stringify(offlineTiles.tileToUrl) : "null"};
   var HAVE_OFFLINE = OFFLINE_TILES && Object.keys(OFFLINE_TILES).length > 0;
   if (HAVE_OFFLINE) {
     var OfflineFirstLayer = L.TileLayer.extend({
       getTileUrl: function(coords) {
         var key = coords.z + "/" + coords.x + "/" + coords.y;
+        // 1. Cached tile? Serve straight from disk — no network.
         if (OFFLINE_TILES[key]) return OFFLINE_TILES[key];
-        // Outside the downloaded coverage. If we look online, fall through
-        // to USGS so users with service still see live tiles. If we're
-        // offline, render a transparent placeholder and raise the
-        // boundary banner.
+        // 2. Cache miss with signal? Patch the gap with a live USGS
+        //    tile so the variable-depth pyramid feels seamless on
+        //    Wi-Fi/cell.
         var online = (typeof navigator === 'undefined') || (navigator.onLine !== false);
         if (online) {
           return 'https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/'
             + coords.z + "/" + coords.y + "/" + coords.x;
         }
-        showOfflineBoundaryBanner();
+        // 3. Cache miss AND offline → return the same transparent PNG
+        //    Leaflet uses as errorTileUrl. No HTTPS request is made,
+        //    no tileerror fires, no banner trips.
         return BLANK_TILE;
       }
     });
-    usgsTopo = new OfflineFirstLayer('', { maxZoom: 16 });
+    usgsTopo = new OfflineFirstLayer('', {
+      maxZoom: 16,
+      // Paint a transparent 1x1 placeholder for any tile load that
+      // fails (HTTPS 4xx/5xx, DNS error, etc.) instead of the broken
+      // image glyph and instead of escalating through tileerror to
+      // our global banner. Combined with the variable-depth offline
+      // pyramid, the user sees clean empty space at edges rather
+      // than a noisy alert.
+      errorTileUrl: BLANK_TILE,
+      // Don't aggressively keep tiles outside the current zoom level
+      // — frees memory and avoids prefetching tiles we know are
+      // outside the corridor at deep zooms.
+      updateWhenIdle: true,
+      keepBuffer: 1,
+    });
+  } else {
+    usgsTopo = L.tileLayer(
+      'https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/{z}/{y}/{x}',
+      { maxZoom: 16, errorTileUrl: BLANK_TILE }
+    );
   }
-  // else: keep the default L.tileLayer declared above (USGS HTTPS template).
   usgsTopo.addTo(map);
 
-  // Both banners share the same DOM element. The boundary banner is shown
-  // whenever we're offline AND a requested tile is outside the downloaded
-  // coverage (or no coverage exists at all). The generic "check your
-  // connection" banner is reserved for the ONLINE case — when the device
-  // claims to be online but USGS HTTPS keeps failing.
+  // The "check your connection" banner now ONLY trips after many
+  // consecutive tile errors — because errorTileUrl already paints a
+  // transparent placeholder for every individual miss, the user only
+  // needs a banner when they're clearly outside the river corridor
+  // entirely (not just brushing its edge at deep zoom).
   var __tileErrCount = 0;
   var __tileBanner = document.getElementById('tile-banner');
-  var __boundaryShownAt = 0;
-  function showOfflineBoundaryBanner() {
-    if (!__tileBanner) return;
-    var now = Date.now();
-    if (now - __boundaryShownAt < 6000) return; // 6s cooldown
-    __boundaryShownAt = now;
-    var span = __tileBanner.querySelector('span');
-    if (!span) return;
-    span.textContent = HAVE_OFFLINE
-      ? "Downloaded offline data doesn't cover this level of detail for this area. Pan toward the river or zoom out."
-      : "You're offline and no map tiles have been downloaded for this area. Open a river and tap 'Download offline map' before going off the grid.";
-    __tileBanner.classList.add('show');
-    setTimeout(function(){ __tileBanner.classList.remove('show'); }, 4500);
-  }
   usgsTopo.on('tileerror', function(){
     __tileErrCount++;
-    if (__tileErrCount < 3 || !__tileBanner) return;
+    if (__tileErrCount < 12 || !__tileBanner) return;
     var span = __tileBanner.querySelector('span');
     if (!span) return;
-    // CRITICAL: consult the offline cache state BEFORE defaulting to a
-    // connection error. If the device is offline, "check your connection"
-    // is useless advice — surface the boundary banner instead, which
-    // tells the user something actionable based on whether they have
-    // any local coverage.
     var isOffline = (typeof navigator !== 'undefined') && (navigator.onLine === false);
     if (isOffline) {
       span.textContent = HAVE_OFFLINE
-        ? "Downloaded offline data doesn't cover this level of detail for this area. Pan toward the river or zoom out."
+        ? "You've left the downloaded river corridor. Pan back toward the river or zoom out."
         : "You're offline and no map tiles have been downloaded for this area. Open a river and tap 'Download offline map' before going off the grid.";
     } else {
       span.textContent = 'Map tiles unavailable — check your connection.';
     }
     __tileBanner.classList.add('show');
+  });
+  // Reset error counter whenever the user successfully loads tiles
+  // again — prevents stale counts from older zoom levels tripping the
+  // banner after the user navigates back toward the corridor.
+  usgsTopo.on('tileload', function(){
+    if (__tileErrCount > 0) __tileErrCount = Math.max(0, __tileErrCount - 1);
   });
   usgsTopo.on('tileload', function(){
     if (__tileErrCount > 0) {
