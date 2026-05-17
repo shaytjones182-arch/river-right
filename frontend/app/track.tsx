@@ -161,30 +161,36 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
   var BLANK_TILE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNgAAIAAAUAAeImBZsAAAAASUVORK5CYII=';
 
   // USGS Topo basemap with optional offline-tile fallback.
-  // We always install OfflineFirstLayer (even with an empty cache) so the
-  // boundary-check fallback in getTileUrl is ALWAYS reachable — otherwise
-  // an empty cache silently degrades to a plain HTTPS layer and a fully
-  // offline device loses the "outside coverage" banner entirely.
+  // We install the custom OfflineFirstLayer ONLY when there is actual
+  // offline coverage; wrapping an empty cache with an empty-URL-template
+  // TileLayer breaks Leaflet's internal tile loader and causes online
+  // tiles to silently stop rendering. The offline-aware tileerror
+  // handler below still surfaces the right boundary banner when the
+  // device is offline with no downloads.
   var OFFLINE_TILES = ${offlineTiles ? JSON.stringify(offlineTiles.tileToUrl) : "null"};
   var HAVE_OFFLINE = OFFLINE_TILES && Object.keys(OFFLINE_TILES).length > 0;
-  var OfflineFirstLayer = L.TileLayer.extend({
-    getTileUrl: function(coords) {
-      var key = coords.z + "/" + coords.x + "/" + coords.y;
-      if (HAVE_OFFLINE && OFFLINE_TILES[key]) return OFFLINE_TILES[key];
-      // Not in the offline pack. If the device looks online, fall through
-      // to USGS so the user still sees current tiles when they have
-      // service. If we're offline, paint a transparent placeholder and
-      // raise the offline-boundary banner.
-      var online = (typeof navigator === 'undefined') || (navigator.onLine !== false);
-      if (online) {
-        return 'https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/'
-          + coords.z + "/" + coords.y + "/" + coords.x;
+  var usgsTopo;
+  if (HAVE_OFFLINE) {
+    var OfflineFirstLayer = L.TileLayer.extend({
+      getTileUrl: function(coords) {
+        var key = coords.z + "/" + coords.x + "/" + coords.y;
+        if (OFFLINE_TILES[key]) return OFFLINE_TILES[key];
+        var online = (typeof navigator === 'undefined') || (navigator.onLine !== false);
+        if (online) {
+          return 'https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/'
+            + coords.z + "/" + coords.y + "/" + coords.x;
+        }
+        showOfflineBoundaryBanner();
+        return BLANK_TILE;
       }
-      showOfflineBoundaryBanner();
-      return BLANK_TILE;
-    }
-  });
-  var usgsTopo = new OfflineFirstLayer('', { maxZoom: 16 });
+    });
+    usgsTopo = new OfflineFirstLayer('', { maxZoom: 16 });
+  } else {
+    usgsTopo = L.tileLayer(
+      'https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/{z}/{y}/{x}',
+      { maxZoom: 16 }
+    );
+  }
   usgsTopo.addTo(map);
 
   // Two banners share the same DOM element. The boundary banner is shown

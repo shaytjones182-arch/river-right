@@ -202,33 +202,38 @@ const buildMapHtml = (
   // ── Offline-tile support ──
   // If we've downloaded tiles for ANY river, prefer them over the network.
   // OFFLINE_TILES is a { "z/x/y" -> "file://…/z/x/y.png" } map covering every
-  // river the user has cached. We always install the OfflineFirstLayer
-  // (even when the map is empty) so the boundary-check fallback below is
-  // ALWAYS reachable — otherwise an empty cache silently degrades to a
-  // plain HTTPS layer and we lose the chance to surface the
-  // "outside coverage" banner.
+  // river the user has cached, produced by getMergedOfflineManifest().
+  //
+  // IMPORTANT: we install the custom OfflineFirstLayer ONLY when there is
+  // actual offline coverage. Wrapping an empty cache with a TileLayer that
+  // has an empty ('') URL template causes Leaflet's internal tile loader
+  // to misbehave and stop requesting tiles entirely — so when HAVE_OFFLINE
+  // is false we fall back to a plain L.tileLayer with the proper USGS
+  // URL template. The offline-aware tileerror handler below still
+  // surfaces the correct boundary banner in the no-cache-offline case.
   var OFFLINE_TILES = ${offlineTiles ? JSON.stringify(offlineTiles.tileToUrl) : "null"};
   var HAVE_OFFLINE = OFFLINE_TILES && Object.keys(OFFLINE_TILES).length > 0;
-  var OfflineFirstLayer = L.TileLayer.extend({
-    getTileUrl: function(coords) {
-      var key = coords.z + "/" + coords.x + "/" + coords.y;
-      if (HAVE_OFFLINE && OFFLINE_TILES[key]) {
-        return OFFLINE_TILES[key];
+  if (HAVE_OFFLINE) {
+    var OfflineFirstLayer = L.TileLayer.extend({
+      getTileUrl: function(coords) {
+        var key = coords.z + "/" + coords.x + "/" + coords.y;
+        if (OFFLINE_TILES[key]) return OFFLINE_TILES[key];
+        // Outside the downloaded coverage. If we look online, fall through
+        // to USGS so users with service still see live tiles. If we're
+        // offline, render a transparent placeholder and raise the
+        // boundary banner.
+        var online = (typeof navigator === 'undefined') || (navigator.onLine !== false);
+        if (online) {
+          return 'https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/'
+            + coords.z + "/" + coords.y + "/" + coords.x;
+        }
+        showOfflineBoundaryBanner();
+        return BLANK_TILE;
       }
-      // Outside the downloaded coverage. If we look online, fall through
-      // to USGS so users with service still see live tiles. If we're
-      // offline, render a transparent placeholder and surface the
-      // appropriate boundary banner.
-      var online = (typeof navigator === 'undefined') || (navigator.onLine !== false);
-      if (online) {
-        return 'https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/'
-          + coords.z + "/" + coords.y + "/" + coords.x;
-      }
-      showOfflineBoundaryBanner();
-      return BLANK_TILE;
-    }
-  });
-  usgsTopo = new OfflineFirstLayer('', { maxZoom: 16 });
+    });
+    usgsTopo = new OfflineFirstLayer('', { maxZoom: 16 });
+  }
+  // else: keep the default L.tileLayer declared above (USGS HTTPS template).
   usgsTopo.addTo(map);
 
   // Both banners share the same DOM element. The boundary banner is shown
