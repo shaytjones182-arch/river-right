@@ -191,7 +191,8 @@ export default function TermsAcceptanceModal({ visible, onAccept }: Props) {
                 !checked && styles.acceptBtnTextDisabled,
               ]}
             >
-              Accept & Continue
+              I have read the full Terms of Service in full, and I
+              understand that I use RiverRight at my own risk
             </Text>
           </TouchableOpacity>
         </View>
@@ -391,7 +392,8 @@ const styles = StyleSheet.create({
   },
   acceptBtn: {
     backgroundColor: COLORS.primary,
-    paddingVertical: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
     borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
@@ -402,9 +404,11 @@ const styles = StyleSheet.create({
   },
   acceptBtnText: {
     color: "#fff",
-    fontSize: 15,
-    fontWeight: "900",
-    letterSpacing: 0.3,
+    fontSize: 13,
+    fontWeight: "800",
+    letterSpacing: 0.2,
+    textAlign: "center",
+    lineHeight: 18,
   },
   acceptBtnTextDisabled: { color: COLORS.textMuted },
 });
