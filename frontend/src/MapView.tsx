@@ -1,6 +1,10 @@
 import React from "react";
 import { Platform, View, StyleSheet, ViewStyle } from "react-native";
 import { WebView } from "react-native-webview";
+// We import from the legacy entry point to match the rest of the app
+// (Expo SDK 54's top-level expo-file-system throws on the older
+// download/info APIs we rely on elsewhere).
+import * as FileSystem from "expo-file-system/legacy";
 
 type Props = {
   html: string;
@@ -11,9 +15,21 @@ type Props = {
   onMessage?: (data: string) => void;
 };
 
+// Anchor the WebView's effective origin at the app's document directory
+// so Leaflet's <img src="file://…/offlineTiles/…">  loads aren't treated
+// as cross-origin by iOS WKWebView. Without this, even with all three
+// allow-file-access flags set, iOS silently refuses to load file://
+// images from an `about:blank`-hosted HTML payload — which is exactly
+// what was happening to the downloaded USGS tiles. `documentDirectory`
+// is undefined on web (and there we use an <iframe> srcDoc anyway), so
+// we fall back to an empty string and skip baseUrl in that branch.
+const FS_BASE_URL: string | undefined =
+  Platform.OS === "web" ? undefined : FileSystem.documentDirectory || undefined;
+
 /**
  * Cross-platform Leaflet/OSM map.
- * - Native: renders a react-native-webview
+ * - Native: renders a react-native-webview (with file:// baseUrl so
+ *   on-disk USGS tiles load correctly)
  * - Web: renders an <iframe srcDoc=...> so the map actually shows
  * - onMessage: called with postMessage payload from inside the map (string).
  * - Both webViewRef and iframeRef are exposed so callers can push commands in.
@@ -38,7 +54,7 @@ export default function MapView({ html, style, testID, webViewRef, iframeRef, on
     <WebView
       ref={webViewRef}
       originWhitelist={["*", "file://"]}
-      source={{ html }}
+      source={{ html, baseUrl: FS_BASE_URL }}
       style={[styles.fill, style]}
       javaScriptEnabled
       domStorageEnabled
