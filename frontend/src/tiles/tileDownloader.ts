@@ -86,6 +86,32 @@ function tileFilePath(riverId: string, z: number, x: number, y: number): string 
   return `${baseDirForRiver(riverId)}${z}/${x}/${y}.png`;
 }
 
+/**
+ * Verify that the file at `path` is actually a valid PNG and not an
+ * HTML/JSON error body, an ArcGIS "tile unavailable" placeholder, or a
+ * truncated download that got saved with a `.png` extension anyway.
+ *
+ * Every real PNG starts with the same 8 magic bytes:
+ *   0x89 0x50 0x4E 0x47 0x0D 0x0A 0x1A 0x0A
+ * Base64-encoded those bytes are `iVBORw0KGgo=`, so we just read the
+ * first 8 bytes and prefix-check. This is ~free (a single syscall, no
+ * full-file read) and catches the silent-failure mode where the user
+ * sees uniformly colored tiles on-device because the saved bytes are
+ * not actually a USGS Topo PNG.
+ */
+async function isValidPng(path: string): Promise<boolean> {
+  try {
+    const head = await FileSystem.readAsStringAsync(path, {
+      encoding: FileSystem.EncodingType.Base64,
+      position: 0,
+      length: 8,
+    });
+    return head.startsWith("iVBORw0KGgo");
+  } catch {
+    return false;
+  }
+}
+
 // ─── Manifest management ───────────────────────────────────────────────────
 async function readManifest(riverId: string): Promise<TileManifest | null> {
   try {
@@ -190,17 +216,29 @@ export function startTileDownload(
           if (idx >= plan.tiles.length) return;
           const t = plan.tiles[idx];
           const filePath = tileFilePath(riverId, t.z, t.x, t.y);
-          // Skip if already on disk from a prior run.
+          // Skip if already on disk from a prior run — but ONLY if the
+          // existing file is a real PNG. If a previous run accidentally
+          // saved an HTML/JSON error body or a truncated tile under
+          // this name, we want to nuke it and re-download instead of
+          // silently rendering a colored placeholder on the user's map.
           try {
             const info = await FileSystem.getInfoAsync(filePath, {
               size: true,
             });
             if (info.exists && (info.size ?? 0) > 0) {
-              progress.completed += 1;
-              progress.bytes += info.size ?? 0;
-              downloaded.push(tileKeyString(t.z, t.x, t.y));
-              emit();
-              continue;
+              if (await isValidPng(filePath)) {
+                progress.completed += 1;
+                progress.bytes += info.size ?? 0;
+                downloaded.push(tileKeyString(t.z, t.x, t.y));
+                emit();
+                continue;
+              }
+              // Bad bytes on disk — delete and fall through to redownload.
+              try {
+                await FileSystem.deleteAsync(filePath, { idempotent: true });
+              } catch {
+                /* ignore */
+              }
             }
           } catch {
             // fall through and re-download
@@ -213,17 +251,43 @@ export function startTileDownload(
             const tileUrl = usgsTopoTileUrl(t.z, t.x, t.y);
             const res = await FileSystem.downloadAsync(tileUrl, filePath);
             if (res.status >= 200 && res.status < 300) {
-              progress.completed += 1;
-              // size header isn't always returned; getInfoAsync is reliable
-              try {
-                const info = await FileSystem.getInfoAsync(filePath, {
-                  size: true,
-                });
-                progress.bytes += info.size ?? 0;
-              } catch {
-                /* ignore */
+              // HTTP 2xx is not enough — USGS / ArcGIS will occasionally
+              // hand back a 200 with an HTML error body, a JSON error
+              // payload, or a placeholder "tile unavailable" image. We
+              // confirm the bytes on disk really are a PNG before
+              // counting the tile as good.
+              if (!(await isValidPng(filePath))) {
+                progress.failed += 1;
+                if (!firstFailReported) {
+                  firstFailReported = true;
+                  console.warn(
+                    "[tile-fail] HTTP 2xx but not a PNG url=" +
+                      tileUrl +
+                      " path=" +
+                      filePath
+                  );
+                  lastFailDetail = `HTTP ${res.status} but non-PNG body for z=${t.z} x=${t.x} y=${t.y}`;
+                  progress.failDetail = lastFailDetail;
+                }
+                // Delete the bogus file so a future re-run picks it up.
+                try {
+                  await FileSystem.deleteAsync(filePath, { idempotent: true });
+                } catch {
+                  /* ignore */
+                }
+              } else {
+                progress.completed += 1;
+                // size header isn't always returned; getInfoAsync is reliable
+                try {
+                  const info = await FileSystem.getInfoAsync(filePath, {
+                    size: true,
+                  });
+                  progress.bytes += info.size ?? 0;
+                } catch {
+                  /* ignore */
+                }
+                downloaded.push(tileKeyString(t.z, t.x, t.y));
               }
-              downloaded.push(tileKeyString(t.z, t.x, t.y));
             } else {
               progress.failed += 1;
               // Report the first non-2xx response so we can surface why
@@ -240,6 +304,13 @@ export function startTileDownload(
                 );
                 lastFailDetail = `HTTP ${res.status} for z=${t.z} x=${t.x} y=${t.y}`;
                 progress.failDetail = lastFailDetail;
+              }
+              // Some platforms write the error body to disk anyway —
+              // delete it so we don't ship a corrupt tile.
+              try {
+                await FileSystem.deleteAsync(filePath, { idempotent: true });
+              } catch {
+                /* ignore */
               }
             }
           } catch (e: any) {
