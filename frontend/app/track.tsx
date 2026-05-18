@@ -84,6 +84,8 @@ const SVG_TRACK = {
     '<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16c2 2 4 2 6 0s4-2 6 0 4 2 6 0"/><path d="M5 13l1-4h12l1 4"/><path d="M12 9V4"/></svg>',
   info:
     '<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v.01"/><path d="M11 12h1v4h1"/></svg>',
+  parking:
+    '<svg viewBox="0 0 24 24"><text x="12" y="18" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,Arial,sans-serif" font-size="18" font-weight="900" fill="white">P</text></svg>',
 };
 
 const buildHtml = (
@@ -112,6 +114,7 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
 .pin.portage{background:#F4A261;}
 .pin.play{background:#2A9D8F;}
 .pin.camp{background:#8B5E34;}
+.pin.parking{background:#4F5D75;}
 .pin-tri{
   width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;
   border-bottom:24px solid #D62828;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.4));
@@ -395,6 +398,9 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
       } else if (p.kind === 'access'){
         marker = L.marker([p.lat, p.lon], { icon: pin('access', SVG.boat) })
           .bindPopup(popupHtml(p.name || 'Access Point', 'Access Point'));
+      } else if (p.kind === 'parking'){
+        marker = L.marker([p.lat, p.lon], { icon: pin('parking', SVG.parking) })
+          .bindPopup(popupHtml(p.name || 'Parking', 'Parking'));
       } else if (p.kind === 'note'){
         marker = L.marker([p.lat, p.lon], { icon: pin('note', SVG.info) })
           .bindPopup(popupHtml(p.name || 'Note', p.description || ''));

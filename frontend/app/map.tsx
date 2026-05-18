@@ -78,6 +78,8 @@ const SVG_ICONS = {
     '<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16c2 2 4 2 6 0s4-2 6 0 4 2 6 0"/><path d="M5 13l1-4h12l1 4"/><path d="M12 9V4"/></svg>',
   info:
     '<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v.01"/><path d="M11 12h1v4h1"/></svg>',
+  parking:
+    '<svg viewBox="0 0 24 24"><text x="12" y="18" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,Arial,sans-serif" font-size="18" font-weight="900" fill="white">P</text></svg>',
 };
 
 const buildMapHtml = (
@@ -114,6 +116,7 @@ const buildMapHtml = (
   .pin.camp{background:#8B5E34;}
   .pin.boat{background:#1D4E89;}
   .pin.access{background:#1D4E89;}
+  .pin.parking{background:#4F5D75;}
   .pin.note{background:#6C757D;}
   .pin-tri{
     width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;
@@ -390,6 +393,9 @@ const buildMapHtml = (
       } else if (p.kind === 'access'){
         marker = L.marker([p.lat, p.lon], { icon: pin('access', SVG.boat) })
           .bindPopup(popupHtml(esc(p.name || 'Access Point'), 'Access Point'));
+      } else if (p.kind === 'parking'){
+        marker = L.marker([p.lat, p.lon], { icon: pin('parking', SVG.parking) })
+          .bindPopup(popupHtml(esc(p.name || 'Parking'), 'Parking'));
       } else if (p.kind === 'note'){
         marker = L.marker([p.lat, p.lon], { icon: pin('note', SVG.info) })
           .bindPopup(popupHtml(esc(p.name || 'Note'), esc(p.description || '')));
@@ -814,29 +820,45 @@ export default function MapScreen() {
               <View style={[styles.dot, { backgroundColor: COLORS.safe }]} />
               <Text style={styles.legendText}>Calm</Text>
             </View>
-            <Text style={styles.legendHint}>Tap a marker → zoom in</Text>
           </View>
         )}
 
-        {legendOpen && selectedRiver && (
-          <View style={styles.legend} testID="map-legend-focused">
-            <Text style={styles.legendTitle}>ON THIS RUN</Text>
-            <LegendIcon
-              kind="rapid"
-              rapidColor={COLORS.warning}
-              label="Rapid"
-            />
-            <LegendIcon kind="hazard" label="Hazard / falls" />
-            <LegendIcon kind="portage" label="Portage" />
-            <LegendIcon kind="camp" label="Campground" />
-            {poiSource === "curated" && (
-              <>
-                <LegendIcon kind="boat" label="Boat ramp" />
-                <LegendIcon kind="note" label="Note" />
-              </>
-            )}
-          </View>
-        )}
+        {legendOpen && selectedRiver && (() => {
+          // Build a set of kinds actually present on this run so we can
+          // hide categories that contribute zero POIs to the current map.
+          const kinds = new Set<string>();
+          for (const p of focusedPois || []) {
+            if (p && typeof p.kind === "string") kinds.add(p.kind);
+          }
+          const hasRapid = kinds.has("rapid") || kinds.has("play");
+          const hasHazard = kinds.has("hazard") || kinds.has("waterfall");
+          const hasPortage = kinds.has("portage");
+          const hasCamp = kinds.has("camp");
+          const hasBoat =
+            kinds.has("boat_ramp") ||
+            kinds.has("access") ||
+            kinds.has("putin") ||
+            kinds.has("takeout");
+          const hasParking = kinds.has("parking");
+          const hasNote = kinds.has("note");
+          const anyVisible =
+            hasRapid || hasHazard || hasPortage || hasCamp || hasBoat || hasParking || hasNote;
+          if (!anyVisible) return null;
+          return (
+            <View style={styles.legend} testID="map-legend-focused">
+              <Text style={styles.legendTitle}>ON THIS RUN</Text>
+              {hasRapid && (
+                <LegendIcon kind="rapid" rapidColor={COLORS.warning} label="Rapid" />
+              )}
+              {hasHazard && <LegendIcon kind="hazard" label="Hazard / falls" />}
+              {hasPortage && <LegendIcon kind="portage" label="Portage" />}
+              {hasCamp && <LegendIcon kind="camp" label="Campground" />}
+              {hasBoat && <LegendIcon kind="boat" label="Boat ramp" />}
+              {hasParking && <LegendIcon kind="parking" label="Parking" />}
+              {hasNote && <LegendIcon kind="note" label="Note" />}
+            </View>
+          );
+        })()}
       </View>
 
       {selectedRiver ? (
@@ -906,7 +928,7 @@ function LegendIcon({
   rapidColor,
   label,
 }: {
-  kind: "rapid" | "hazard" | "portage" | "camp" | "boat" | "note";
+  kind: "rapid" | "hazard" | "portage" | "camp" | "boat" | "parking" | "note";
   rapidColor?: string;
   label: string;
 }) {
@@ -917,6 +939,17 @@ function LegendIcon({
       <View style={styles.legendRow}>
         <View style={styles.legendTri}>
           <Text style={styles.legendTriText}>!</Text>
+        </View>
+        <Text style={styles.legendText}>{label}</Text>
+      </View>
+    );
+  }
+  if (kind === "parking") {
+    // Charcoal circle with white "P" — matches in-map parking pin
+    return (
+      <View style={styles.legendRow}>
+        <View style={[styles.legendPin, { backgroundColor: "#4F5D75" }]}>
+          <Text style={styles.legendPinLetter}>P</Text>
         </View>
         <Text style={styles.legendText}>{label}</Text>
       </View>
@@ -1151,6 +1184,13 @@ const styles = StyleSheet.create({
     position: "absolute", top: 4, left: -3, width: 6, textAlign: "center",
   },
   legendText: { fontSize: 13, fontWeight: "700", color: COLORS.textMain },
+  legendPinLetter: {
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: "900",
+    lineHeight: 14,
+    textAlign: "center",
+  },
   legendHint: { fontSize: 11, color: COLORS.textMuted, marginTop: 6, fontStyle: "italic" },
 
   // Filter bar (replaces old stats bar)
