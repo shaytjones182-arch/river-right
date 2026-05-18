@@ -30,14 +30,14 @@ import {
   setMapSelectedRiverId,
 } from "../src/tabState";
 
-type RiverType = "whitewater" | "mixed" | "calm";
+type Difficulty = "low" | "intermediate" | "high";
 
 type River = {
   id: string;
   name: string;
   state: string;
   class_rating: string;
-  type: RiverType | string;
+  type: string;
   description: string;
   put_in: { name: string; lat: number; lon: number };
   take_out: { name: string; lat: number; lon: number };
@@ -60,7 +60,40 @@ type Polyline = {
   length_mi?: number;
 };
 
-type FilterKey = "all" | "whitewater" | "mixed" | "calm";
+type FilterKey = "all" | "low" | "intermediate" | "high";
+
+// ── Difficulty classification ────────────────────────────────────────
+// Buckets the run by the MAX rapid class found in its `class_rating`
+// string (e.g. "II–III" → 3 → intermediate). Whitewater is graded I–VI
+// in Roman; we also accept Arabic digits, ranges with hyphen or en/em
+// dashes, and `+` suffixes (which we treat as the next half-step but
+// still bucket against the integer class).
+//   class ≤ 1            → "low"          (green dot)
+//   class 2 or 3          → "intermediate" (amber dot)
+//   class ≥ 4            → "high"          (red dot)
+// Unknown / missing ratings fall through to "low" so the marker is still
+// rendered — they just sit in the safest bucket.
+const ROMAN_TO_INT: Record<string, number> = { I: 1, II: 2, III: 3, IV: 4, V: 5, VI: 6 };
+function maxRapidClass(s: string | null | undefined): number {
+  if (!s) return 0;
+  // Normalize: uppercase, swap exotic dashes for plain hyphen, drop "+".
+  const norm = String(s).toUpperCase().replace(/[\u2010-\u2015\u2212]/g, "-").replace(/\+/g, "");
+  const tokens = norm.match(/[IVX]+|\d+/g) || [];
+  let maxV = 0;
+  for (const t of tokens) {
+    let v = 0;
+    if (/^\d+$/.test(t)) v = parseInt(t, 10);
+    else if (t in ROMAN_TO_INT) v = ROMAN_TO_INT[t];
+    if (v > maxV) maxV = v;
+  }
+  return maxV;
+}
+function difficultyOf(classRating: string | null | undefined): Difficulty {
+  const m = maxRapidClass(classRating);
+  if (m >= 4) return "high";
+  if (m >= 2) return "intermediate";
+  return "low";
+}
 
 // ---------------- HTML (single, persistent) ----------------
 
@@ -287,9 +320,12 @@ const buildMapHtml = (
   var polylineLayer = L.layerGroup().addTo(map);
   var currentMode = null;
 
-  function colorFor(t){
-    if (t === 'whitewater') return '#D62828';
-    if (t === 'calm') return '#2A9D8F';
+  function colorFor(diff){
+    // 'diff' is the precomputed difficulty bucket from the React side
+    // ('low' | 'intermediate' | 'high'). Hex values mirror COLORS.safe /
+    // .warning / .danger so the dots line up with the legend swatches.
+    if (diff === 'high') return '#D62828';
+    if (diff === 'low')  return '#2A9D8F';
     return '#F4A261';
   }
 
@@ -317,7 +353,7 @@ const buildMapHtml = (
     focusedLayer.clearLayers();
     polylineLayer.clearLayers();
     rivers.forEach(function(r){
-      var color = colorFor(r.type);
+      var color = colorFor(r.diff);
       var icon = L.divIcon({
         className: '',
         html: '<div class="pulse" style="background:' + color + '"></div>',
@@ -485,9 +521,9 @@ const buildMapHtml = (
 
 const FILTERS: { key: FilterKey; label: string; color: string }[] = [
   { key: "all", label: "All Rivers", color: COLORS.primary },
-  { key: "whitewater", label: "Whitewater", color: COLORS.danger },
-  { key: "mixed", label: "Mixed", color: COLORS.warning },
-  { key: "calm", label: "Calm", color: COLORS.safe },
+  { key: "low", label: "Low", color: COLORS.safe },
+  { key: "intermediate", label: "Intermediate", color: COLORS.warning },
+  { key: "high", label: "High", color: COLORS.danger },
 ];
 
 export default function MapScreen() {
@@ -521,7 +557,7 @@ export default function MapScreen() {
 
   const filteredRivers = useMemo(() => {
     if (filter === "all") return rivers;
-    return rivers.filter((r) => r.type === filter);
+    return rivers.filter((r) => difficultyOf(r.class_rating) === filter);
   }, [rivers, filter]);
 
   // Initial featured-river fetch (cache-aware — works offline)
@@ -658,7 +694,11 @@ export default function MapScreen() {
       cmd: "overview",
       rivers: filteredRivers.map((r) => ({
         id: r.id,
-        type: r.type,
+        // Precomputed difficulty bucket → drives the dot color in the
+        // WebView. We send the bucket (not the raw class string) so the
+        // WebView script stays dumb and doesn't need its own Roman-numeral
+        // parser.
+        diff: difficultyOf(r.class_rating),
         plat: r.put_in.lat,
         plon: r.put_in.lon,
       })),
@@ -826,18 +866,18 @@ export default function MapScreen() {
 
         {legendOpen && !selectedRiver && (
           <View style={styles.legend} testID="map-legend">
-            <Text style={styles.legendTitle}>RIVER TYPE</Text>
+            <Text style={styles.legendTitle}>DIFFICULTY LEVEL</Text>
             <View style={styles.legendRow}>
-              <View style={[styles.dot, { backgroundColor: COLORS.danger }]} />
-              <Text style={styles.legendText}>Whitewater</Text>
+              <View style={[styles.dot, { backgroundColor: COLORS.safe }]} />
+              <Text style={styles.legendText}>Low (Class I)</Text>
             </View>
             <View style={styles.legendRow}>
               <View style={[styles.dot, { backgroundColor: COLORS.warning }]} />
-              <Text style={styles.legendText}>Mixed</Text>
+              <Text style={styles.legendText}>Intermediate (Class II–III)</Text>
             </View>
             <View style={styles.legendRow}>
-              <View style={[styles.dot, { backgroundColor: COLORS.safe }]} />
-              <Text style={styles.legendText}>Calm</Text>
+              <View style={[styles.dot, { backgroundColor: COLORS.danger }]} />
+              <Text style={styles.legendText}>High (Class IV–V)</Text>
             </View>
           </View>
         )}
