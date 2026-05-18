@@ -222,7 +222,7 @@ const buildMapHtml = (
   // downloaded offline coverage while offline. Loads as a clean tile (no
   // tileerror fired) so we can surface a debounced "outside coverage"
   // banner instead of Leaflet's default broken-image placeholder.
-  var BLANK_TILE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNgAAIAAAUAAeImBZsAAAAASUVORK5CYII=';
+  var BLANK_TILE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkAAIAAAoAAv/lxKUAAAAASUVORK5CYII=';
 
   // ── Offline-tile support (variable-depth pyramid aware) ──
   // The offline pack is intentionally LOPSIDED: full coverage at the

@@ -158,7 +158,7 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
   // fired) and we instead surface a debounced banner explaining what
   // happened. Without this, missing tiles render as Leaflet's default
   // "broken image" placeholder.
-  var BLANK_TILE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNgAAIAAAUAAeImBZsAAAAASUVORK5CYII=';
+  var BLANK_TILE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkAAIAAAoAAv/lxKUAAAAASUVORK5CYII=';
 
   // ── Offline-tile support (variable-depth pyramid aware) ──
   // The offline pack is intentionally LOPSIDED: full coverage at the
