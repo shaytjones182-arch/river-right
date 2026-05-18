@@ -120,8 +120,7 @@ export default function Home() {
             </View>
             <Text style={styles.h1}>Read the river.{"\n"}Run it right.</Text>
             <Text style={styles.subtitle}>
-              Live USGS flow data, GPS tracking, and curated American rivers — from
-              glassy floats to gnarly whitewater.
+              Live USGS flow data, GPS tracking, and curated American rivers.
             </Text>
           </View>
 

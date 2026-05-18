@@ -46,9 +46,22 @@ const DATA_SOURCES: Credit[] = [
     required: true,
   },
   {
-    title: "RiverRight LLC — Curated River Data",
+    title: "Bureau of Land Management (BLM)",
     blurb:
-      "Hand-verified river polylines, points of interest, rapid grades, hazard markers, and run metadata for runs marked with the curated badge. © 2025 RiverRight LLC, all rights reserved.",
+      "Primary reference for the seasonal CFS flow ranges (Very low / Low / Normal / High) used on individual river runs, supplemented by community consensus and standard river-safety guidance.",
+    url: "https://www.blm.gov/",
+  },
+  {
+    title:
+      "Guide to the Green River in Desolation and Gray Canyons — Duwain Whitis & Barbara Vinson (RiverMaps LLC, 2009)",
+    blurb:
+      "Used as a reference for rapid locations, rapid classifications, and campsite locations on the Green River — Desolation Canyon run.",
+  },
+  {
+    title:
+      "Belknap's Waterproof Desolation Canyon River Guide — Buzz Belknap & Loie Belknap Evans (Westwater Books, 2013)",
+    blurb:
+      "Used as a reference for rapid locations and campsite locations on the Green River — Desolation Canyon run.",
   },
 ];
 
