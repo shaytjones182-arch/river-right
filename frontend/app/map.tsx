@@ -361,6 +361,16 @@ const buildMapHtml = (
     __dbgState.zoom = map.getZoom();
     __dbgRender();
   });
+  // Poll navigator.onLine instead of relying on online/offline events —
+  // WKWebView frequently doesn't fire those events when the device's
+  // network flips, especially when the page was loaded while offline.
+  setInterval(function(){
+    var now = (typeof navigator !== 'undefined') ? !!navigator.onLine : true;
+    if (now !== __dbgState.online) {
+      __dbgState.online = now;
+      __dbgRender();
+    }
+  }, 1500);
   // Initial paint.
   setTimeout(function(){
     var c = map.getCenter();
