@@ -40,6 +40,10 @@ type RiverDetail = {
     put_in: { name: string; lat: number; lon: number };
     take_out: { name: string; lat: number; lon: number };
     usgs_site_id: string;
+    // Friendly station label (e.g. "Green River at Green River, Utah
+    // (Station 09315000)") shown beneath the live CFS readout. Falls
+    // back to the bare site id if the backend doesn't supply it.
+    usgs_site_name?: string;
     image: string;
     points_of_interest?: string[];
     // Optional curated bullet list shown above the POI section. Loaded
@@ -198,8 +202,16 @@ export default function RiverDetail() {
                 <Text style={styles.statusText}>{flow?.label?.toUpperCase() || "NO DATA"}</Text>
               </View>
             </View>
-            {flow?.gauge_height_ft !== null && flow?.gauge_height_ft !== undefined && (
-              <Text style={styles.subtle}>Gauge height: {flow.gauge_height_ft.toFixed(2)} ft</Text>
+            {/* Replaces the prior "Gauge height: X.XX ft" line. Showing the
+                friendly station name reinforces which gauge the CFS reading
+                came from and reads naturally on the river card. We still
+                emit the line when only a bare `usgs_site_id` is available
+                so something useful renders even before the friendly name is
+                wired up for a given river. */}
+            {(r.usgs_site_name || r.usgs_site_id) && (
+              <Text style={styles.subtle} numberOfLines={2}>
+                {r.usgs_site_name || `Station ${r.usgs_site_id}`}
+              </Text>
             )}
             {flow?.updated_at && (
               <Text style={styles.subtle}>Updated {new Date(flow.updated_at).toLocaleString()}</Text>

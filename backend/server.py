@@ -115,6 +115,11 @@ FEATURED_RIVERS: List[Dict[str, Any]] = [
         "put_in": {"name": "Sand Wash", "lat": 39.7969, "lon": -109.9847},
         "take_out": {"name": "Swasey's Beach", "lat": 39.0686, "lon": -110.1322},
         "usgs_site_id": "09315000",
+        # Friendly display name for the gauge — surfaced on the river
+        # detail screen in place of the raw site number / gauge-height
+        # reading. Keep this short enough to fit on one line on small
+        # phones (e.g. iPhone SE).
+        "usgs_site_name": "Green River at Green River, Utah (Station 09315000)",
         "image": "https://images.unsplash.com/photo-1626594995085-36b551227b9a?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85"
     },
 ]
