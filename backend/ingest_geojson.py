@@ -46,6 +46,7 @@ DATA_DIR = ROOT / "data" / "runs"
 # Common CRS aliases seen in the wild (QGIS, ArcGIS exports, etc.)
 CRS_ALIASES = {
     "urn:ogc:def:crs:OGC::CRS84": "EPSG:4326",
+    "urn:ogc:def:crs:OGC:1.3:CRS84": "EPSG:4326",
     "urn:ogc:def:crs:EPSG::4326": "EPSG:4326",
     "EPSG:4326": "EPSG:4326",
 }
@@ -291,6 +292,7 @@ WATERWAY_TO_KIND = {
     "slipway": "boat_ramp",
     "boat_ramp": "boat_ramp",
     "access_point": "access",
+    "parking": "access",
     "put_in": "putin",
     "putin": "putin",
     "take_out": "takeout",
