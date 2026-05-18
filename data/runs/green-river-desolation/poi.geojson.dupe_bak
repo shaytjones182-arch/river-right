@@ -1,5 +1,4 @@
 {
-  "type": "FeatureCollection",
   "pois": [
     {
       "name": "Swasey Boat Ramp",
@@ -43,6 +42,15 @@
       "category": "access",
       "lat": 39.196316,
       "lon": -110.076435,
+      "grade": null,
+      "description": null
+    },
+    {
+      "name": "Sand Wash Boat Ramp",
+      "kind": "boat_ramp",
+      "category": "access",
+      "lat": 39.840531,
+      "lon": -109.913538,
       "grade": null,
       "description": null
     },
@@ -1063,6 +1071,5 @@
       "grade": null,
       "description": null
     }
-  ],
-  "count": 119
+  ]
 }
