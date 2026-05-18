@@ -17,7 +17,6 @@ import {
   fetchPoisWithCache,
 } from "../../../src/offlineCache";
 import OfflineMapCard from "../../../src/tiles/OfflineMapCard";
-import { getTileManifest } from "../../../src/tiles/tileDownloader";
 
 type RiverDetail = {
   river: {
@@ -71,36 +70,6 @@ export default function RiverDetail() {
   const [osmPois, setOsmPois] = useState<OsmPoi[] | null>(null);
   const [osmLoading, setOsmLoading] = useState(true);
   const [osmError, setOsmError] = useState(false);
-  const [offlineReady, setOfflineReady] = useState(false);
-
-  // The "Saved offline" badge is gated on the EXPLICIT tile-download
-  // manifest — i.e. the user actually tapped "Download offline map" and the
-  // USGS Topo tiles are now on disk. Previously this was tied to the
-  // auto-cached river meta + polyline, which is populated silently the
-  // moment you open a river online, making the badge appear by default.
-  useEffect(() => {
-    let cancelled = false;
-    let interval: any = null;
-    const check = async () => {
-      const m = await getTileManifest(id as string);
-      if (!cancelled) setOfflineReady(!!m && m.tileKeys.length > 0);
-    };
-    check();
-    // Re-poll briefly after mount so the badge flips on as soon as a
-    // download in progress completes.
-    interval = setInterval(async () => {
-      if (cancelled) return;
-      const m = await getTileManifest(id as string);
-      if (!cancelled && m && m.tileKeys.length > 0) {
-        setOfflineReady(true);
-        clearInterval(interval);
-      }
-    }, 1500);
-    return () => {
-      cancelled = true;
-      if (interval) clearInterval(interval);
-    };
-  }, [id]);
 
   useEffect(() => {
     let cancelled = false;
@@ -229,21 +198,21 @@ export default function RiverDetail() {
             )}
           </View>
 
-          {offlineReady && (
-            <View style={styles.offlineBadge} testID="river-offline-badge">
-              <Ionicons name="cloud-done" size={14} color={COLORS.safe} />
-              <Text style={styles.offlineBadgeText}>
-                Offline map saved — USGS Topo tiles, rapids &amp; POIs work
-                without cell service.
-              </Text>
-            </View>
-          )}
-
           <TouchableOpacity
             testID="river-view-on-map"
             style={styles.viewOnMapBtn}
             activeOpacity={0.85}
-            onPress={() => router.push({ pathname: "/map", params: { river: r.id } })}
+            onPress={() =>
+              router.push({
+                pathname: "/map",
+                // The `reset` nonce forces the map tab to drop any saved
+                // viewport / pan-zoom and refit to this river's default
+                // bounding view — every tap from this card lands on a
+                // clean overview of the run, regardless of where the user
+                // last left the map tab.
+                params: { river: r.id, reset: String(Date.now()) },
+              })
+            }
           >
             <Ionicons name="map" size={18} color="#fff" />
             <Text style={styles.viewOnMapBtnText}>View on Map</Text>
@@ -419,7 +388,11 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     paddingVertical: 14,
     borderRadius: 14,
-    marginBottom: 24,
+    // Tight gap to the Download offline map button that sits directly
+    // beneath. OfflineMapCard's bare button adds its own marginTop (8) so
+    // the visible separator between the two buttons is ~8 px — they read
+    // as a related pair without touching.
+    marginBottom: 0,
     minHeight: 48,
   },
   viewOnMapBtnText: {
@@ -435,25 +408,6 @@ const styles = StyleSheet.create({
   statusPill: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999 },
   statusText: { color: "#fff", fontWeight: "900", letterSpacing: 1, fontSize: 13 },
   subtle: { color: COLORS.textMuted, fontSize: 12, marginTop: 4 },
-  offlineBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: COLORS.safe + "14",
-    borderColor: COLORS.safe + "60",
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    marginTop: 12,
-  },
-  offlineBadgeText: {
-    flex: 1,
-    color: COLORS.textMain,
-    fontSize: 12.5,
-    fontWeight: "600",
-    lineHeight: 17,
-  },
   h3: { fontSize: 18, fontWeight: "900", color: COLORS.textMain, marginBottom: 8, marginTop: 8, letterSpacing: -0.3 },
   body1: { color: COLORS.textMain, lineHeight: 22, marginBottom: 16, fontSize: 15 },
   hazard: { flexDirection: "row", gap: 10, alignItems: "flex-start", paddingVertical: 6 },

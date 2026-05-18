@@ -23,7 +23,7 @@ let mapView: MapView | null = null;
 export function getMapView(): MapView | null {
   return mapView;
 }
-export function setMapView(v: MapView): void {
+export function setMapView(v: MapView | null): void {
   mapView = v;
 }
 

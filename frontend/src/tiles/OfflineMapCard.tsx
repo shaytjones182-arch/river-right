@@ -231,7 +231,11 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface,
     borderRadius: 14,
     padding: 14,
-    marginTop: 12,
+    // Mirror the bareBtn rhythm — keeps the gap to the "View on Map"
+    // button above and the "About this run" heading below identical
+    // whether the card is in its compact (button-only) or expanded state.
+    marginTop: 8,
+    marginBottom: 8,
     borderWidth: 1,
     borderColor: COLORS.border,
   },
@@ -289,7 +293,13 @@ const styles = StyleSheet.create({
     paddingVertical: 13,
     borderRadius: 10,
     gap: 6,
-    marginTop: 12,
+    // Tight top gap so the Download button reads as a sibling of the
+    // "View on Map" button directly above (without touching it).
+    marginTop: 8,
+    // Bottom gap matches the visual rhythm of the rest of the river-detail
+    // card — pairs with the h3.marginTop (8) of the following "About this
+    // run" heading for a uniform ~16 px section break.
+    marginBottom: 8,
   },
   btnPrimary: { backgroundColor: COLORS.primary },
   // Solid green "Downloaded" state — used after a successful tile download.

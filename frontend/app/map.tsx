@@ -539,14 +539,30 @@ export default function MapScreen() {
     load();
   }, [load]);
 
-  // Deep-link: if the route includes ?river=<id>, auto-select once rivers load
-  const params = useLocalSearchParams<{ river?: string }>();
+  // Deep-link: if the route includes ?river=<id>, auto-select once rivers load.
+  // If the route also carries a `reset=<nonce>` param, force the map to drop
+  // any persisted viewport and refit to the river's default bounding view
+  // (used by the "View on Map" button on the river detail screen).
+  const params = useLocalSearchParams<{ river?: string; reset?: string }>();
+  const lastResetRef = useRef<string | null>(null);
   useEffect(() => {
     if (params.river && rivers.length > 0) {
       const exists = rivers.some((r) => r.id === params.river);
       if (exists) setSelectedRiverId(params.river as string);
     }
   }, [params.river, rivers]);
+
+  // Force-refit handler: every time the river-detail card sends us a new
+  // `reset` nonce, wipe the saved viewport and prime `prevModeRef` so the
+  // next state push to the map triggers `move: "fit"` even if we were
+  // already focused on the same river.
+  useEffect(() => {
+    if (!params.reset) return;
+    if (lastResetRef.current === params.reset) return;
+    lastResetRef.current = params.reset;
+    setMapView(null);
+    prevModeRef.current = null;
+  }, [params.reset]);
 
   // When a river is selected, fetch its POIs + (optional) curated polyline
   useEffect(() => {
@@ -660,7 +676,10 @@ export default function MapScreen() {
       : null
   );
 
-  // Push state to map whenever map is ready or relevant state changes
+  // Push state to map whenever map is ready or relevant state changes.
+  // `params.reset` is in the deps so the explicit refit triggered by the
+  // river card's "View on Map" button re-runs this effect even when the
+  // selected river hasn't changed (e.g. user is already viewing that run).
   useEffect(() => {
     if (!mapReady) return;
     // Only push focused state once POIs are loaded so the bounds include them
@@ -671,7 +690,7 @@ export default function MapScreen() {
     const move = newMode !== prevModeRef.current ? "fit" : "none";
     postCommand({ ...buildPayload(), move });
     prevModeRef.current = newMode;
-  }, [mapReady, selectedRiver, focusedPois, filteredRivers, buildPayload, postCommand]);
+  }, [mapReady, selectedRiver, focusedPois, filteredRivers, buildPayload, postCommand, params.reset]);
 
   // Handle messages from the map
   const handleMessage = useCallback((msg: string) => {
