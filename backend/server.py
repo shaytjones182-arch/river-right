@@ -28,6 +28,7 @@ def _load_curated(river_id: str) -> Optional[Dict[str, Any]]:
     poly_file = run_dir / "polyline.geojson"
     poi_file = run_dir / "poi.geojson"
     meta_file = run_dir / "meta.json"
+    helpful_file = run_dir / "helpful_info.json"
     if not poly_file.exists() and not poi_file.exists():
         return None
     bundle: Dict[str, Any] = {}
@@ -41,6 +42,32 @@ def _load_curated(river_id: str) -> Optional[Dict[str, Any]]:
         if meta_file.exists():
             with meta_file.open() as f:
                 bundle["meta"] = json.load(f)
+        if helpful_file.exists():
+            # Schema: {"items": [{"text": str, "url"?: str}, ...]}
+            # Anything that isn't a non-empty `text` string is dropped so a
+            # malformed entry can't break the river-detail screen.
+            try:
+                with helpful_file.open() as f:
+                    raw = json.load(f) or {}
+                items = raw.get("items") if isinstance(raw, dict) else None
+                clean: List[Dict[str, Any]] = []
+                if isinstance(items, list):
+                    for it in items:
+                        if not isinstance(it, dict):
+                            continue
+                        text = it.get("text")
+                        if not isinstance(text, str) or not text.strip():
+                            continue
+                        entry: Dict[str, Any] = {"text": text.strip()}
+                        url = it.get("url")
+                        if isinstance(url, str) and url.strip():
+                            entry["url"] = url.strip()
+                        clean.append(entry)
+                bundle["helpful_info"] = clean
+            except Exception as e:
+                logging.warning(
+                    f"Failed to parse helpful_info.json for {river_id}: {e}"
+                )
     except Exception as e:
         logging.warning(f"Failed to load curated data for {river_id}: {e}")
         return None
@@ -1578,6 +1605,15 @@ async def get_river(river_id: str):
     river = next((r for r in FEATURED_RIVERS if r["id"] == river_id), None)
     if not river:
         raise HTTPException(404, "River not found")
+    # Make a shallow copy so we don't mutate the FEATURED_RIVERS entry.
+    river = dict(river)
+    # Surface any curated "Helpful information" bullets sitting next to the
+    # run's geojson on disk (/app/data/runs/<id>/helpful_info.json). The
+    # field is omitted entirely when the file is missing or empty so the
+    # client can simply `if (r.helpful_info?.length) render…`.
+    curated = _load_curated(river_id)
+    if curated and curated.get("helpful_info"):
+        river["helpful_info"] = curated["helpful_info"]
     flow = None
     site_id = river.get("usgs_site_id")
     if site_id:

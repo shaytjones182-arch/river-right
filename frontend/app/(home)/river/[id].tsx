@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
+  Linking,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -17,6 +18,15 @@ import {
   fetchPoisWithCache,
 } from "../../../src/offlineCache";
 import OfflineMapCard from "../../../src/tiles/OfflineMapCard";
+
+// One bullet in the "Helpful information" section. `text` is required
+// and renders as plain copy. `url` is optional — when present the entire
+// row becomes tappable and opens the URL in the system browser (or in the
+// matching app, e.g. tel: links open the dialer).
+type HelpfulInfoItem = {
+  text: string;
+  url?: string;
+};
 
 type RiverDetail = {
   river: {
@@ -32,6 +42,9 @@ type RiverDetail = {
     usgs_site_id: string;
     image: string;
     points_of_interest?: string[];
+    // Optional curated bullet list shown above the POI section. Loaded
+    // from /app/data/runs/<river-id>/helpful_info.json by the backend.
+    helpful_info?: HelpfulInfoItem[];
   };
   flow: {
     cfs: number | null;
@@ -220,16 +233,71 @@ export default function RiverDetail() {
 
           <OfflineMapCard riverId={r.id} />
 
-          <Text style={styles.h3}>About this run</Text>
-          <Text style={styles.body1}>{r.description}</Text>
+          {/* ── About this run ────────────────────────────────────────────
+              Intentionally hidden behind a `false` guard rather than deleted
+              so the layout & data wiring is ready the moment we have new
+              copy to inject. Flip the guard back to `true` (or replace with
+              a real condition) to restore the section.
+          ─────────────────────────────────────────────────────────────── */}
+          {false && (
+            <>
+              <Text style={styles.h3}>About this run</Text>
+              <Text style={styles.body1}>{r.description}</Text>
+            </>
+          )}
 
-          <Text style={styles.h3}>Hazards</Text>
-          {r.hazards.map((h, i) => (
-            <View key={i} style={styles.hazard}>
-              <Ionicons name="warning" size={16} color={COLORS.danger} />
-              <Text style={styles.hazardText}>{h}</Text>
+          {/* ── Helpful information ──────────────────────────────────────
+              Curated bullet list (permits, campsite reservations, shuttle
+              bookings, general notices). Renders only when the river's
+              `helpful_info.json` is non-empty. Each row is a bullet plus a
+              text line; if `url` is provided, the row is tappable and opens
+              the link in the system browser (or the matching native app for
+              tel:/mailto: schemes).
+          ─────────────────────────────────────────────────────────────── */}
+          {r.helpful_info && r.helpful_info.length > 0 && (
+            <View testID="helpful-info-list">
+              <Text style={styles.h3}>Helpful information</Text>
+              {r.helpful_info.map((item, i) => {
+                const hasUrl = !!item.url;
+                const row = (
+                  <View style={styles.helpfulRow}>
+                    <Ionicons
+                      name="ellipse"
+                      size={6}
+                      color={COLORS.textMuted}
+                      style={styles.helpfulBullet}
+                    />
+                    <Text
+                      style={[
+                        styles.helpfulText,
+                        hasUrl && styles.helpfulTextLink,
+                      ]}
+                    >
+                      {item.text}
+                      {hasUrl ? (
+                        <Text style={styles.helpfulExternalIcon}> ↗</Text>
+                      ) : null}
+                    </Text>
+                  </View>
+                );
+                if (hasUrl) {
+                  return (
+                    <TouchableOpacity
+                      key={i}
+                      activeOpacity={0.6}
+                      onPress={() =>
+                        Linking.openURL(item.url as string).catch(() => {})
+                      }
+                      testID={`helpful-info-link-${i}`}
+                    >
+                      {row}
+                    </TouchableOpacity>
+                  );
+                }
+                return <View key={i}>{row}</View>;
+              })}
             </View>
-          ))}
+          )}
 
           <View style={styles.osmHeaderRow}>
             <View>
@@ -314,26 +382,6 @@ export default function RiverDetail() {
             </Text>
           )}
 
-          {r.points_of_interest && r.points_of_interest.length > 0 && (
-            <>
-              <Text style={styles.h3}>Tips</Text>
-              <Text style={[styles.subtle, { marginBottom: 6 }]}>
-                These tips are user-contributed and have not been verified.
-              </Text>
-              {r.points_of_interest.map((p, i) => (
-                <View key={i} style={styles.hazard}>
-                  <Ionicons
-                    name="ellipse"
-                    size={8}
-                    color={COLORS.primary}
-                    style={{ marginTop: 8 }}
-                  />
-                  <Text style={styles.hazardText}>{p}</Text>
-                </View>
-              ))}
-            </>
-          )}
-
           <TouchableOpacity
             testID="river-detail-track-btn"
             style={styles.cta}
@@ -412,6 +460,34 @@ const styles = StyleSheet.create({
   body1: { color: COLORS.textMain, lineHeight: 22, marginBottom: 16, fontSize: 15 },
   hazard: { flexDirection: "row", gap: 10, alignItems: "flex-start", paddingVertical: 6 },
   hazardText: { flex: 1, color: COLORS.textMain, lineHeight: 20, fontSize: 14 },
+
+  // ── Helpful information bullets ─────────────────────────────────────
+  // Slightly smaller bullet glyph than the POI list to read as a
+  // secondary "info" list, but typography matches the rest of the card.
+  helpfulRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    paddingVertical: 6,
+  },
+  helpfulBullet: {
+    marginTop: 9,
+  },
+  helpfulText: {
+    flex: 1,
+    color: COLORS.textMain,
+    lineHeight: 20,
+    fontSize: 14,
+  },
+  helpfulTextLink: {
+    color: COLORS.primary,
+    fontWeight: "600",
+  },
+  helpfulExternalIcon: {
+    color: COLORS.primary,
+    fontSize: 12,
+    fontWeight: "700",
+  },
   poiLead: { fontWeight: "800", color: COLORS.textMain },
   poiMeta: { color: COLORS.textMuted, fontSize: 13 },
   osmHeaderRow: {
