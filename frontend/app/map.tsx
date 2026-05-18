@@ -238,18 +238,19 @@ const buildMapHtml = (
     var OfflineFirstLayer = L.TileLayer.extend({
       getTileUrl: function(coords) {
         var key = coords.z + "/" + coords.x + "/" + coords.y;
-        // 1. Cached tile? Serve straight from disk — no network.
+        // 1. Cached tile? Serve straight from disk.
         if (OFFLINE_TILES[key]) return OFFLINE_TILES[key];
-        // 2. Cache miss. We do NOT trust navigator.onLine here —
-        //    iOS WKWebView reports online=true even in airplane mode,
-        //    so the "is the device online?" question can't be answered
-        //    from inside the WebView. Instead, the user's act of
-        //    downloading an offline pack IS the signal: respect it
-        //    and paint a clean transparent placeholder for any tile
-        //    outside the pack. Live USGS top-ups happen only when
-        //    HAVE_OFFLINE is false (handled by the plain L.tileLayer
-        //    branch below).
-        return BLANK_TILE;
+        // 2. Cache miss → ALWAYS attempt the live USGS tile. We don't
+        //    consult navigator.onLine because iOS WKWebView reports it
+        //    unreliably (returns false for file:// origins regardless
+        //    of actual connectivity, and returns true in airplane mode
+        //    with html-only sources). If we're genuinely offline the
+        //    HTTPS request will fail and the errorTileUrl: BLANK_TILE
+        //    setting will paint a transparent square — the same visual
+        //    we'd get from returning BLANK_TILE directly, but with the
+        //    bonus that online users actually see live tiles.
+        return 'https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/'
+          + coords.z + "/" + coords.y + "/" + coords.x;
       }
     });
     usgsTopo = new OfflineFirstLayer('', {
@@ -369,31 +370,23 @@ const buildMapHtml = (
   }, 200);
   // ─── END TEMP DEBUG OVERLAY ───
 
-  // The "check your connection" banner now ONLY trips after many
-  // consecutive tile errors — because errorTileUrl already paints a
-  // transparent placeholder for every individual miss, the user only
-  // needs a banner when they're clearly outside the river corridor
-  // entirely (not just brushing its edge at deep zoom).
+  // Banner suppression: when the user has any offline coverage, we
+  // never show the "check your connection" or "left the corridor"
+  // banners — the user explicitly downloaded tiles for a reason and
+  // any cache-miss tiles already paint a clean transparent square
+  // via errorTileUrl. The banner only ever trips for users with NO
+  // offline cache who have lost their network connection.
   var __tileErrCount = 0;
   var __tileBanner = document.getElementById('tile-banner');
   usgsTopo.on('tileerror', function(){
+    if (HAVE_OFFLINE) return;
     __tileErrCount++;
     if (__tileErrCount < 12 || !__tileBanner) return;
     var span = __tileBanner.querySelector('span');
     if (!span) return;
-    var isOffline = (typeof navigator !== 'undefined') && (navigator.onLine === false);
-    if (isOffline) {
-      span.textContent = HAVE_OFFLINE
-        ? "You've left the downloaded river corridor. Pan back toward the river or zoom out."
-        : "You're offline and no map tiles have been downloaded for this area. Open a river and tap 'Download offline map' before going off the grid.";
-    } else {
-      span.textContent = 'Map tiles unavailable — check your connection.';
-    }
+    span.textContent = 'Map tiles unavailable — check your connection.';
     __tileBanner.classList.add('show');
   });
-  // Reset error counter whenever the user successfully loads tiles
-  // again — prevents stale counts from older zoom levels tripping the
-  // banner after the user navigates back toward the corridor.
   usgsTopo.on('tileload', function(){
     if (__tileErrCount > 0) __tileErrCount = Math.max(0, __tileErrCount - 1);
   });
