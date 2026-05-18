@@ -175,13 +175,12 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
         var key = coords.z + "/" + coords.x + "/" + coords.y;
         // 1. Cached tile → serve from disk.
         if (OFFLINE_TILES[key]) return OFFLINE_TILES[key];
-        // 2. Cache miss + signal → live USGS HTTPS fills the gap.
-        var online = (typeof navigator === 'undefined') || (navigator.onLine !== false);
-        if (online) {
-          return 'https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/'
-            + coords.z + "/" + coords.y + "/" + coords.x;
-        }
-        // 3. Cache miss + offline → transparent placeholder, no event.
+        // 2. Cache miss → transparent placeholder. We do NOT consult
+        //    navigator.onLine here because iOS WKWebView reports
+        //    online=true even in airplane mode, so falling through to
+        //    USGS HTTPS produces guaranteed-failed requests that trip
+        //    the "check your connection" banner. The user's choice of
+        //    what to cache is the source of truth.
         return BLANK_TILE;
       }
     });

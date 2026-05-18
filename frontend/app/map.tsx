@@ -240,17 +240,15 @@ const buildMapHtml = (
         var key = coords.z + "/" + coords.x + "/" + coords.y;
         // 1. Cached tile? Serve straight from disk — no network.
         if (OFFLINE_TILES[key]) return OFFLINE_TILES[key];
-        // 2. Cache miss with signal? Patch the gap with a live USGS
-        //    tile so the variable-depth pyramid feels seamless on
-        //    Wi-Fi/cell.
-        var online = (typeof navigator === 'undefined') || (navigator.onLine !== false);
-        if (online) {
-          return 'https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/'
-            + coords.z + "/" + coords.y + "/" + coords.x;
-        }
-        // 3. Cache miss AND offline → return the same transparent PNG
-        //    Leaflet uses as errorTileUrl. No HTTPS request is made,
-        //    no tileerror fires, no banner trips.
+        // 2. Cache miss. We do NOT trust navigator.onLine here —
+        //    iOS WKWebView reports online=true even in airplane mode,
+        //    so the "is the device online?" question can't be answered
+        //    from inside the WebView. Instead, the user's act of
+        //    downloading an offline pack IS the signal: respect it
+        //    and paint a clean transparent placeholder for any tile
+        //    outside the pack. Live USGS top-ups happen only when
+        //    HAVE_OFFLINE is false (handled by the plain L.tileLayer
+        //    branch below).
         return BLANK_TILE;
       }
     });
