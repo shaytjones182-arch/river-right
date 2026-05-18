@@ -144,37 +144,12 @@ const buildMapHtml = (
   }
   .tile-banner.show{transform:translate(-50%,0);opacity:1;}
   .tile-banner svg{width:14px;height:14px;flex-shrink:0;}
-
-  /* TEMPORARY on-screen tile-debug overlay. Renders inside the WebView so
-     we can diagnose offline-tile loading without needing the JS console
-     (which is unreliable in Expo Go). Tap to dismiss. Remove once the
-     offline-tile pipeline is confirmed working end-to-end. */
-  #tile-dbg{
-    position:absolute;left:8px;bottom:8px;z-index:1000;
-    background:rgba(0,0,0,0.82);color:#fff;
-    font:11px/1.35 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    padding:8px 10px;border-radius:8px;max-width:88%;
-    box-shadow:0 2px 8px rgba(0,0,0,0.4);
-    word-break:break-all;
-  }
-  #tile-dbg .dbg-row{margin:1px 0;}
-  #tile-dbg .ok{color:#7CFFB4;}
-  #tile-dbg .bad{color:#FF8B8B;}
-  #tile-dbg .lbl{color:#FFD166;font-weight:700;}
-  #tile-dbg .close{
-    position:absolute;top:2px;right:6px;color:#FFD166;
-    font-weight:900;font-size:13px;cursor:pointer;
-  }
 </style>
 </head><body>
 <div id="m"></div>
 <div id="tile-banner" class="tile-banner" role="status" aria-live="polite">
   <svg viewBox="0 0 24 24" fill="none" stroke="#F4A261" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l10 18H2L12 3z"/><path d="M12 10v5"/><path d="M12 18v.01"/></svg>
   <span>Map tiles unavailable — check your connection.</span>
-</div>
-<div id="tile-dbg">
-  <span class="close" onclick="this.parentNode.style.display='none'">×</span>
-  <div class="dbg-row"><span class="lbl">DEBUG</span> initializing…</div>
 </div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
@@ -275,110 +250,6 @@ const buildMapHtml = (
     );
   }
   usgsTopo.addTo(map);
-
-  // ─── TEMP DEBUG OVERLAY (remove once offline tiles are confirmed) ───
-  // Shows live in the WebView so we don't need the JS console.
-  var __dbg = document.getElementById('tile-dbg');
-  var __dbgState = {
-    have: HAVE_OFFLINE,
-    count: HAVE_OFFLINE ? Object.keys(OFFLINE_TILES).length : 0,
-    online: (typeof navigator !== 'undefined') ? !!navigator.onLine : true,
-    center: '',
-    zoom: '',
-    sample: '',     // first OFFLINE_TILES URL we have
-    requests: [],   // first 3 tile loads, with success/error result
-    errors: 0,
-    loads: 0,
-  };
-  function __dbgRender(){
-    if (!__dbg) return;
-    var rows = [];
-    rows.push('<span class="lbl">DEBUG</span>'
-      + ' have=' + (__dbgState.have ? '<span class="ok">YES</span>' : '<span class="bad">NO</span>')
-      + ' n=' + __dbgState.count
-      + ' online=' + (__dbgState.online ? '<span class="ok">y</span>' : '<span class="bad">n</span>'));
-    rows.push('<span class="lbl">view</span> ' + __dbgState.center + ' z=' + __dbgState.zoom);
-    if (__dbgState.sample) {
-      rows.push('<span class="lbl">sample</span> ' + __dbgState.sample);
-    }
-    rows.push('<span class="lbl">tiles</span> loaded=<span class="ok">' + __dbgState.loads + '</span>'
-      + ' errors=<span class="bad">' + __dbgState.errors + '</span>');
-    for (var i=0; i<__dbgState.requests.length; i++) {
-      var r = __dbgState.requests[i];
-      rows.push('<span class="' + (r.ok ? 'ok' : 'bad') + '">'
-        + (r.ok ? '✓' : '✗') + '</span> '
-        + r.key + ' → ' + r.urlTail);
-    }
-    __dbg.innerHTML =
-      '<span class="close" onclick="this.parentNode.style.display=\\'none\\'">×</span>'
-      + rows.map(function(r){return '<div class="dbg-row">' + r + '</div>';}).join('');
-  }
-  // Seed the sample URL.
-  if (HAVE_OFFLINE) {
-    var __k0 = Object.keys(OFFLINE_TILES)[0];
-    __dbgState.sample = __k0 + ' → …' + OFFLINE_TILES[__k0].slice(-50);
-  }
-  // Track the first 3 tile URLs Leaflet actually requests + their outcome.
-  var __dbgReqIdx = {};
-  var __origGetTileUrl = usgsTopo.getTileUrl;
-  usgsTopo.getTileUrl = function(coords){
-    var url = __origGetTileUrl.call(this, coords);
-    if (Object.keys(__dbgReqIdx).length < 3) {
-      var key = coords.z + '/' + coords.x + '/' + coords.y;
-      if (!(key in __dbgReqIdx)) {
-        __dbgReqIdx[key] = __dbgState.requests.length;
-        __dbgState.requests.push({
-          key: key,
-          urlTail: '…' + String(url).slice(-50),
-          ok: null,
-        });
-        __dbgRender();
-      }
-    }
-    return url;
-  };
-  usgsTopo.on('tileload', function(e){
-    __dbgState.loads++;
-    var c = e && e.coords;
-    if (c) {
-      var key = c.z + '/' + c.x + '/' + c.y;
-      if (key in __dbgReqIdx) __dbgState.requests[__dbgReqIdx[key]].ok = true;
-    }
-    __dbgRender();
-  });
-  usgsTopo.on('tileerror', function(e){
-    __dbgState.errors++;
-    var c = e && e.coords;
-    if (c) {
-      var key = c.z + '/' + c.x + '/' + c.y;
-      if (key in __dbgReqIdx) __dbgState.requests[__dbgReqIdx[key]].ok = false;
-    }
-    __dbgRender();
-  });
-  map.on('moveend zoomend', function(){
-    var c = map.getCenter();
-    __dbgState.center = c.lat.toFixed(3) + ',' + c.lng.toFixed(3);
-    __dbgState.zoom = map.getZoom();
-    __dbgRender();
-  });
-  // Poll navigator.onLine instead of relying on online/offline events —
-  // WKWebView frequently doesn't fire those events when the device's
-  // network flips, especially when the page was loaded while offline.
-  setInterval(function(){
-    var now = (typeof navigator !== 'undefined') ? !!navigator.onLine : true;
-    if (now !== __dbgState.online) {
-      __dbgState.online = now;
-      __dbgRender();
-    }
-  }, 1500);
-  // Initial paint.
-  setTimeout(function(){
-    var c = map.getCenter();
-    __dbgState.center = c.lat.toFixed(3) + ',' + c.lng.toFixed(3);
-    __dbgState.zoom = map.getZoom();
-    __dbgRender();
-  }, 200);
-  // ─── END TEMP DEBUG OVERLAY ───
 
   // Banner suppression: when the user has any offline coverage, we
   // never show the "check your connection" or "left the corridor"
