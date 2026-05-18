@@ -1,0 +1,6 @@
+{
+  "low_threshold": 900,
+  "normal_threshold": 3000,
+  "high_threshold": 20000,
+  "datasource_attribution": "Main Source: Bureau of Land Management (BLM).  Also estimated with river safety guidelines and flow consensus for this river run from the boating community."
+}

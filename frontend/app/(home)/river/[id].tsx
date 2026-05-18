@@ -8,6 +8,8 @@ import {
   Image,
   ActivityIndicator,
   Linking,
+  Modal,
+  Pressable,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -56,6 +58,18 @@ type RiverDetail = {
     status: string;
     label: string;
     updated_at?: string;
+    // Curated per-river CFS classification ranges (Very low / Low /
+    // Normal / High). Optional — older rivers may not have a
+    // cfs_thresholds.json yet, in which case the popup only shows the
+    // generic class breakdown.
+    thresholds?: {
+      low_threshold?: number;
+      normal_threshold?: number;
+      high_threshold?: number;
+    };
+    // Free-text source citation surfaced when the user taps the status
+    // pill ("LOW" / "NORMAL" / etc.).
+    datasource_attribution?: string;
   } | null;
 };
 
@@ -87,6 +101,10 @@ export default function RiverDetail() {
   const [osmPois, setOsmPois] = useState<OsmPoi[] | null>(null);
   const [osmLoading, setOsmLoading] = useState(true);
   const [osmError, setOsmError] = useState(false);
+  // Toggles the per-river "What does this label mean?" modal that opens
+  // when the user taps the status pill (LOW / NORMAL / HIGH / etc.) next
+  // to the big CFS number.
+  const [flowInfoOpen, setFlowInfoOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -198,9 +216,24 @@ export default function RiverDetail() {
                 </Text>
                 <Text style={styles.cfsUnit}>CFS</Text>
               </View>
-              <View style={[styles.statusPill, { backgroundColor: statusColor }]}>
+              <TouchableOpacity
+                onPress={() => flow && setFlowInfoOpen(true)}
+                disabled={!flow}
+                activeOpacity={0.7}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                testID="river-flow-status-pill"
+                style={[styles.statusPill, { backgroundColor: statusColor }]}
+              >
                 <Text style={styles.statusText}>{flow?.label?.toUpperCase() || "NO DATA"}</Text>
-              </View>
+                {flow && (
+                  <Ionicons
+                    name="information-circle"
+                    size={14}
+                    color="#fff"
+                    style={styles.statusPillIcon}
+                  />
+                )}
+              </TouchableOpacity>
             </View>
             {/* Replaces the prior "Gauge height: X.XX ft" line. Showing the
                 friendly station name reinforces which gauge the CFS reading
@@ -405,7 +438,136 @@ export default function RiverDetail() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* ── Flow-status explainer modal ──────────────────────────────────
+          Opens when the user taps the LOW / NORMAL / HIGH status pill next
+          to the current CFS number. Mirrors the look of the Leaflet
+          marker popups (centered card with a title, range list, and a
+          datasource attribution line). Tap outside the card or the close
+          button to dismiss.
+      ─────────────────────────────────────────────────────────────── */}
+      <Modal
+        visible={flowInfoOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setFlowInfoOpen(false)}
+      >
+        <Pressable
+          style={styles.flowModalBackdrop}
+          onPress={() => setFlowInfoOpen(false)}
+          testID="flow-info-backdrop"
+        >
+          <Pressable style={styles.flowModalCard} onPress={() => {}}>
+            <View style={styles.flowModalHeader}>
+              <Text style={styles.flowModalTitle}>What does this mean?</Text>
+              <TouchableOpacity
+                onPress={() => setFlowInfoOpen(false)}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                testID="flow-info-close"
+              >
+                <Ionicons name="close" size={22} color={COLORS.textMain} />
+              </TouchableOpacity>
+            </View>
+
+            {flow && (
+              <View style={styles.flowModalSummary}>
+                <View
+                  style={[
+                    styles.flowModalPill,
+                    { backgroundColor: statusColor },
+                  ]}
+                >
+                  <Text style={styles.flowModalPillText}>
+                    {flow.label?.toUpperCase()}
+                  </Text>
+                </View>
+                <Text style={styles.flowModalSummaryText}>
+                  Current reading{" "}
+                  <Text style={styles.flowModalSummaryBold}>
+                    {flow.cfs !== null && flow.cfs !== undefined
+                      ? `${Math.round(flow.cfs).toLocaleString()} CFS`
+                      : "—"}
+                  </Text>
+                </Text>
+              </View>
+            )}
+
+            {flow?.thresholds &&
+              flow.thresholds.low_threshold !== undefined &&
+              flow.thresholds.normal_threshold !== undefined &&
+              flow.thresholds.high_threshold !== undefined && (
+                <View style={styles.flowModalRanges}>
+                  <Text style={styles.flowModalRangesHeader}>
+                    Flow ranges for this run
+                  </Text>
+                  <FlowRangeRow
+                    color={COLORS.low}
+                    label="Very low"
+                    range={`Below ${Math.round(
+                      flow.thresholds.low_threshold
+                    ).toLocaleString()} CFS`}
+                  />
+                  <FlowRangeRow
+                    color={COLORS.info}
+                    label="Low"
+                    range={`${Math.round(
+                      flow.thresholds.low_threshold
+                    ).toLocaleString()} – ${Math.round(
+                      flow.thresholds.normal_threshold
+                    ).toLocaleString()} CFS`}
+                  />
+                  <FlowRangeRow
+                    color={COLORS.safe}
+                    label="Normal"
+                    range={`${Math.round(
+                      flow.thresholds.normal_threshold
+                    ).toLocaleString()} – ${Math.round(
+                      flow.thresholds.high_threshold
+                    ).toLocaleString()} CFS`}
+                  />
+                  <FlowRangeRow
+                    color={COLORS.warning}
+                    label="High"
+                    range={`Above ${Math.round(
+                      flow.thresholds.high_threshold
+                    ).toLocaleString()} CFS`}
+                  />
+                </View>
+              )}
+
+            {flow?.datasource_attribution && (
+              <View style={styles.flowModalAttribution}>
+                <Text style={styles.flowModalAttributionHeader}>Source</Text>
+                <Text style={styles.flowModalAttributionText}>
+                  {flow.datasource_attribution}
+                </Text>
+              </View>
+            )}
+          </Pressable>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
+  );
+}
+
+// Mini helper rendered inside the flow-info modal — one labelled row per
+// classification bucket (Very low / Low / Normal / High) with the matching
+// pill color and the CFS range.
+function FlowRangeRow({
+  color,
+  label,
+  range,
+}: {
+  color: string;
+  label: string;
+  range: string;
+}) {
+  return (
+    <View style={styles.flowRangeRow}>
+      <View style={[styles.flowRangeDot, { backgroundColor: color }]} />
+      <Text style={styles.flowRangeLabel}>{label}</Text>
+      <Text style={styles.flowRangeRange}>{range}</Text>
+    </View>
   );
 }
 
@@ -465,7 +627,15 @@ const styles = StyleSheet.create({
   flowRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
   bigCfs: { fontSize: 44, fontWeight: "900", color: COLORS.textMain, letterSpacing: -2 },
   cfsUnit: { fontSize: 12, fontWeight: "800", color: COLORS.textMuted, letterSpacing: 2 },
-  statusPill: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999 },
+  statusPill: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 999,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  statusPillIcon: { marginLeft: 2, opacity: 0.85 },
   statusText: { color: "#fff", fontWeight: "900", letterSpacing: 1, fontSize: 13 },
   subtle: { color: COLORS.textMuted, fontSize: 12, marginTop: 4 },
   h3: { fontSize: 18, fontWeight: "900", color: COLORS.textMain, marginBottom: 8, marginTop: 8, letterSpacing: -0.3 },
@@ -564,4 +734,116 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   ctaText: { color: "#fff", fontWeight: "900", letterSpacing: 2, fontSize: 16 },
+
+  // ── Flow-status explainer modal ─────────────────────────────────────
+  flowModalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(10, 17, 40, 0.45)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  flowModalCard: {
+    width: "100%",
+    maxWidth: 420,
+    backgroundColor: COLORS.surface,
+    borderRadius: 18,
+    padding: 18,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.18,
+    shadowRadius: 18,
+    elevation: 8,
+  },
+  flowModalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  flowModalTitle: {
+    fontSize: 17,
+    fontWeight: "900",
+    color: COLORS.textMain,
+    letterSpacing: -0.2,
+  },
+  flowModalSummary: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 14,
+  },
+  flowModalPill: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+  },
+  flowModalPillText: {
+    color: "#fff",
+    fontWeight: "900",
+    fontSize: 12,
+    letterSpacing: 1,
+  },
+  flowModalSummaryText: {
+    flex: 1,
+    color: COLORS.textMuted,
+    fontSize: 13,
+  },
+  flowModalSummaryBold: {
+    color: COLORS.textMain,
+    fontWeight: "800",
+  },
+  flowModalRanges: {
+    backgroundColor: COLORS.background,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 14,
+  },
+  flowModalRangesHeader: {
+    fontSize: 11,
+    fontWeight: "900",
+    letterSpacing: 1.2,
+    color: COLORS.textMuted,
+    marginBottom: 8,
+  },
+  flowRangeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 4,
+    gap: 10,
+  },
+  flowRangeDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  flowRangeLabel: {
+    color: COLORS.textMain,
+    fontSize: 13,
+    fontWeight: "700",
+    width: 70,
+  },
+  flowRangeRange: {
+    flex: 1,
+    color: COLORS.textMuted,
+    fontSize: 13,
+    textAlign: "right",
+  },
+  flowModalAttribution: {
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+    paddingTop: 12,
+  },
+  flowModalAttributionHeader: {
+    fontSize: 11,
+    fontWeight: "900",
+    letterSpacing: 1.2,
+    color: COLORS.textMuted,
+    marginBottom: 4,
+  },
+  flowModalAttributionText: {
+    color: COLORS.textMain,
+    fontSize: 13,
+    lineHeight: 19,
+  },
 });

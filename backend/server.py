@@ -29,6 +29,7 @@ def _load_curated(river_id: str) -> Optional[Dict[str, Any]]:
     poi_file = run_dir / "poi.geojson"
     meta_file = run_dir / "meta.json"
     helpful_file = run_dir / "helpful_info.json"
+    thresholds_file = run_dir / "cfs_thresholds.json"
     if not poly_file.exists() and not poi_file.exists():
         return None
     bundle: Dict[str, Any] = {}
@@ -67,6 +68,33 @@ def _load_curated(river_id: str) -> Optional[Dict[str, Any]]:
             except Exception as e:
                 logging.warning(
                     f"Failed to parse helpful_info.json for {river_id}: {e}"
+                )
+        if thresholds_file.exists():
+            # Schema:
+            # {
+            #   "low_threshold":     int,   # below this CFS = "Low"
+            #   "normal_threshold":  int,   # informational; typical seasonal
+            #                               # flow, shown in the popup
+            #   "high_threshold":    int,   # at/above this CFS = "High"
+            #   "datasource_attribution": str  # shown in the popup
+            # }
+            try:
+                with thresholds_file.open() as f:
+                    raw = json.load(f) or {}
+                if isinstance(raw, dict):
+                    cfs_th: Dict[str, Any] = {}
+                    for k in ("low_threshold", "normal_threshold", "high_threshold"):
+                        v = raw.get(k)
+                        if isinstance(v, (int, float)):
+                            cfs_th[k] = float(v)
+                    attr = raw.get("datasource_attribution")
+                    if isinstance(attr, str) and attr.strip():
+                        cfs_th["datasource_attribution"] = attr.strip()
+                    if cfs_th:
+                        bundle["cfs_thresholds"] = cfs_th
+            except Exception as e:
+                logging.warning(
+                    f"Failed to parse cfs_thresholds.json for {river_id}: {e}"
                 )
     except Exception as e:
         logging.warning(f"Failed to load curated data for {river_id}: {e}")
@@ -1499,11 +1527,43 @@ def haversine_miles(lat1: float, lon1: float, lat2: float, lon2: float) -> float
     return 2 * R * math.asin(math.sqrt(a))
 
 
-def classify_flow(cfs: Optional[float]) -> Dict[str, str]:
-    """Heuristic flow classification when only CFS is known.
-    For an MVP without per-river ranges, we use coarse buckets."""
+def classify_flow(
+    cfs: Optional[float],
+    thresholds: Optional[Dict[str, Any]] = None,
+) -> Dict[str, str]:
+    """Classify a CFS reading into a Very-low / Low / Normal / High bucket.
+
+    When `thresholds` is provided (per-river overrides loaded from
+    /app/data/runs/<id>/cfs_thresholds.json), we honor those exact
+    boundaries:
+        cfs < low_threshold                          → Very low (gray)
+        low_threshold     ≤ cfs < normal_threshold   → Low      (muted blue)
+        normal_threshold  ≤ cfs < high_threshold     → Normal   (green)
+        cfs ≥ high_threshold                         → High     (amber)
+
+    Falls back to the coarse generic buckets when curated thresholds
+    aren't supplied so endpoints without per-river data still produce
+    something useful.
+    """
     if cfs is None:
         return {"status": "unknown", "label": "No data"}
+    if thresholds:
+        lo = thresholds.get("low_threshold")
+        nm = thresholds.get("normal_threshold")
+        hi = thresholds.get("high_threshold")
+        if (
+            isinstance(lo, (int, float))
+            and isinstance(nm, (int, float))
+            and isinstance(hi, (int, float))
+        ):
+            if cfs < lo:
+                return {"status": "low", "label": "Very low"}
+            if cfs < nm:
+                return {"status": "info", "label": "Low"}
+            if cfs < hi:
+                return {"status": "safe", "label": "Normal"}
+            return {"status": "warning", "label": "High"}
+    # Generic fallback (MVP placeholder — replaced per-river over time).
     if cfs < 100:
         return {"status": "low", "label": "Low"}
     if cfs < 1500:
@@ -1612,13 +1672,14 @@ async def get_river(river_id: str):
         raise HTTPException(404, "River not found")
     # Make a shallow copy so we don't mutate the FEATURED_RIVERS entry.
     river = dict(river)
-    # Surface any curated "Helpful information" bullets sitting next to the
-    # run's geojson on disk (/app/data/runs/<id>/helpful_info.json). The
-    # field is omitted entirely when the file is missing or empty so the
-    # client can simply `if (r.helpful_info?.length) render…`.
-    curated = _load_curated(river_id)
-    if curated and curated.get("helpful_info"):
+    # Surface curated extras sitting next to the run's geojson on disk:
+    #   /app/data/runs/<id>/helpful_info.json   → river.helpful_info
+    #   /app/data/runs/<id>/cfs_thresholds.json → drives per-river flow
+    #                                             classification + popup
+    curated = _load_curated(river_id) or {}
+    if curated.get("helpful_info"):
         river["helpful_info"] = curated["helpful_info"]
+    cfs_th = curated.get("cfs_thresholds") or None
     flow = None
     site_id = river.get("usgs_site_id")
     if site_id:
@@ -1627,10 +1688,25 @@ async def get_river(river_id: str):
             parsed = parse_iv_response(payload)
             site_data = parsed.get(site_id)
             if site_data:
-                cls = classify_flow(site_data.get("cfs"))
+                cls = classify_flow(site_data.get("cfs"), thresholds=cfs_th)
                 flow = {**site_data, **cls}
         except Exception as e:
             logging.warning(f"USGS fetch failed for {site_id}: {e}")
+    # Always attach the curated thresholds + attribution to the flow
+    # payload (even when the live USGS fetch failed) so the river card's
+    # tap-to-explain popup still has something to show.
+    if cfs_th:
+        if flow is None:
+            flow = {}
+        # Expose the raw thresholds so the client can render the
+        # "Very low / Low / Normal / High" ranges in the popup.
+        flow["thresholds"] = {
+            k: cfs_th[k]
+            for k in ("low_threshold", "normal_threshold", "high_threshold")
+            if k in cfs_th
+        }
+        if cfs_th.get("datasource_attribution"):
+            flow["datasource_attribution"] = cfs_th["datasource_attribution"]
     return {"river": river, "flow": flow}
 
 
