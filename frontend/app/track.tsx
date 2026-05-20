@@ -13,6 +13,7 @@ import {
   KeyboardAvoidingView,
   Animated,
   PanResponder,
+  AppState,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -23,6 +24,14 @@ import { COLORS, API } from "../src/theme";
 import ProfileMenu from "../src/ProfileMenu";
 import { getMergedOfflineManifest } from "../src/tiles/tileDownloader";
 import { fetchPoisWithCache, fetchPolylineWithCache } from "../src/offlineCache";
+import {
+  ensureBackgroundPermission,
+  startBackgroundLocation,
+  stopBackgroundLocation,
+  drainBackgroundQueue,
+  resetBackgroundQueue,
+  type BgLocPing,
+} from "../src/locationBackground";
 import {
   rollupTrip,
   saveTrip,
@@ -524,6 +533,12 @@ export default function Track() {
   const [totalSec, setTotalSec] = useState(0); // elapsed seconds for current day (excludes paused time)
   const [movingSec, setMovingSec] = useState(0); // seconds with speed >= MOVING_MPH_THRESHOLD
   const [points, setPoints] = useState<TripPoint[]>([]);
+  // Mirror of `points` accessible from async callbacks (background-queue
+  // drainer, AppState listener) without closing over stale state.
+  const pointsRef = useRef<TripPoint[]>([]);
+  useEffect(() => {
+    pointsRef.current = points;
+  }, [points]);
   // Refs used inside callbacks/intervals so we always read the latest values
   const speedRef = useRef(0);
   const dayStartedAtRef = useRef<number | null>(null);
@@ -659,18 +674,14 @@ export default function Track() {
     };
   }, [selectedRiver, sendJs]);
 
-  const onLoc = (loc: Location.LocationObject) => {
-    const speed = loc.coords.speed && loc.coords.speed > 0 ? loc.coords.speed * 2.23694 : 0;
-    const p: TripPoint = {
-      lat: loc.coords.latitude,
-      lon: loc.coords.longitude,
-      t: loc.timestamp,
-      speed,
-    };
+  // Shared insertion path used by both the foreground watcher and the
+  // background-queue drainer. Keeps distance + max-speed bookkeeping
+  // identical regardless of where the point came from.
+  const appendTripPoint = useCallback((p: TripPoint) => {
     setCoord({ lat: p.lat, lon: p.lon, t: p.t });
-    speedRef.current = speed;
-    setSpeedMph(speed);
-    setMaxMph((m) => (speed > m ? speed : m));
+    speedRef.current = p.speed;
+    setSpeedMph(p.speed);
+    setMaxMph((m) => (p.speed > m ? p.speed : m));
     setPoints((prev) => {
       if (prev.length > 0) {
         const last = prev[prev.length - 1];
@@ -683,7 +694,38 @@ export default function Track() {
       return [...prev, p];
     });
     sendJs(`window.updatePos(${p.lat}, ${p.lon}, true)`);
+  }, [sendJs]);
+
+  const onLoc = (loc: Location.LocationObject) => {
+    const speed = loc.coords.speed && loc.coords.speed > 0 ? loc.coords.speed * 2.23694 : 0;
+    appendTripPoint({
+      lat: loc.coords.latitude,
+      lon: loc.coords.longitude,
+      t: loc.timestamp,
+      speed,
+    });
   };
+
+  // Merge any pings the background TaskManager task buffered to storage
+  // while the JS engine was suspended. Called on Track-tab mount + each
+  // time the app returns to the foreground. We dedupe against the last
+  // already-recorded timestamp so re-entries don't double-count distance.
+  const mergeBackgroundPings = useCallback(async () => {
+    const queued: BgLocPing[] = await drainBackgroundQueue();
+    if (!queued.length) return;
+    // Dedupe vs. the last in-memory point's timestamp.
+    const lastT = pointsRef.current.length
+      ? pointsRef.current[pointsRef.current.length - 1].t
+      : 0;
+    const fresh = queued
+      .filter((q) => q.ts > lastT)
+      .sort((a, b) => a.ts - b.ts);
+    for (const q of fresh) {
+      const speedMph =
+        q.speed && q.speed > 0 ? q.speed * 2.23694 : 0;
+      appendTripPoint({ lat: q.lat, lon: q.lon, t: q.ts, speed: speedMph });
+    }
+  }, [appendTripPoint]);
 
   // Reset all per-day counters to start a fresh day
   const resetDayCounters = () => {
@@ -695,7 +737,23 @@ export default function Track() {
     setMovingSec(0);
     speedRef.current = 0;
     sendJs(`window.setPath([])`);
+    // Wipe any stale background-queue pings left over from a previous
+    // session — they'd otherwise be merged in on next foreground.
+    resetBackgroundQueue().catch(() => {});
   };
+
+  // On Track-tab mount and on every app foreground, fold any background
+  // pings that arrived while the JS engine was suspended into live state.
+  useEffect(() => {
+    // Initial drain on mount.
+    mergeBackgroundPings().catch(() => {});
+    const sub = AppState.addEventListener("change", (next) => {
+      if (next === "active") {
+        mergeBackgroundPings().catch(() => {});
+      }
+    });
+    return () => sub.remove();
+  }, [mergeBackgroundPings]);
 
   // Begin (or resume) recording GPS + 1-second tick.
   const beginRecording = async () => {
@@ -717,6 +775,19 @@ export default function Track() {
         { accuracy: Location.Accuracy.High, distanceInterval: 5, timeInterval: 2000 },
         onLoc
       );
+    }
+    // Also kick off the background TaskManager updates so GPS keeps
+    // streaming when the phone is locked / app is backgrounded. Asks for
+    // the secondary "Always" permission if we don't already have it; we
+    // tolerate a denial gracefully (the foreground sub will still record
+    // pings whenever the user is actively looking at the tab).
+    try {
+      const okBg = await ensureBackgroundPermission();
+      if (okBg) {
+        await startBackgroundLocation();
+      }
+    } catch (e) {
+      console.warn("background-location start failed:", e);
     }
     return true;
   };
@@ -742,6 +813,10 @@ export default function Track() {
     }
     setSpeedMph(0);
     speedRef.current = 0;
+    // Tear down the background TaskManager task too so the OS stops
+    // delivering pings (and the foreground-service notification on
+    // Android disappears).
+    stopBackgroundLocation().catch(() => {});
   };
 
   // Build a TripDay snapshot from current accumulators

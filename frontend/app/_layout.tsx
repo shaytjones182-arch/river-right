@@ -5,6 +5,10 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import TermsAcceptanceModal from "../src/TermsAcceptanceModal";
 import { useTermsAcceptance } from "../src/useTermsAcceptance";
+// Side-effect import: registers the background-location TaskManager task at
+// module top level so iOS / Android can find it on cold launch (required
+// even before the user taps Start on the Track tab).
+import "../src/locationBackground";
 
 export default function RootLayout() {
   const { status, accept } = useTermsAcceptance();
