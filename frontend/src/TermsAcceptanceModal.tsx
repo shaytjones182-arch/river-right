@@ -15,6 +15,7 @@ import {
   LayoutAnimation,
   Platform,
   UIManager,
+  Image,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -57,9 +58,11 @@ export default function TermsAcceptanceModal({ visible, onAccept }: Props) {
       <View style={[styles.root, { paddingTop: insets.top }]}>
         {/* Header band */}
         <View style={styles.headerBand}>
-          <View style={styles.logoCircle}>
-            <Ionicons name="water" size={28} color="#fff" />
-          </View>
+          <Image
+            source={require("../assets/images/riverright-mark.png")}
+            style={styles.logoMark}
+            resizeMode="contain"
+          />
           <Text style={styles.title}>Welcome to RiverRight</Text>
           <Text style={styles.subtitle}>Read the river. Run it right.</Text>
         </View>
@@ -232,19 +235,10 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     paddingHorizontal: 20,
   },
-  logoCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: COLORS.primary,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 10,
-    shadowColor: "#000",
-    shadowOpacity: 0.15,
-    shadowOffset: { width: 0, height: 3 },
-    shadowRadius: 6,
-    elevation: 3,
+  logoMark: {
+    width: 72,
+    height: 72,
+    marginBottom: 8,
   },
   title: {
     fontSize: 22,

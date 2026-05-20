@@ -160,7 +160,11 @@ export default function Home() {
             <ActivityIndicator color={COLORS.primary} style={{ marginVertical: 40 }} />
           ) : visible.length === 0 ? (
             <View style={styles.emptyWrap}>
-              <Ionicons name="water-outline" size={36} color={COLORS.textMuted} />
+              <Image
+                source={require("../../assets/images/riverright-mark.png")}
+                style={styles.emptyMark}
+                resizeMode="contain"
+              />
               <Text style={styles.emptyTitle}>No rivers found</Text>
               <Text style={styles.emptySub}>
                 Try a different search.
@@ -373,6 +377,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 48,
     gap: 8,
+  },
+  emptyMark: {
+    width: 56,
+    height: 56,
+    // Slightly desaturate the brand mark visually so it reads as a quiet
+    // placeholder rather than a hero element.
+    opacity: 0.55,
   },
   emptyTitle: {
     fontSize: 16,
