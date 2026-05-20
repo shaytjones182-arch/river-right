@@ -71,10 +71,6 @@ export default function RootLayout() {
             options={{ href: null }}
           />
           <Tabs.Screen
-            name="about/index"
-            options={{ href: null }}
-          />
-          <Tabs.Screen
             name="about/terms"
             options={{ href: null }}
           />

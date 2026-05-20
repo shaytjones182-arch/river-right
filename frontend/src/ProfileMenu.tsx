@@ -105,10 +105,16 @@ export default function ProfileMenu({ testID }: ProfileMenuProps) {
               }}
             />
             <MenuRow
-              testID="profile-menu-about"
-              icon="information-circle-outline"
-              label="About RiverRight"
-              onPress={() => go("/about")}
+              testID="profile-menu-terms"
+              icon="document-text-outline"
+              label="Terms of Service"
+              onPress={() => go("/about/terms")}
+            />
+            <MenuRow
+              testID="profile-menu-attributions"
+              icon="ribbon-outline"
+              label="Attributions"
+              onPress={() => go("/about/attributions")}
               divider={false}
             />
           </Pressable>
