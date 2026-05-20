@@ -46,6 +46,13 @@ const DATA_SOURCES: Credit[] = [
     required: true,
   },
   {
+    title: "U.S. Geological Survey — 3D Hydrography Program (3DHP, 2025)",
+    blurb:
+      "Authoritative hydrography data used to source and verify the exact river polylines (centerlines) for curated runs. The 3DHP is the successor to the National Hydrography Dataset (NHD) and provides high-resolution flowline geometry for U.S. surface waters.",
+    license: "U.S. Government public domain (USGS work)",
+    url: "https://www.usgs.gov/3d-hydrography-program",
+  },
+  {
     title: "Bureau of Land Management (BLM)",
     blurb:
       "Primary reference for the seasonal CFS flow ranges (Very low / Low / Normal / High) used on individual river runs, supplemented by community consensus and standard river-safety guidance.",
