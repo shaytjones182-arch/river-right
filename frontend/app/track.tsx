@@ -24,6 +24,9 @@ import { COLORS, API } from "../src/theme";
 import ProfileMenu from "../src/ProfileMenu";
 import { getMergedOfflineManifest } from "../src/tiles/tileDownloader";
 import { fetchPoisWithCache, fetchPolylineWithCache } from "../src/offlineCache";
+// Leaflet 1.9.4 inlined as base64 — see comment in leafletInline.ts.
+// This makes the map work fully offline (no CDN dependency at runtime).
+import { LEAFLET_JS_B64, LEAFLET_CSS_B64 } from "../src/leafletInline";
 import {
   ensureBackgroundPermission,
   startBackgroundLocation,
@@ -104,7 +107,7 @@ const buildHtml = (
 ) => `<!DOCTYPE html>
 <html><head>
 <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>${atob(LEAFLET_CSS_B64)}</style>
 <style>
 html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
 .me{background:#0077B6;border:3px solid #fff;border-radius:50%;width:18px;height:18px;box-shadow:0 0 0 6px rgba(0,119,182,0.25);}
@@ -159,7 +162,7 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
   <svg viewBox="0 0 24 24" fill="none" stroke="#F4A261" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l10 18H2L12 3z"/><path d="M12 10v5"/><path d="M12 18v.01"/></svg>
   <span>Map tiles unavailable — check your connection.</span>
 </div>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>${atob(LEAFLET_JS_B64).replace(/<\//g, "<\\/")}</script>
 <script>
 (function(){
   var SVG = ${JSON.stringify(SVG_TRACK)};

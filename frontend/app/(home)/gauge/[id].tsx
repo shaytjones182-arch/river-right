@@ -12,6 +12,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import MapView from "../../../src/MapView";
 import { COLORS, STATUS_COLORS, API } from "../../../src/theme";
+// Leaflet 1.9.4 inlined as base64 so the WebView map works fully offline.
+import { LEAFLET_JS_B64, LEAFLET_CSS_B64 } from "../../../src/leafletInline";
 
 type SiteData = {
   site_id: string;
@@ -27,7 +29,7 @@ type SiteData = {
 
 const buildHtml = (lat: number, lon: number, name: string) => `<!DOCTYPE html>
 <html><head><meta name="viewport" content="initial-scale=1.0,maximum-scale=1.0">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>${atob(LEAFLET_CSS_B64)}</style>
 <style>
   html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
   .tile-banner{position:absolute;top:8px;left:50%;transform:translate(-50%,-150%);z-index:1000;pointer-events:none;background:#0A1128;color:#fff;padding:6px 12px;border-radius:999px;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;font-size:11px;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,0.35);display:flex;align-items:center;gap:6px;max-width:88%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:0;transition:transform 220ms ease-out,opacity 220ms ease-out;}
@@ -39,7 +41,7 @@ const buildHtml = (lat: number, lon: number, name: string) => `<!DOCTYPE html>
   <svg viewBox="0 0 24 24" fill="none" stroke="#F4A261" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l10 18H2L12 3z"/><path d="M12 10v5"/><path d="M12 18v.01"/></svg>
   <span>Map tiles unavailable</span>
 </div>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>${atob(LEAFLET_JS_B64).replace(/<\//g, "<\\/")}</script>
 <script>
 var m = L.map('m', { zoomControl:false, attributionControl:false, maxZoom:16 }).setView([${lat}, ${lon}], 11);
 // USGS Topo basemap only — OSM tile servers disallow app use.

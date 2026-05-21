@@ -15,6 +15,8 @@ import MapView from "../src/MapView";
 import ProfileMenu from "../src/ProfileMenu";
 import Svg, { Path, Polygon, Circle, Polyline as SvgPolyline } from "react-native-svg";
 import { COLORS, API } from "../src/theme";
+// Leaflet 1.9.4 inlined as base64 so the WebView map works fully offline.
+import { LEAFLET_JS_B64, LEAFLET_CSS_B64 } from "../src/leafletInline";
 import {
   fetchPolylineWithCache,
   fetchPoisWithCache,
@@ -121,7 +123,7 @@ const buildMapHtml = (
 ) => `<!DOCTYPE html>
 <html><head>
 <meta name="viewport" content="initial-scale=1.0,maximum-scale=1.0,user-scalable=no" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>${atob(LEAFLET_CSS_B64)}</style>
 <style>
   html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#dfeef7;}
   .pulse{
@@ -187,7 +189,7 @@ const buildMapHtml = (
   <svg viewBox="0 0 24 24" fill="none" stroke="#F4A261" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l10 18H2L12 3z"/><path d="M12 10v5"/><path d="M12 18v.01"/></svg>
   <span>Map tiles unavailable — check your connection.</span>
 </div>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>${atob(LEAFLET_JS_B64).replace(/<\//g, "<\\/")}</script>
 <script>
 (function(){
   var SVG = ${JSON.stringify(SVG_ICONS)};
