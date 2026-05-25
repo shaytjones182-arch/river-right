@@ -20,6 +20,12 @@
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API } from "./theme";
+// Static, in-bundle curated data. This is the source of truth for the
+// rivers list, polylines, POIs, helpful_info, and cfs_thresholds — so the
+// app works fully offline for everything except live USGS CFS readings.
+// The network fetchers below ONLY hit the API for the live `flow` field,
+// then merge it on top of the bundled river meta.
+import { CURATED_BUNDLE } from "./curatedData";
 
 const META_PREFIX = "@riverright:offline:meta:";
 const POLY_PREFIX = "@riverright:offline:poly:";
@@ -82,89 +88,67 @@ export type FetchOpts = {
   writeCache?: boolean;
 };
 
-/** Fetch river meta + flow. On network error, return cached meta + null flow. */
+/** Fetch river meta + live flow. River meta comes from the in-bundle
+ *  curated data (no network needed); only the live `flow` field hits the
+ *  API. If the flow fetch fails, returns the bundled river with flow=null. */
 export async function fetchRiverWithCache(
   id: string,
   opts: FetchOpts = {}
 ): Promise<RiverMetaResponse> {
+  const bundledRiver = CURATED_BUNDLE?.runs?.[id]?.river || null;
+  // Always pull the latest LIVE flow over the wire; non-blocking on failure.
+  let flow: any = null;
   try {
     const r = await fetch(`${API}/rivers/${id}`);
-    if (!r.ok) throw new Error("HTTP " + r.status);
-    const j: RiverMetaResponse = await r.json();
-    if (j.river && opts.writeCache) {
-      await setJson(META_PREFIX + id, j.river);
-      await setJson(TS_PREFIX + id, Date.now());
+    if (r.ok) {
+      const j: RiverMetaResponse = await r.json();
+      flow = j?.flow ?? null;
+      // If the API responds, mirror its (possibly updated) river meta into
+      // the offline cache so a later airplane-mode launch still has fresh
+      // data even if we don't ship a new app version.
+      if (j.river && opts.writeCache) {
+        await setJson(META_PREFIX + id, j.river);
+        await setJson(TS_PREFIX + id, Date.now());
+      }
     }
-    return j;
-  } catch (err) {
-    const cached = await getJson<RiverMeta>(META_PREFIX + id);
-    if (cached) {
-      return { river: cached, flow: null };
-    }
-    throw err;
+  } catch {
+    /* swallow — bundled river still renders */
   }
+  if (bundledRiver) {
+    return { river: bundledRiver, flow };
+  }
+  // No bundled entry — fall back to last cached or the network river meta
+  // if we managed to load one.
+  const cached = await getJson<RiverMeta>(META_PREFIX + id);
+  if (cached) return { river: cached, flow };
+  throw new Error(`No bundled or cached data for river ${id}`);
 }
 
-/** Fetch the curated polyline GeoJSON. Only writes to cache when opts.writeCache. */
+/** Curated polyline. Reads from the in-bundle data — no network. */
 export async function fetchPolylineWithCache(
   id: string,
-  opts: FetchOpts = {}
+  _opts: FetchOpts = {}
 ): Promise<any | null> {
-  try {
-    const r = await fetch(`${API}/rivers/${id}/polyline`);
-    if (!r.ok) {
-      if (r.status === 404) return null; // No polyline for this river
-      throw new Error("HTTP " + r.status);
-    }
-    const j = await r.json();
-    if (opts.writeCache) {
-      await setJson(POLY_PREFIX + id, j);
-    }
-    return j;
-  } catch (err) {
-    const cached = await getJson<any>(POLY_PREFIX + id);
-    if (cached) return cached;
-    throw err;
-  }
+  return CURATED_BUNDLE?.runs?.[id]?.polyline ?? null;
 }
 
-/** Fetch /osm-poi (which returns curated POIs when curated data exists). */
+/** Curated POIs. Reads from the in-bundle data — no network. */
 export async function fetchPoisWithCache(
   id: string,
-  opts: FetchOpts = {}
+  _opts: FetchOpts = {}
 ): Promise<any> {
-  try {
-    const r = await fetch(`${API}/rivers/${id}/osm-poi`);
-    const j = await r.json();
-    if (!j.error && opts.writeCache) {
-      await setJson(POIS_PREFIX + id, j);
-    }
-    return j;
-  } catch (err) {
-    const cached = await getJson<any>(POIS_PREFIX + id);
-    if (cached) return cached;
-    throw err;
-  }
+  const run = CURATED_BUNDLE?.runs?.[id];
+  if (!run) return { pois: [], source: "none", count: 0 };
+  return {
+    pois: run.pois || [],
+    source: run.poi_source || "curated",
+    count: run.poi_count ?? (run.pois?.length || 0),
+  };
 }
 
-/** Fetch the featured-rivers list. The home-tab list itself is harmless to
- *  cache (it's just names + thumbnails), so this still auto-writes the cache
- *  so users see *something* if they open the app offline. The per-river
- *  detailed bundles are still gated by the explicit download flow. */
+/** Featured-rivers list — always from the in-bundle data. */
 export async function fetchFeaturedWithCache(): Promise<{ rivers: any[] }> {
-  try {
-    const r = await fetch(`${API}/rivers/featured`);
-    if (!r.ok) throw new Error("HTTP " + r.status);
-    const j = await r.json();
-    if (j && Array.isArray(j.rivers)) {
-      await setJson(FEATURED_KEY, j);
-    }
-    return j;
-  } catch (err) {
-    const cached = await getJson<{ rivers: any[] }>(FEATURED_KEY);
-    if (cached) return cached;
-    throw err;
-  }
+  return { rivers: CURATED_BUNDLE?.featured || [] };
 }
 
 // ─── Inspection / management ───────────────────────────────────────────────

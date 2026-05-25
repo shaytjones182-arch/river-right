@@ -42,11 +42,6 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [query, setQuery] = useState("");
-  // ── TEMP DIAGNOSTIC STRIP ────────────────────────────────────────────
-  // Shown only inside the app, displays the API URL the bundled binary is
-  // actually using + whether the rivers fetch succeeded/failed and the
-  // HTTP code. Remove after the field-test bug is solved.
-  const [dbgStatus, setDbgStatus] = useState<string>("init");
   const { isUnlocked } = useUnlocks();
   const [paywallRiver, setPaywallRiver] = useState<River | null>(null);
   const scrollRef = useRef<ScrollView>(null);
@@ -68,34 +63,11 @@ export default function Home() {
   );
 
   const load = useCallback(async () => {
-    // DIAGNOSTIC: bypass the offlineCache layer here and hit the API
-    // directly so the strip reflects the raw network result rather than a
-    // cached one. Successful response is still merged into state so the UI
-    // continues to render rivers normally.
-    const url = `${API}/rivers/featured`;
-    setDbgStatus("requesting…");
     try {
-      const r = await fetch(url);
-      const body = await r.text();
-      let parsed: any = null;
-      try { parsed = JSON.parse(body); } catch {}
-      const count = parsed?.rivers?.length ?? "?";
-      setDbgStatus(`HTTP ${r.status} · rivers=${count}`);
-      if (r.ok && parsed?.rivers) {
-        setRivers(parsed.rivers);
-      } else {
-        // Fall back to the cache helper so anything cached still shows.
-        const j = await fetchFeaturedWithCache();
-        setRivers(j.rivers || []);
-      }
-    } catch (e: any) {
-      setDbgStatus(`ERR · ${String(e?.message || e).slice(0, 80)}`);
-      try {
-        const j = await fetchFeaturedWithCache();
-        setRivers(j.rivers || []);
-      } catch (e2) {
-        console.warn("featured rivers fallback failed", e2);
-      }
+      const j = await fetchFeaturedWithCache();
+      setRivers(j.rivers || []);
+    } catch (e) {
+      console.warn("featured rivers", e);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -150,15 +122,6 @@ export default function Home() {
             <Text style={styles.subtitle}>
               Live USGS flow data, GPS tracking, and curated American rivers.
             </Text>
-            {/* TEMP DIAGNOSTIC STRIP — remove before App Store submit. */}
-            <View style={styles.dbgStrip} testID="dbg-strip">
-              <Text style={styles.dbgText} numberOfLines={2}>
-                API: {API || "(empty!)"}
-              </Text>
-              <Text style={styles.dbgText} numberOfLines={2}>
-                /rivers/featured → {dbgStatus}
-              </Text>
-            </View>
           </View>
 
           <View style={styles.searchWrap} testID="home-search-wrap">
@@ -317,18 +280,6 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   filterRow: { paddingVertical: 16, gap: 10 },
-  dbgStrip: {
-    marginTop: 12,
-    padding: 8,
-    backgroundColor: "rgba(0,0,0,0.85)",
-    borderRadius: 6,
-  },
-  dbgText: {
-    color: "#FFD166",
-    fontSize: 11,
-    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
-    lineHeight: 14,
-  },
   filter: {
     paddingHorizontal: 22,
     paddingVertical: 12,
