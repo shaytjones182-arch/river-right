@@ -88,40 +88,117 @@ export type FetchOpts = {
   writeCache?: boolean;
 };
 
-/** Fetch river meta + live flow. River meta comes from the in-bundle
- *  curated data (no network needed); only the live `flow` field hits the
- *  API. If the flow fetch fails, returns the bundled river with flow=null. */
-export async function fetchRiverWithCache(
-  id: string,
-  opts: FetchOpts = {}
-): Promise<RiverMetaResponse> {
-  const bundledRiver = CURATED_BUNDLE?.runs?.[id]?.river || null;
-  // Always pull the latest LIVE flow over the wire; non-blocking on failure.
-  let flow: any = null;
+// ─── Client-side flow classification ───────────────────────────────────────
+// Ported from backend `classify_flow` so the app can compute flow status
+// fully offline (well, given a live CFS reading from USGS). Returns the
+// same {status, label} shape the rest of the UI already expects.
+function classifyFlow(
+  cfs: number | null,
+  thresholds?: { low_threshold?: number; normal_threshold?: number; high_threshold?: number } | null
+): { status: string; label: string } {
+  if (cfs === null || cfs === undefined) return { status: "unknown", label: "No data" };
+  if (thresholds) {
+    const { low_threshold: lo, normal_threshold: nm, high_threshold: hi } = thresholds;
+    if (typeof lo === "number" && typeof nm === "number" && typeof hi === "number") {
+      if (cfs < lo) return { status: "low", label: "Very low" };
+      if (cfs < nm) return { status: "info", label: "Low" };
+      if (cfs < hi) return { status: "safe", label: "Normal" };
+      return { status: "warning", label: "High" };
+    }
+  }
+  if (cfs < 100) return { status: "low", label: "Low" };
+  if (cfs < 1500) return { status: "safe", label: "Runnable" };
+  if (cfs < 8000) return { status: "warning", label: "High" };
+  return { status: "danger", label: "Flood" };
+}
+
+/** Fetch live CFS + gauge height directly from USGS public IV API. No
+ *  backend dependency. Returns null if the network call fails. */
+async function fetchUsgsLiveFlow(siteId: string): Promise<{
+  cfs: number | null;
+  gauge_height_ft: number | null;
+  updated_at?: string;
+} | null> {
+  if (!siteId) return null;
   try {
-    const r = await fetch(`${API}/rivers/${id}`);
-    if (r.ok) {
-      const j: RiverMetaResponse = await r.json();
-      flow = j?.flow ?? null;
-      // If the API responds, mirror its (possibly updated) river meta into
-      // the offline cache so a later airplane-mode launch still has fresh
-      // data even if we don't ship a new app version.
-      if (j.river && opts.writeCache) {
-        await setJson(META_PREFIX + id, j.river);
-        await setJson(TS_PREFIX + id, Date.now());
+    const url =
+      "https://waterservices.usgs.gov/nwis/iv/?format=json" +
+      `&sites=${encodeURIComponent(siteId)}` +
+      "&parameterCd=00060,00065&siteStatus=active";
+    const r = await fetch(url);
+    if (!r.ok) return null;
+    const j = await r.json();
+    const series: any[] = j?.value?.timeSeries || [];
+    let cfs: number | null = null;
+    let gaugeFt: number | null = null;
+    let updatedAt: string | undefined;
+    for (const ts of series) {
+      const varCode = ts?.variable?.variableCode?.[0]?.value;
+      const values = ts?.values?.[0]?.value || [];
+      if (!values.length) continue;
+      const last = values[values.length - 1];
+      const raw = parseFloat(last?.value);
+      const v = Number.isFinite(raw) && raw > -999998 ? raw : null;
+      const t = last?.dateTime;
+      if (varCode === "00060") {
+        cfs = v;
+        if (t) updatedAt = t;
+      } else if (varCode === "00065") {
+        gaugeFt = v;
+        if (t && !updatedAt) updatedAt = t;
       }
     }
+    return { cfs, gauge_height_ft: gaugeFt, updated_at: updatedAt };
   } catch {
-    /* swallow — bundled river still renders */
+    return null;
   }
-  if (bundledRiver) {
-    return { river: bundledRiver, flow };
+}
+
+/** Fetch river meta + live flow. River meta + CFS thresholds come from the
+ *  in-bundle curated data (no network needed). Live CFS/gauge height comes
+ *  directly from USGS's public IV API — bypasses our backend entirely so
+ *  the standalone app works without any hosted infrastructure. */
+export async function fetchRiverWithCache(
+  id: string,
+  _opts: FetchOpts = {}
+): Promise<RiverMetaResponse> {
+  const run = CURATED_BUNDLE?.runs?.[id];
+  const bundledRiver: RiverMeta | null = run?.river || null;
+  const thresholds = run?.cfs_thresholds || null;
+
+  if (!bundledRiver) {
+    // No bundled entry — last resort: previously cached meta
+    const cached = await getJson<RiverMeta>(META_PREFIX + id);
+    if (cached) return { river: cached, flow: null };
+    throw new Error(`No bundled or cached data for river ${id}`);
   }
-  // No bundled entry — fall back to last cached or the network river meta
-  // if we managed to load one.
-  const cached = await getJson<RiverMeta>(META_PREFIX + id);
-  if (cached) return { river: cached, flow };
-  throw new Error(`No bundled or cached data for river ${id}`);
+
+  // Hit USGS directly for the live reading.
+  const live = await fetchUsgsLiveFlow(bundledRiver.usgs_site_id);
+  if (!live) {
+    return { river: bundledRiver, flow: null };
+  }
+  const cls = classifyFlow(live.cfs, thresholds);
+  const flow: any = {
+    cfs: live.cfs,
+    gauge_height_ft: live.gauge_height_ft,
+    updated_at: live.updated_at,
+    status: cls.status,
+    label: cls.label,
+  };
+  // Surface the curated thresholds + attribution to the UI (used by the
+  // flow-status info modal on the river detail screen).
+  if (thresholds) {
+    flow.thresholds = {
+      low_threshold: thresholds.low_threshold,
+      normal_threshold: thresholds.normal_threshold,
+      high_threshold: thresholds.high_threshold,
+    };
+    if (thresholds.datasource_attribution) {
+      flow.datasource_attribution = thresholds.datasource_attribution;
+    }
+  }
+  return { river: bundledRiver, flow };
 }
 
 /** Curated polyline. Reads from the in-bundle data — no network. */
