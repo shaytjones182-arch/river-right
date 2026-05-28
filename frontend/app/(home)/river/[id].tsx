@@ -20,6 +20,7 @@ import {
   fetchPoisWithCache,
 } from "../../../src/offlineCache";
 import OfflineMapCard from "../../../src/tiles/OfflineMapCard";
+import { rapidColor } from "../../../src/rapidColors";
 
 // One bullet in the "Helpful information" section. `text` is required
 // and renders as plain copy. `url` is optional — when present the entire
@@ -390,7 +391,7 @@ export default function RiverDetail() {
                       : p.kind === "portage"
                       ? COLORS.warning
                       : p.kind === "play"
-                      ? COLORS.safe
+                      ? rapidColor(p.grade)
                       : p.kind === "camp"
                       ? "#8B5E34"
                       : p.kind === "boat_ramp" ||
@@ -400,7 +401,7 @@ export default function RiverDetail() {
                       ? COLORS.safe
                       : p.kind === "note"
                       ? COLORS.textMuted
-                      : COLORS.warning; // rapids (and anything else) — unified yellow
+                      : rapidColor(p.grade); // rapids — green→red by class, blue if unknown
                   return (
                     <View key={`${p.lat}-${p.lon}-${i}`} style={styles.hazard}>
                       <Ionicons

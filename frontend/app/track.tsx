@@ -369,6 +369,35 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
       iconSize:[28,28], iconAnchor:[14,14], popupAnchor:[0,-14]
     });
   }
+  // Inline-colored variant of pin() used for per-class rapid markers.
+  function pinColored(color, svg){
+    return L.divIcon({
+      className:'',
+      html:'<div class="pin" style="background:'+color+';">'+svg+'</div>',
+      iconSize:[28,28], iconAnchor:[14,14], popupAnchor:[0,-14]
+    });
+  }
+  // Per-class rapid colors (green→red spectrum, one color per integer
+  // class). Compound grades like "III-IV" use the HIGHEST class found.
+  // Unknown grade → blue.
+  var RAPID_CLASS_COLORS = [
+    '#1D6FB8', // 0 unknown
+    '#2E8B57', '#88B04B', '#D4B106', '#E08020', '#C0392B', '#6B1D1D'
+  ];
+  function rapidClassNum(grade){
+    if (!grade) return 0;
+    var tokens = String(grade).toUpperCase().match(/VI|IV|V|III|II|I/g) || [];
+    var map = { 'VI':6, 'V':5, 'IV':4, 'III':3, 'II':2, 'I':1 };
+    var max = 0;
+    for (var i = 0; i < tokens.length; i++){
+      var n = map[tokens[i]] || 0;
+      if (n > max) max = n;
+    }
+    return max;
+  }
+  function rapidColor(grade){
+    return RAPID_CLASS_COLORS[rapidClassNum(grade)] || '#1D6FB8';
+  }
   function tri(){
     return L.divIcon({
       className:'',
@@ -434,7 +463,7 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
         marker = L.marker([p.lat, p.lon], { icon: pin('portage', SVG.steps) })
           .bindPopup(popupHtml(p.name, 'Portage'));
       } else if (p.kind === 'play'){
-        marker = L.marker([p.lat, p.lon], { icon: pin('play', SVG.wave) })
+        marker = L.marker([p.lat, p.lon], { icon: pinColored(rapidColor(p.grade), SVG.wave) })
           .bindPopup(popupHtml(p.name, 'Play spot'));
       } else if (p.kind === 'camp'){
         marker = L.marker([p.lat, p.lon], { icon: pin('camp', SVG.tent) })
@@ -457,19 +486,11 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
         marker = L.marker([p.lat, p.lon], { icon: pin('boat', SVG.boat) })
           .bindPopup(popupHtml(p.name || (p.kind === 'putin' ? 'Put-in' : 'Take-out'), 'Boat Ramp'));
       } else {
-        var grade = (p.grade || '').toUpperCase();
-        // Per-POI grade decides the icon color. If the data file omits a
-        // grade we render a plain (mild-styled) rapid icon — no fallback to
-        // the run-level class rating, so absolutely nothing in the popup
-        // comes from anywhere except the data file.
-        var cls = 'rapid-mild';
-        if (/V/.test(grade) || /IV/.test(grade)) cls = 'rapid-hard';
-        else if (/III/.test(grade)) cls = 'rapid-mod';
-        else if (grade) cls = 'rapid-mild';
         var name = p.name;
         if (!name || /^rapids?$/i.test(name)) name = 'Unnamed rapid';
         var classLabel = p.grade || '';
-        marker = L.marker([p.lat, p.lon], { icon: pin(cls, SVG.wave) })
+        // Per-class color (green→red); unknown grade → blue.
+        marker = L.marker([p.lat, p.lon], { icon: pinColored(rapidColor(p.grade), SVG.wave) })
           .bindPopup(popupHtml(name, classLabel ? 'Class ' + classLabel : ''));
       }
       if (marker) {

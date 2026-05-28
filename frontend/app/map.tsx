@@ -331,10 +331,49 @@ const buildMapHtml = (
     return '#F4A261';
   }
 
+  // Map an individual rapid's Roman-numeral grade (e.g. "III", "IV-V",
+  // "III+") to a color along a green→red spectrum, one color per integer
+  // class (no separate sub-grade shades). For compound grades like
+  // "III-IV" we use the HIGHEST class present so the user errs cautious.
+  // Returns BLUE for rapids whose grade is unknown.
+  var RAPID_CLASS_COLORS = [
+    '#1D6FB8', // 0 — unknown grade → blue
+    '#2E8B57', // I   true green
+    '#88B04B', // II  yellow-green
+    '#D4B106', // III yellow
+    '#E08020', // IV  orange
+    '#C0392B', // V   red
+    '#6B1D1D'  // VI  deep red
+  ];
+  function rapidClassNum(grade){
+    if (!grade) return 0;
+    var g = String(grade).toUpperCase();
+    var tokens = g.match(/VI|IV|V|III|II|I/g) || [];
+    var map = { 'VI':6, 'V':5, 'IV':4, 'III':3, 'II':2, 'I':1 };
+    var max = 0;
+    for (var i = 0; i < tokens.length; i++){
+      var n = map[tokens[i]] || 0;
+      if (n > max) max = n;
+    }
+    return max;
+  }
+  function rapidColor(grade){
+    return RAPID_CLASS_COLORS[rapidClassNum(grade)] || '#1D6FB8';
+  }
+
   function pin(cls, svg){
     return L.divIcon({
       className: '',
       html: '<div class="pin ' + cls + '">' + svg + '</div>',
+      iconSize: [28,28], iconAnchor: [14,14], popupAnchor: [0,-14]
+    });
+  }
+  // Same as pin() but lets us set the background color inline instead of
+  // via a CSS class — used by the per-class rapid coloring.
+  function pinColored(color, svg){
+    return L.divIcon({
+      className: '',
+      html: '<div class="pin" style="background:' + color + ';">' + svg + '</div>',
       iconSize: [28,28], iconAnchor: [14,14], popupAnchor: [0,-14]
     });
   }
@@ -420,7 +459,7 @@ const buildMapHtml = (
         marker = L.marker([p.lat, p.lon], { icon: pin('portage', SVG.steps) })
           .bindPopup(popupHtml(esc(p.name), 'Portage'));
       } else if (p.kind === 'play'){
-        marker = L.marker([p.lat, p.lon], { icon: pin('play', SVG.wave) })
+        marker = L.marker([p.lat, p.lon], { icon: pinColored(rapidColor(p.grade), SVG.wave) })
           .bindPopup(popupHtml(esc(p.name), 'Play spot' + (p.grade ? ' · Class ' + esc(p.grade) : '')));
       } else if (p.kind === 'camp'){
         marker = L.marker([p.lat, p.lon], { icon: pin('camp', SVG.tent) })
@@ -444,15 +483,10 @@ const buildMapHtml = (
           .bindPopup(popupHtml(esc(p.name || (p.kind === 'putin' ? 'Put-in' : 'Take-out')), 'Boat Ramp'));
       } else {
         var grade = (p.grade || '').toUpperCase();
-        // Default to a plain (mild-styled) rapid pin when the data file
-        // doesn't supply a grade. No fallback to the run-level rating.
-        var cls = 'rapid-mild';
-        if (/V/.test(grade) || /IV/.test(grade)) cls = 'rapid-hard';
-        else if (/III/.test(grade)) cls = 'rapid-mod';
-        else if (grade) cls = 'rapid-mild';
         var name = p.name;
         if (!name || /^rapids?$/i.test(name)) name = 'Unnamed rapid';
-        marker = L.marker([p.lat, p.lon], { icon: pin(cls, SVG.wave) })
+        // Per-class color (green→red spectrum); no grade → blue.
+        marker = L.marker([p.lat, p.lon], { icon: pinColored(rapidColor(p.grade), SVG.wave) })
           .bindPopup(popupHtml(esc(name), classLabel(p.grade)));
       }
       if (marker) marker.addTo(focusedLayer);
@@ -962,7 +996,7 @@ export default function MapScreen() {
               </View>
               {hasRapid && (
                 <LegendIcon
-                  kind="rapid" rapidColor={COLORS.warning} label="Rapid"
+                  kind="rapid" rapidColor="#1D6FB8" label="Rapid"
                   active={legendFilter === "rapid"}
                   dimmed={!!legendFilter && legendFilter !== "rapid"}
                   onPress={() => toggleLegendFilter("rapid")}
