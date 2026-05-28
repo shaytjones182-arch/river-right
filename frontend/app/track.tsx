@@ -27,6 +27,8 @@ import { fetchPoisWithCache, fetchPolylineWithCache } from "../src/offlineCache"
 // Leaflet 1.9.4 inlined as base64 — see comment in leafletInline.ts.
 // This makes the map work fully offline (no CDN dependency at runtime).
 import { LEAFLET_JS_B64, LEAFLET_CSS_B64 } from "../src/leafletInline";
+// leaflet-rotate plugin — enables two-finger twist + bearing API.
+import { LEAFLET_ROTATE_JS_B64 } from "../src/leafletRotateInline";
 import {
   ensureBackgroundPermission,
   startBackgroundLocation,
@@ -155,6 +157,21 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
 }
 .tile-banner.show{transform:translate(-50%,0);opacity:1;}
 .tile-banner svg{width:14px;height:14px;flex-shrink:0;}
+/* Re-center floating action button */
+.recenter-fab{
+  position:absolute;right:14px;bottom:14px;z-index:1000;
+  width:44px;height:44px;border-radius:22px;
+  background:#0A1128;color:#fff;border:none;
+  box-shadow:0 2px 8px rgba(0,0,0,0.35);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;
+  opacity:0;pointer-events:none;
+  transform:translateY(6px);
+  transition:opacity 180ms ease, transform 180ms ease;
+}
+.recenter-fab.show{opacity:1;pointer-events:auto;transform:translateY(0);}
+.recenter-fab svg{width:22px;height:22px;}
+.recenter-fab:active{background:#1D6FB8;}
 </style></head>
 <body>
 <div id="m"></div>
@@ -162,11 +179,17 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
   <svg viewBox="0 0 24 24" fill="none" stroke="#F4A261" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l10 18H2L12 3z"/><path d="M12 10v5"/><path d="M12 18v.01"/></svg>
   <span>Map tiles unavailable — check your connection.</span>
 </div>
+<button id="recenter-fab" class="recenter-fab" aria-label="Re-center on my location">
+  <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="3"/><path d="M12 2v3"/><path d="M12 19v3"/><path d="M2 12h3"/><path d="M19 12h3"/>
+  </svg>
+</button>
 <script>${atob(LEAFLET_JS_B64).replace(/<\//g, "<\\/")}</script>
+<script>${atob(LEAFLET_ROTATE_JS_B64).replace(/<\//g, "<\\/")}</script>
 <script>
 (function(){
   var SVG = ${JSON.stringify(SVG_TRACK)};
-  var map = L.map('m', { zoomControl:false, attributionControl:false, maxZoom:16 }).setView([${lat}, ${lon}], 14);
+  var map = L.map('m', { zoomControl:false, attributionControl:false, maxZoom:16, rotate:true, touchRotate:true, rotateControl:false, bearing:0 }).setView([${lat}, ${lon}], 14);
 
   // 1x1 transparent PNG used when the user pans/zooms outside the
   // downloaded offline coverage. The Leaflet img loads cleanly (no tileerror
@@ -510,6 +533,49 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
       };
     }
   };
+
+  // ── Re-center FAB ───────────────────────────────────────────────────────
+  // Shows when the user pans/rotates away from "looking at themselves".
+  // On tap: snap map back to current GPS position + reset bearing to north.
+  var fab = document.getElementById('recenter-fab');
+  // Track whether the user has manually interacted with the map (so we
+  // don't surface the FAB on the very first auto-fitBounds when a run is
+  // picked). Once they pan/zoom/rotate themselves, the FAB becomes live.
+  var userInteracted = false;
+  ['dragstart','zoomstart','rotatestart'].forEach(function(ev){
+    map.on(ev, function(){ userInteracted = true; updateFab(); });
+  });
+  function offCenterPx(){
+    try {
+      var p1 = map.latLngToContainerPoint([currentUserLat, currentUserLon]);
+      var p2 = map.getSize().divideBy(2);
+      var dx = p1.x - p2.x, dy = p1.y - p2.y;
+      return Math.sqrt(dx*dx + dy*dy);
+    } catch(e){ return 0; }
+  }
+  function currentBearing(){
+    try { return (typeof map.getBearing === 'function') ? (map.getBearing() || 0) : 0; }
+    catch(e){ return 0; }
+  }
+  function updateFab(){
+    if (!fab) return;
+    if (!userInteracted) { fab.classList.remove('show'); return; }
+    var far = offCenterPx() > 60;          // ~60px off-center
+    var rotated = Math.abs(currentBearing()) > 2; // >2deg
+    if (far || rotated) fab.classList.add('show');
+    else fab.classList.remove('show');
+  }
+  map.on('move zoom rotate moveend zoomend rotateend', updateFab);
+  if (fab) {
+    fab.addEventListener('click', function(){
+      if (typeof map.setBearing === 'function') {
+        try { map.setBearing(0); } catch(e){}
+      }
+      map.setView([currentUserLat, currentUserLon], map.getZoom(), { animate: true });
+      userInteracted = false;
+      fab.classList.remove('show');
+    });
+  }
 })();
 </script>
 </body></html>`;
