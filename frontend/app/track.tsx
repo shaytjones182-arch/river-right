@@ -23,7 +23,7 @@ import MapView from "../src/MapView";
 import { COLORS, API } from "../src/theme";
 import ProfileMenu from "../src/ProfileMenu";
 import { getMergedOfflineManifest } from "../src/tiles/tileDownloader";
-import { fetchPoisWithCache, fetchPolylineWithCache } from "../src/offlineCache";
+import { fetchPoisWithCache, fetchPolylineWithCache, fetchFeaturedWithCache } from "../src/offlineCache";
 // Leaflet 1.9.4 inlined as base64 — see comment in leafletInline.ts.
 // This makes the map work fully offline (no CDN dependency at runtime).
 import { LEAFLET_JS_B64, LEAFLET_CSS_B64 } from "../src/leafletInline";
@@ -647,8 +647,7 @@ export default function Track() {
     })();
     (async () => {
       try {
-        const r = await fetch(`${API}/rivers/featured`);
-        const j = await r.json();
+        const j = await fetchFeaturedWithCache();
         setRivers(j.rivers || []);
       } catch (e) {
         console.warn("track rivers", e);
