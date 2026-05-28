@@ -221,9 +221,11 @@ export default function Home() {
                       <Text style={styles.riverState}>{r.state}</Text>
                     </View>
                     <Text style={styles.riverName}>{r.name}</Text>
-                    <Text style={styles.riverDesc} numberOfLines={2}>
-                      {r.description}
-                    </Text>
+                    {!!r.description && (
+                      <Text style={styles.riverDesc} numberOfLines={2}>
+                        {r.description}
+                      </Text>
+                    )}
                   </View>
                 </TouchableOpacity>
               );
