@@ -27,8 +27,6 @@ import { fetchPoisWithCache, fetchPolylineWithCache, fetchFeaturedWithCache } fr
 // Leaflet 1.9.4 inlined as base64 — see comment in leafletInline.ts.
 // This makes the map work fully offline (no CDN dependency at runtime).
 import { LEAFLET_JS_B64, LEAFLET_CSS_B64 } from "../src/leafletInline";
-// leaflet-rotate plugin — enables two-finger twist + bearing API.
-import { LEAFLET_ROTATE_JS_B64 } from "../src/leafletRotateInline";
 import {
   ensureBackgroundPermission,
   startBackgroundLocation,
@@ -185,11 +183,10 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
   </svg>
 </button>
 <script>${atob(LEAFLET_JS_B64).replace(/<\//g, "<\\/")}</script>
-<script>${atob(LEAFLET_ROTATE_JS_B64).replace(/<\//g, "<\\/")}</script>
 <script>
 (function(){
   var SVG = ${JSON.stringify(SVG_TRACK)};
-  var map = L.map('m', { zoomControl:false, attributionControl:false, maxZoom:16, rotate:true, touchRotate:true, rotateControl:false, bearing:0 }).setView([${lat}, ${lon}], 14);
+  var map = L.map('m', { zoomControl:false, attributionControl:false, maxZoom:16 }).setView([${lat}, ${lon}], 14);
 
   // 1x1 transparent PNG used when the user pans/zooms outside the
   // downloaded offline coverage. The Leaflet img loads cleanly (no tileerror
@@ -564,14 +561,14 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
   };
 
   // ── Re-center FAB ───────────────────────────────────────────────────────
-  // Shows when the user pans/rotates away from "looking at themselves".
-  // On tap: snap map back to current GPS position + reset bearing to north.
+  // Shows when the user pans/zooms away from "looking at themselves".
+  // On tap: snaps the map back to the current GPS position.
   var fab = document.getElementById('recenter-fab');
   // Track whether the user has manually interacted with the map (so we
   // don't surface the FAB on the very first auto-fitBounds when a run is
-  // picked). Once they pan/zoom/rotate themselves, the FAB becomes live.
+  // picked). Once they pan/zoom themselves, the FAB becomes live.
   var userInteracted = false;
-  ['dragstart','zoomstart','rotatestart'].forEach(function(ev){
+  ['dragstart','zoomstart'].forEach(function(ev){
     map.on(ev, function(){ userInteracted = true; updateFab(); });
   });
   function offCenterPx(){
@@ -582,24 +579,15 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
       return Math.sqrt(dx*dx + dy*dy);
     } catch(e){ return 0; }
   }
-  function currentBearing(){
-    try { return (typeof map.getBearing === 'function') ? (map.getBearing() || 0) : 0; }
-    catch(e){ return 0; }
-  }
   function updateFab(){
     if (!fab) return;
     if (!userInteracted) { fab.classList.remove('show'); return; }
-    var far = offCenterPx() > 60;          // ~60px off-center
-    var rotated = Math.abs(currentBearing()) > 2; // >2deg
-    if (far || rotated) fab.classList.add('show');
+    if (offCenterPx() > 60) fab.classList.add('show');
     else fab.classList.remove('show');
   }
-  map.on('move zoom rotate moveend zoomend rotateend', updateFab);
+  map.on('move zoom moveend zoomend', updateFab);
   if (fab) {
     fab.addEventListener('click', function(){
-      if (typeof map.setBearing === 'function') {
-        try { map.setBearing(0); } catch(e){}
-      }
       map.setView([currentUserLat, currentUserLon], map.getZoom(), { animate: true });
       userInteracted = false;
       fab.classList.remove('show');
