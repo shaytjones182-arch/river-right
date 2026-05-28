@@ -249,7 +249,8 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
   var runHalo = L.polyline([], { color:'#ffffff', weight:7, opacity:0.85, lineCap:'round', lineJoin:'round' }).addTo(map);
   var runLine = L.polyline([], { color:'#1D6FB8', weight:4, opacity:0.95, lineCap:'round', lineJoin:'round' }).addTo(map);
 
-  var path = L.polyline([], { color:'#0077B6', weight:5, opacity:0.95 }).addTo(map);
+  var path = L.polyline([], { color:'#0A1128', weight:7, opacity:0.55, lineCap:'round', lineJoin:'round' }).addTo(map);
+  var pathInner = L.polyline([], { color:'#ffffff', weight:4, opacity:1, lineCap:'round', lineJoin:'round' }).addTo(map);
   var meIcon = L.divIcon({ className:'me', iconSize:[18,18] });
   var meMarker = L.marker([${lat}, ${lon}], { icon: meIcon, zIndexOffset: 2000 }).addTo(map);
   var poiLayer = L.layerGroup().addTo(map);
@@ -358,11 +359,14 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
     currentUserLat = lat;
     currentUserLon = lon;
     meMarker.setLatLng([lat, lon]);
-    var ll = path.getLatLngs(); ll.push([lat, lon]); path.setLatLngs(ll);
+    var ll = path.getLatLngs(); ll.push([lat, lon]);
+    path.setLatLngs(ll);
+    pathInner.setLatLngs(ll);
     if (follow) map.panTo([lat, lon], { animate:true });
   };
   window.setPath = function(arr) {
     path.setLatLngs(arr);
+    pathInner.setLatLngs(arr);
     if (arr.length) { meMarker.setLatLng(arr[arr.length-1]); }
   };
   window.fitPath = function() {
