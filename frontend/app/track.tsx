@@ -1005,10 +1005,19 @@ export default function Track() {
       cancelled = true;
     };
   }, []);
-  const html = useMemo(
-    () => (coord ? buildHtml(coord.lat, coord.lon, trackOfflineTiles) : null),
-    [coord, trackOfflineTiles]
-  );
+  // Capture the FIRST coord (and first offline-tile manifest) we ever see
+  // and bake those into the HTML. Subsequent `coord` updates flow through
+  // the in-WebView `window.updatePos()` call instead of rebuilding the
+  // HTML — otherwise every GPS ping would rewrite the temp file, remount
+  // the WebView, and reset the user's pan/zoom/rotation back to default.
+  const initialHtmlRef = useRef<string | null>(null);
+  const html = useMemo(() => {
+    if (initialHtmlRef.current) return initialHtmlRef.current;
+    if (!coord) return null;
+    initialHtmlRef.current = buildHtml(coord.lat, coord.lon, trackOfflineTiles);
+    return initialHtmlRef.current;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [coord, trackOfflineTiles]);
 
   const visiblePickerRivers = useMemo(() => {
     const q = pickerQuery.trim().toLowerCase();
