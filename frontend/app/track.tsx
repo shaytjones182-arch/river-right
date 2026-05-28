@@ -269,8 +269,16 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
   // line always renders on top. Two layers: white halo + blue line, matching
   // the styling on the Map tab so a paddler reading both screens sees the
   // same blue reference river.
-  var runHalo = L.polyline([], { color:'#ffffff', weight:7, opacity:0.85, lineCap:'round', lineJoin:'round' }).addTo(map);
-  var runLine = L.polyline([], { color:'#1D6FB8', weight:4, opacity:0.95, lineCap:'round', lineJoin:'round' }).addTo(map);
+  // Use a Canvas renderer for all polylines on this map. SVG polylines
+  // exhibit a "drift" bug when leaflet-rotate is active — they appear to
+  // lag behind the map by a fraction of a pan/rotate. Canvas redraws every
+  // frame so it stays perfectly in sync.
+  var lineRenderer = L.canvas({ padding: 0.5 });
+  var runHalo = L.polyline([], { color:'#ffffff', weight:7, opacity:0.85, lineCap:'round', lineJoin:'round', renderer: lineRenderer }).addTo(map);
+  var runLine = L.polyline([], { color:'#1D6FB8', weight:4, opacity:0.95, lineCap:'round', lineJoin:'round', renderer: lineRenderer }).addTo(map);
+
+  var path = L.polyline([], { color:'#0A1128', weight:7, opacity:0.55, lineCap:'round', lineJoin:'round', renderer: lineRenderer }).addTo(map);
+  var pathInner = L.polyline([], { color:'#ffffff', weight:4, opacity:1, lineCap:'round', lineJoin:'round', renderer: lineRenderer }).addTo(map);
 
   var path = L.polyline([], { color:'#0A1128', weight:7, opacity:0.55, lineCap:'round', lineJoin:'round' }).addTo(map);
   var pathInner = L.polyline([], { color:'#ffffff', weight:4, opacity:1, lineCap:'round', lineJoin:'round' }).addTo(map);
