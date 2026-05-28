@@ -479,10 +479,20 @@ const buildMapHtml = (
       });
     }
     var b = L.latLngBounds(pts).pad(0.15);
+    // Pick the natural fit zoom, then clamp UP to the offline pack's
+    // coarsest level (z=10) when the user has downloaded tiles. Without
+    // this clamp, long rivers (e.g. Desolation Canyon, ~85 mi) fit at
+    // z≈8-9 — outside the cached pyramid — so the user sees flat pastel
+    // tiles until they manually zoom in. Clamping shows real terrain
+    // immediately at the cost of not seeing the whole run on first frame.
+    var naturalZoom = map.getBoundsZoom(b, false);
+    var minOfflineZoom = 10;
+    var targetZoom = HAVE_OFFLINE ? Math.max(naturalZoom, minOfflineZoom) : naturalZoom;
+    var center = b.getCenter();
     if (animate){
-      map.flyToBounds(b, { duration: 1.4, easeLinearity: 0.3 });
+      map.flyTo(center, targetZoom, { duration: 1.4, easeLinearity: 0.3 });
     } else {
-      map.fitBounds(b, { animate: false });
+      map.setView(center, targetZoom, { animate: false });
     }
   }
 
@@ -551,6 +561,37 @@ export default function MapScreen() {
   const [focusedPolyline, setFocusedPolyline] = useState<Polyline | null>(null);
   const [poiSource, setPoiSource] = useState<string | null>(null);
   const [focusLoading, setFocusLoading] = useState(false);
+  // Legend category filter — when non-null, only POIs whose kind falls
+  // into that bucket are sent to the WebView. Each row in the legend
+  // toggles this; tapping the active row clears it. Clears automatically
+  // when the user leaves focused mode.
+  type LegendBucket =
+    | "rapid" | "hazard" | "portage" | "camp" | "boat" | "parking" | "note";
+  const [legendFilter, setLegendFilter] = useState<LegendBucket | null>(null);
+  const toggleLegendFilter = useCallback((b: LegendBucket) => {
+    setLegendFilter((cur) => (cur === b ? null : b));
+  }, []);
+  // Map a POI kind → legend bucket.
+  const kindBucket = (k: string): LegendBucket | null => {
+    if (k === "rapid" || k === "play") return "rapid";
+    if (k === "hazard" || k === "waterfall") return "hazard";
+    if (k === "portage") return "portage";
+    if (k === "camp") return "camp";
+    if (k === "boat_ramp" || k === "access" || k === "putin" || k === "takeout") return "boat";
+    if (k === "parking") return "parking";
+    if (k === "note") return "note";
+    return null;
+  };
+  // Auto-clear the filter when the user backs out of focused mode.
+  useEffect(() => {
+    if (!selectedRiverId) setLegendFilter(null);
+  }, [selectedRiverId]);
+  // Pois actually displayed on the map after the legend filter is applied.
+  const displayedPois = useMemo(() => {
+    if (!focusedPois) return null;
+    if (!legendFilter) return focusedPois;
+    return focusedPois.filter((p) => kindBucket(p.kind) === legendFilter);
+  }, [focusedPois, legendFilter]);
 
   const selectedRiver = useMemo(
     () => rivers.find((r) => r.id === selectedRiverId) || null,
@@ -688,7 +729,7 @@ export default function MapScreen() {
           take_out_lon: selectedRiver.take_out.lon,
           take_out_name: selectedRiver.take_out.name,
         },
-        pois: focusedPois || [],
+        pois: displayedPois || [],
         polyline: focusedPolyline,
       };
     }
@@ -705,7 +746,7 @@ export default function MapScreen() {
         plon: r.put_in.lon,
       })),
     };
-  }, [selectedRiver, focusedPois, focusedPolyline, filteredRivers]);
+  }, [selectedRiver, displayedPois, focusedPolyline, filteredRivers]);
 
   // Seed `prevModeRef` so we DON'T trigger a fitBounds on first mount when
   // we've restored a saved view (otherwise the saved view would be clobbered
@@ -732,7 +773,7 @@ export default function MapScreen() {
     const move = newMode !== prevModeRef.current ? "fit" : "none";
     postCommand({ ...buildPayload(), move });
     prevModeRef.current = newMode;
-  }, [mapReady, selectedRiver, focusedPois, filteredRivers, buildPayload, postCommand, params.reset]);
+  }, [mapReady, selectedRiver, focusedPois, displayedPois, filteredRivers, buildPayload, postCommand, params.reset]);
 
   // Handle messages from the map
   const handleMessage = useCallback((msg: string) => {
@@ -907,16 +948,68 @@ export default function MapScreen() {
           if (!anyVisible) return null;
           return (
             <View style={styles.legend} testID="map-legend-focused">
-              <Text style={styles.legendTitle}>ON THIS RUN</Text>
+              <View style={styles.legendHeader}>
+                <Text style={styles.legendTitle}>ON THIS RUN</Text>
+                {legendFilter && (
+                  <TouchableOpacity
+                    onPress={() => setLegendFilter(null)}
+                    hitSlop={8}
+                    testID="map-legend-clear"
+                  >
+                    <Text style={styles.legendClear}>CLEAR</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
               {hasRapid && (
-                <LegendIcon kind="rapid" rapidColor={COLORS.warning} label="Rapid" />
+                <LegendIcon
+                  kind="rapid" rapidColor={COLORS.warning} label="Rapid"
+                  active={legendFilter === "rapid"}
+                  dimmed={!!legendFilter && legendFilter !== "rapid"}
+                  onPress={() => toggleLegendFilter("rapid")}
+                />
               )}
-              {hasHazard && <LegendIcon kind="hazard" label="Hazard / falls" />}
-              {hasPortage && <LegendIcon kind="portage" label="Portage" />}
-              {hasCamp && <LegendIcon kind="camp" label="Campground" />}
-              {hasBoat && <LegendIcon kind="boat" label="Boat ramp" />}
-              {hasParking && <LegendIcon kind="parking" label="Parking" />}
-              {hasNote && <LegendIcon kind="note" label="Note" />}
+              {hasHazard && (
+                <LegendIcon kind="hazard" label="Hazard / falls"
+                  active={legendFilter === "hazard"}
+                  dimmed={!!legendFilter && legendFilter !== "hazard"}
+                  onPress={() => toggleLegendFilter("hazard")}
+                />
+              )}
+              {hasPortage && (
+                <LegendIcon kind="portage" label="Portage"
+                  active={legendFilter === "portage"}
+                  dimmed={!!legendFilter && legendFilter !== "portage"}
+                  onPress={() => toggleLegendFilter("portage")}
+                />
+              )}
+              {hasCamp && (
+                <LegendIcon kind="camp" label="Campground"
+                  active={legendFilter === "camp"}
+                  dimmed={!!legendFilter && legendFilter !== "camp"}
+                  onPress={() => toggleLegendFilter("camp")}
+                />
+              )}
+              {hasBoat && (
+                <LegendIcon kind="boat" label="Boat ramp"
+                  active={legendFilter === "boat"}
+                  dimmed={!!legendFilter && legendFilter !== "boat"}
+                  onPress={() => toggleLegendFilter("boat")}
+                />
+              )}
+              {hasParking && (
+                <LegendIcon kind="parking" label="Parking"
+                  active={legendFilter === "parking"}
+                  dimmed={!!legendFilter && legendFilter !== "parking"}
+                  onPress={() => toggleLegendFilter("parking")}
+                />
+              )}
+              {hasNote && (
+                <LegendIcon kind="note" label="Note"
+                  active={legendFilter === "note"}
+                  dimmed={!!legendFilter && legendFilter !== "note"}
+                  onPress={() => toggleLegendFilter("note")}
+                />
+              )}
             </View>
           );
         })()}
@@ -988,32 +1081,44 @@ function LegendIcon({
   kind,
   rapidColor,
   label,
+  active,
+  dimmed,
+  onPress,
 }: {
   kind: "rapid" | "hazard" | "portage" | "camp" | "boat" | "parking" | "note";
   rapidColor?: string;
   label: string;
+  active?: boolean;
+  dimmed?: boolean;
+  onPress?: () => void;
 }) {
   // Mini icon symbols mirroring the exact SVGs on the map markers
+  const rowStyle = [
+    styles.legendRow,
+    styles.legendRowTappable,
+    active && styles.legendRowActive,
+    dimmed && styles.legendRowDimmed,
+  ];
   if (kind === "hazard") {
     // Red triangle with "!" — same as map waterfall/hazard markers
     return (
-      <View style={styles.legendRow}>
+      <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={rowStyle} testID={`map-legend-${kind}`}>
         <View style={styles.legendTri}>
           <Text style={styles.legendTriText}>!</Text>
         </View>
         <Text style={styles.legendText}>{label}</Text>
-      </View>
+      </TouchableOpacity>
     );
   }
   if (kind === "parking") {
     // Charcoal circle with white "P" — matches in-map parking pin
     return (
-      <View style={styles.legendRow}>
+      <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={rowStyle} testID={`map-legend-${kind}`}>
         <View style={[styles.legendPin, { backgroundColor: "#4F5D75" }]}>
           <Text style={styles.legendPinLetter}>P</Text>
         </View>
         <Text style={styles.legendText}>{label}</Text>
-      </View>
+      </TouchableOpacity>
     );
   }
   const bg =
@@ -1163,10 +1268,10 @@ function LegendIcon({
   };
 
   return (
-    <View style={styles.legendRow}>
+    <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={rowStyle} testID={`map-legend-${kind}`}>
       <View style={[styles.legendPin, { backgroundColor: bg }]}>{renderSvg()}</View>
       <Text style={styles.legendText}>{label}</Text>
-    </View>
+    </TouchableOpacity>
   );
 }
 
@@ -1225,7 +1330,32 @@ const styles = StyleSheet.create({
     fontSize: 10, fontWeight: "900", letterSpacing: 1.5,
     color: COLORS.textMuted, marginBottom: 8,
   },
+  legendHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  legendClear: {
+    fontSize: 10,
+    fontWeight: "900",
+    color: COLORS.primary,
+    letterSpacing: 1.2,
+  },
   legendRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 5 },
+  legendRowTappable: {
+    paddingVertical: 4,
+    paddingHorizontal: 6,
+    marginHorizontal: -6,
+    borderRadius: 6,
+    marginBottom: 2,
+  },
+  legendRowActive: {
+    backgroundColor: "rgba(29, 111, 184, 0.14)",
+  },
+  legendRowDimmed: {
+    opacity: 0.45,
+  },
   dot: { width: 10, height: 10, borderRadius: 5 },
   legendPin: {
     width: 18, height: 18, borderRadius: 9,
