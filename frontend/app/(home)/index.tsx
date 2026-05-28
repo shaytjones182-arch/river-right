@@ -221,10 +221,15 @@ export default function Home() {
                       <Text style={styles.riverState}>{r.state}</Text>
                     </View>
                     <Text style={styles.riverName}>{r.name}</Text>
-                    {!!r.description && (
+                    {r.description ? (
                       <Text style={styles.riverDesc} numberOfLines={2}>
                         {r.description}
                       </Text>
+                    ) : (
+                      // Empty placeholder reserves the same vertical space
+                      // that the 2-line description normally occupies, so
+                      // the title doesn't drop when description is blank.
+                      <View style={styles.riverDescPlaceholder} />
                     )}
                   </View>
                 </TouchableOpacity>
@@ -373,6 +378,13 @@ const styles = StyleSheet.create({
   riverDesc: {
     color: "rgba(255,255,255,0.85)",
     fontSize: 13,
+    marginTop: 4,
+  },
+  // Empty spacer used when a river has no description text. Keeps the
+  // title's vertical position consistent so the layout doesn't shift
+  // between cards with and without descriptions.
+  riverDescPlaceholder: {
+    height: 36,    // ≈ 2 lines × 13px × 1.4 line-height
     marginTop: 4,
   },
   emptyWrap: {
