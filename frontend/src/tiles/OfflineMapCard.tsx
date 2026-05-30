@@ -2,6 +2,9 @@
 //
 // Loads the curated polyline → computes a tile plan → lets the user kick
 // off / cancel / delete a download of USGS Topo tiles for offline use.
+// Behind the $5-per-river paywall: tapping the button when the river is
+// NOT yet unlocked opens PaywallSheet; on a successful purchase we
+// automatically begin the download (one tap, no double-prompt).
 
 import React, { useEffect, useRef, useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
@@ -24,20 +27,30 @@ import {
   TileManifest,
   OFFLINE_TILES_SUPPORTED,
 } from "./tileDownloader";
+import PaywallSheet from "../iap/PaywallSheet";
+import { useUnlocks } from "../iap/useUnlocks";
+import { productForRiver } from "../iap/products";
 
 type Props = {
   riverId: string;
+  riverName?: string;
 };
 
 function fmtMB(bytes: number): string {
   return (bytes / (1024 * 1024)).toFixed(1) + " MB";
 }
 
-export default function OfflineMapCard({ riverId }: Props) {
+export default function OfflineMapCard({ riverId, riverName }: Props) {
   const [plan, setPlan] = useState<TilePlan | null>(null);
   const [manifest, setManifest] = useState<TileManifest | null>(null);
   const [progress, setProgress] = useState<DownloadProgress | null>(null);
   const cancelRef = useRef<(() => void) | null>(null);
+  // Paywall state — only relevant for the very first download attempt on
+  // an un-purchased river. Once unlocked we skip this entirely.
+  const { isUnlocked, ready: unlocksReady } = useUnlocks();
+  const [paywallOpen, setPaywallOpen] = useState(false);
+  const product = productForRiver(riverId);
+  const purchased = unlocksReady && isUnlocked(riverId);
 
   // Build the tile plan from the polyline bbox.
   useEffect(() => {
@@ -78,13 +91,10 @@ export default function OfflineMapCard({ riverId }: Props) {
     };
   }, [riverId]);
 
-  const handleStart = () => {
+  // Internal: actually kicks off the download (skips the paywall check).
+  const beginDownload = () => {
     if (!plan) return;
-    // Kick off the data-bundle save IN PARALLEL with the tile download. This
-    // is the ONLY place that writes the river meta + polyline + POIs to the
-    // offline cache, so the whole feature stays behind the $5 paywall (this
-    // card is rendered only on the river-detail page, which itself is gated
-    // by the unlock flow).
+    // Kick off the data-bundle save IN PARALLEL with the tile download.
     saveRiverOfflineBundle(riverId).catch(() => {
       /* best-effort; tiles are the main payload */
     });
@@ -103,6 +113,16 @@ export default function OfflineMapCard({ riverId }: Props) {
       }
     );
     cancelRef.current = cancel;
+  };
+
+  // Public tap handler: paywall first (if not unlocked), then download.
+  const handleStart = () => {
+    if (!plan) return;
+    if (!purchased) {
+      setPaywallOpen(true);
+      return;
+    }
+    beginDownload();
   };
 
   const handleCancel = () => {
@@ -208,7 +228,11 @@ export default function OfflineMapCard({ riverId }: Props) {
       </TouchableOpacity>
     );
   } else {
-    // ── Nothing yet — bare blue "Download offline map" button.
+    // ── Nothing yet — blue "Download offline map for $X" button. Tapping
+    // it opens the paywall first if the user hasn't unlocked this run yet.
+    const ctaLabel = purchased
+      ? "Download offline map"
+      : `Download offline map for ${product.displayPrice}`;
     body = (
       <TouchableOpacity
         testID="offline-tiles-download"
@@ -217,13 +241,29 @@ export default function OfflineMapCard({ riverId }: Props) {
         disabled={!plan}
         activeOpacity={0.85}
       >
-        <Ionicons name="cloud-download" size={14} color="#fff" />
-        <Text style={styles.btnPrimaryText}>Download offline map</Text>
+        <Ionicons name={purchased ? "cloud-download" : "lock-closed"} size={14} color="#fff" />
+        <Text style={styles.btnPrimaryText}>{ctaLabel}</Text>
       </TouchableOpacity>
     );
   }
 
-  return body;
+  return (
+    <>
+      {body}
+      <PaywallSheet
+        visible={paywallOpen}
+        riverId={riverId}
+        riverName={riverName ?? null}
+        onClose={() => setPaywallOpen(false)}
+        onUnlocked={() => {
+          setPaywallOpen(false);
+          // Tiny defer so the sheet finishes its close animation before
+          // we kick off the download — looks more polished than overlap.
+          setTimeout(() => beginDownload(), 250);
+        }}
+      />
+    </>
+  );
 }
 
 const styles = StyleSheet.create({

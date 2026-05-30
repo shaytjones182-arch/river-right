@@ -3,7 +3,9 @@
     "name": "RiverRight",
     "slug": "riverright",
     "version": "1.0.1",
-    "runtimeVersion": { "policy": "appVersion" },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "riverright",
@@ -17,7 +19,9 @@
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Track your river trip with GPS",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Continue recording your river trip when the phone is locked or in your pocket",
-        "UIBackgroundModes": ["location"],
+        "UIBackgroundModes": [
+          "location"
+        ],
         "ITSAppUsesNonExemptEncryption": false
       }
     },
@@ -62,7 +66,8 @@
           "isAndroidBackgroundLocationEnabled": true,
           "isAndroidForegroundServiceEnabled": true
         }
-      ]
+      ],
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true

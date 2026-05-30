@@ -277,7 +277,7 @@ export default function RiverDetail() {
             <Text style={styles.viewOnMapBtnText}>View on Map</Text>
           </TouchableOpacity>
 
-          <OfflineMapCard riverId={r.id} />
+          <OfflineMapCard riverId={r.id} riverName={r.name} />
 
           {/* ── About this run ────────────────────────────────────────────
               Intentionally hidden behind a `false` guard rather than deleted
