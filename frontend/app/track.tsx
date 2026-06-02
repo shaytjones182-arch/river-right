@@ -43,6 +43,12 @@ import {
   TripPoint,
   MOVING_MPH_THRESHOLD,
 } from "../src/storage";
+import {
+  saveActiveTripSnapshot,
+  loadActiveTripSnapshot,
+  clearActiveTripSnapshot,
+  type ActiveTripSnapshot,
+} from "../src/tripPersist";
 
 type Pt = { lat: number; lon: number; t: number };
 
@@ -631,9 +637,49 @@ export default function Track() {
   useEffect(() => {
     pointsRef.current = points;
   }, [points]);
+  // Per-day cumulative moving time in ms — updated incrementally as new
+  // GPS pings come in (uses the timestamp delta between points where
+  // speed >= MOVING_MPH_THRESHOLD). Lives in a ref so the AppState /
+  // tick handlers can read the up-to-date value without re-rendering.
+  const movingMsRef = useRef(0);
   // Refs used inside callbacks/intervals so we always read the latest values
   const speedRef = useRef(0);
   const dayStartedAtRef = useRef<number | null>(null);
+  // Cumulative paused-duration tracking for the current day. `pausedMs`
+  // is the total ms spent paused before the latest pause/resume cycle;
+  // `pausedAt` is the epoch ms when the user last pressed pause (null if
+  // currently tracking). totalSec is then derived as
+  //   floor((Date.now() - dayStartedAt - pausedMs - (pausedAt ? now - pausedAt : 0)) / 1000)
+  const pausedMsRef = useRef(0);
+  const pausedAtRef = useRef<number | null>(null);
+
+  // ── GPS quality filter ─────────────────────────────────────────────────
+  // Tweakable constants for accepting / rejecting raw GPS pings.
+  const MAX_GPS_ACCURACY_M = 25; // discard pings with reported accuracy worse than 25 m
+  const MIN_MOVE_MILES = 0.0031; // ≈ 5 m. Smaller deltas are GPS noise, not real movement
+  const MAX_JUMP_MILES = 1.0;    // any single-step >1 mi is a teleport (GPS glitch), drop it
+
+  // Drop a single GPS sample? Returns the rejection reason for debug logs.
+  function rejectReasonForFix(
+    accuracyM: number | null | undefined,
+    delta: number,
+  ): string | null {
+    if (accuracyM != null && accuracyM > MAX_GPS_ACCURACY_M) return "low-accuracy";
+    if (delta > MAX_JUMP_MILES) return "teleport";
+    return null;
+  }
+
+  // Compute the moving-time milliseconds we should add for a new ping
+  // given the previous point's timestamp + the current speed. Clamps the
+  // delta so a multi-hour foregrounding gap doesn't suddenly add hours
+  // to "moving time".
+  function movingDeltaMsFor(prevT: number | null, nowT: number, mph: number) {
+    if (!prevT) return 0;
+    if (mph < MOVING_MPH_THRESHOLD) return 0;
+    const dt = Math.max(0, Math.min(60_000, nowT - prevT));
+    return dt;
+  }
+
 
   // Run picker / POI state
   const [rivers, setRivers] = useState<RiverShort[]>([]);
@@ -768,18 +814,29 @@ export default function Track() {
   // Shared insertion path used by both the foreground watcher and the
   // background-queue drainer. Keeps distance + max-speed bookkeeping
   // identical regardless of where the point came from.
-  const appendTripPoint = useCallback((p: TripPoint) => {
+  const appendTripPoint = useCallback((p: TripPoint & { accuracy?: number | null }) => {
     setCoord({ lat: p.lat, lon: p.lon, t: p.t });
     speedRef.current = p.speed;
     setSpeedMph(p.speed);
     setMaxMph((m) => (p.speed > m ? p.speed : m));
     setPoints((prev) => {
-      if (prev.length > 0) {
-        const last = prev[prev.length - 1];
-        const delta = haversineMiles(last, p);
-        // Drop micro-noise spikes (< ~3 meters)
-        if (delta > 0.002) {
+      const last = prev.length ? prev[prev.length - 1] : null;
+      const delta = last ? haversineMiles(last, p) : 0;
+      // Reject obvious garbage GPS pings (low accuracy / teleport jumps).
+      const reason = rejectReasonForFix(p.accuracy, delta);
+      if (reason) {
+        // Silently skip — we don't update marker, line, distance, or
+        // moving-time. The user will get a clean point a few seconds
+        // later once the GPS settles.
+        return prev;
+      }
+      if (last) {
+        // Only count distance when movement exceeds the 5 m floor — this
+        // is what kills the "8 mph at standstill" bug. Sub-floor deltas
+        // are GPS jitter and contribute neither distance nor moving time.
+        if (delta >= MIN_MOVE_MILES) {
           setDistMiles((d) => d + delta);
+          movingMsRef.current += movingDeltaMsFor(last.t, p.t, p.speed);
         }
       }
       return [...prev, p];
@@ -794,6 +851,7 @@ export default function Track() {
       lon: loc.coords.longitude,
       t: loc.timestamp,
       speed,
+      accuracy: loc.coords.accuracy ?? null,
     });
   };
 
@@ -827,6 +885,9 @@ export default function Track() {
     setTotalSec(0);
     setMovingSec(0);
     speedRef.current = 0;
+    movingMsRef.current = 0;
+    pausedMsRef.current = 0;
+    pausedAtRef.current = null;
     sendJs(`window.setPath([])`);
     // Wipe any stale background-queue pings left over from a previous
     // session — they'd otherwise be merged in on next foreground.
@@ -846,19 +907,140 @@ export default function Track() {
     return () => sub.remove();
   }, [mergeBackgroundPings]);
 
+  // ── Active-trip persistence ─────────────────────────────────────────────
+  // Keep an up-to-date snapshot of the in-progress trip on disk so we can
+  // recover it if the OS kills the process overnight. Three save triggers:
+  //   1. Every ~10 s while in tracking/paused state (interval)
+  //   2. AppState transitioning AWAY from "active"  (background flush)
+  //   3. Right after every reducer change that bumps points/days/state
+  //      (cheap idempotent write triggered by useEffect deps)
+  const saveSnapshotNow = useCallback(() => {
+    if (tripState === "idle") return;
+    const snap: ActiveTripSnapshot = {
+      savedAt: Date.now(),
+      tripState,
+      tripStartedAt: tripStartedAtRef.current || Date.now(),
+      dayStartedAt: dayStartedAtRef.current,
+      pausedMs: pausedMsRef.current,
+      pausedAt: pausedAtRef.current,
+      river: { ...tripRiverRef.current },
+      loggedDays,
+      points,
+      distMiles,
+      movingSec: Math.floor(movingMsRef.current / 1000),
+      maxMph,
+    };
+    saveActiveTripSnapshot(snap).catch(() => {});
+  }, [tripState, loggedDays, points, distMiles, maxMph]);
+
+  // Trigger 1+3 (interval + reactive)
+  useEffect(() => {
+    if (tripState === "idle") return;
+    saveSnapshotNow();
+    const id = setInterval(saveSnapshotNow, 10_000);
+    return () => clearInterval(id);
+  }, [tripState, saveSnapshotNow]);
+
+  // Trigger 2 (AppState background flush). We listen on a SECOND
+  // AppState subscription rather than folding into the merge-pings
+  // listener so the two concerns stay independent and testable.
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (next) => {
+      if (next !== "active") saveSnapshotNow();
+    });
+    return () => sub.remove();
+  }, [saveSnapshotNow]);
+
+  // ── Cold-launch resume prompt ────────────────────────────────────────
+  // On first mount, if AsyncStorage has a recent active-trip snapshot,
+  // ask the user whether to resume it. "Resume" rehydrates all per-day
+  // state and resumes recording; "Discard" wipes the snapshot.
+  const resumePromptShownRef = useRef(false);
+  useEffect(() => {
+    if (resumePromptShownRef.current) return;
+    resumePromptShownRef.current = true;
+    (async () => {
+      const snap = await loadActiveTripSnapshot();
+      if (!snap) return;
+      const dur = Math.max(
+        0,
+        Math.floor((Date.now() - (snap.dayStartedAt || snap.tripStartedAt)) / 60_000)
+      );
+      Alert.alert(
+        "Resume previous trip?",
+        `An unfinished trip on ${snap.river.name || "your river"} was saved ${dur} min ago. Resume it or discard?`,
+        [
+          {
+            text: "Discard",
+            style: "destructive",
+            onPress: () => {
+              clearActiveTripSnapshot().catch(() => {});
+            },
+          },
+          {
+            text: "Resume",
+            onPress: async () => {
+              // Rehydrate state from the snapshot. Re-start GPS recording
+              // (the user almost certainly wants the trip to keep going).
+              tripStartedAtRef.current = snap.tripStartedAt;
+              dayStartedAtRef.current = snap.dayStartedAt;
+              tripRiverRef.current = { ...snap.river };
+              setLoggedDays(snap.loggedDays || []);
+              setPoints(snap.points || []);
+              pointsRef.current = snap.points || [];
+              setDistMiles(snap.distMiles || 0);
+              setMaxMph(snap.maxMph || 0);
+              movingMsRef.current = (snap.movingSec || 0) * 1000;
+              pausedMsRef.current = snap.pausedMs || 0;
+              pausedAtRef.current = snap.pausedAt;
+              // Replay the saved trail onto the map so it's visible
+              // immediately (no need to wait for the next GPS ping).
+              if (snap.points && snap.points.length) {
+                const arr = snap.points.map((p) => [p.lat, p.lon]);
+                sendJs(`window.setPath(${JSON.stringify(arr)})`);
+              }
+              if (snap.river.id) setSelectedRiverId(snap.river.id);
+              // Auto-resume recording if the snapshot was in tracking
+              // state. Paused snapshots stay paused so the user can
+              // decide when to resume.
+              if (snap.tripState === "tracking") {
+                const ok = await beginRecording();
+                if (ok) setTripState("tracking");
+                else setTripState("paused");
+              } else {
+                setTripState("paused");
+              }
+            },
+          },
+        ],
+        { cancelable: false }
+      );
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Begin (or resume) recording GPS + 1-second tick.
   const beginRecording = async () => {
     if (!permGranted) {
       Alert.alert("Location required", "Please enable location to track your trip.");
       return false;
     }
-    // 1-second tick: advances elapsed time + moving time (when speed >= threshold)
+    // 1-second tick: re-derives elapsed + moving time from REFS so the
+    // values stay correct even if iOS suspends the JS engine (the math is
+    // based on `Date.now()` + `movingMsRef.current`, not an incrementing
+    // counter, so a multi-hour suspend resumes cleanly).
     if (!tickRef.current) {
       tickRef.current = setInterval(() => {
-        setTotalSec((s) => s + 1);
-        if (speedRef.current >= MOVING_MPH_THRESHOLD) {
-          setMovingSec((s) => s + 1);
-        }
+        const start = dayStartedAtRef.current;
+        if (start == null) return;
+        const now = Date.now();
+        const pAt = pausedAtRef.current;
+        // Active wall-clock = (now - start) - (paused milliseconds before
+        // last cycle) - (current pause-in-progress duration if any).
+        const liveActiveMs =
+          now - start - pausedMsRef.current - (pAt != null ? now - pAt : 0);
+        setTotalSec(Math.max(0, Math.floor(liveActiveMs / 1000)));
+        setMovingSec(Math.max(0, Math.floor(movingMsRef.current / 1000)));
       }, 1000);
     }
     if (!subRef.current) {
@@ -948,6 +1130,7 @@ export default function Track() {
 
   const handlePause = () => {
     stopRecording();
+    pausedAtRef.current = Date.now();
     setTripState("paused");
     sendJs(`window.fitPath && window.fitPath()`);
   };
@@ -955,6 +1138,12 @@ export default function Track() {
   const handleResume = async () => {
     const ok = await beginRecording();
     if (!ok) return;
+    // Roll the just-elapsed paused interval into pausedMs so the elapsed
+    // timer continues from where it left off rather than jumping forward.
+    if (pausedAtRef.current != null) {
+      pausedMsRef.current += Date.now() - pausedAtRef.current;
+      pausedAtRef.current = null;
+    }
     setTripState("tracking");
   };
 
@@ -991,6 +1180,9 @@ export default function Track() {
     } catch (e) {
       console.warn("save trip failed", e);
     }
+    // Wipe the in-progress snapshot so cold launch doesn't prompt to
+    // resume a trip the user just explicitly ended.
+    clearActiveTripSnapshot().catch(() => {});
     // Hard reset all trip state
     setLoggedDays([]);
     tripStartedAtRef.current = null;
