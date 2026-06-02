@@ -19,6 +19,7 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import { WebView } from "react-native-webview";
+import { useFocusEffect } from "expo-router";
 import MapView from "../src/MapView";
 import { COLORS, API } from "../src/theme";
 import ProfileMenu from "../src/ProfileMenu";
@@ -106,6 +107,7 @@ const buildHtml = (
   offlineTiles?: { tileToUrl: Record<string, string> } | null
 ) => `<!DOCTYPE html>
 <html><head>
+<meta charset="utf-8" />
 <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <style>${atob(LEAFLET_CSS_B64)}</style>
 <style>
@@ -142,7 +144,7 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
 .pop-meta{font-size:11px;color:#5C6B73;margin-top:2px;}
 /* Tile-unavailable banner */
 .tile-banner{
-  position:absolute;top:10px;left:50%;transform:translate(-50%,-150%);
+  position:absolute;top:60px;left:50%;transform:translate(-50%,-150%);
   z-index:1000;pointer-events:none;
   background:#0A1128;color:#fff;
   padding:8px 14px;border-radius:999px;
@@ -175,7 +177,7 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
 <div id="m"></div>
 <div id="tile-banner" class="tile-banner" role="status" aria-live="polite">
   <svg viewBox="0 0 24 24" fill="none" stroke="#F4A261" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l10 18H2L12 3z"/><path d="M12 10v5"/><path d="M12 18v.01"/></svg>
-  <span>Map tiles unavailable — check your connection.</span>
+  <span>Map tiles unavailable - check your connection.</span>
 </div>
 <button id="recenter-fab" class="recenter-fab" aria-label="Re-center on my location">
   <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -248,7 +250,7 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
     if (__tileErrCount < 12 || !__tileBanner) return;
     var span = __tileBanner.querySelector('span');
     if (!span) return;
-    span.textContent = 'Map tiles unavailable — check your connection.';
+    span.textContent = 'Map tiles unavailable - check your connection.';
     __tileBanner.classList.add('show');
   });
   usgsTopo.on('tileload', function(){
@@ -1021,6 +1023,33 @@ export default function Track() {
       cancelled = true;
     };
   }, []);
+  // Refresh the offline-tile manifest whenever this tab regains focus,
+  // so freshly-downloaded tiles show up without an app restart. If the
+  // tile count changed since last render, we ALSO null out the
+  // initialHtmlRef so the next render rebuilds the HTML and the WebView
+  // remounts with the new file:// URLs baked in.
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      (async () => {
+        const m = await getMergedOfflineManifest();
+        if (cancelled) return;
+        setTrackOfflineTiles((prev) => {
+          const a = prev?.tileToUrl ? Object.keys(prev.tileToUrl).length : 0;
+          const b = m?.tileToUrl ? Object.keys(m.tileToUrl).length : 0;
+          if (a !== b) {
+            // Force a fresh HTML build on the next render.
+            initialHtmlRef.current = null;
+            return m;
+          }
+          return prev;
+        });
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }, [])
+  );
   // Capture the FIRST coord (and first offline-tile manifest) we ever see
   // and bake those into the HTML. Subsequent `coord` updates flow through
   // the in-WebView `window.updatePos()` call instead of rebuilding the

@@ -10,7 +10,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { WebView } from "react-native-webview";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import { useRouter, useLocalSearchParams, useFocusEffect } from "expo-router";
 import MapView from "../src/MapView";
 import ProfileMenu from "../src/ProfileMenu";
 import Svg, { Path, Polygon, Circle, Polyline as SvgPolyline } from "react-native-svg";
@@ -122,6 +122,7 @@ const buildMapHtml = (
   offlineTiles?: { tileToUrl: Record<string, string> } | null
 ) => `<!DOCTYPE html>
 <html><head>
+<meta charset="utf-8" />
 <meta name="viewport" content="initial-scale=1.0,maximum-scale=1.0,user-scalable=no" />
 <style>${atob(LEAFLET_CSS_B64)}</style>
 <style>
@@ -168,7 +169,7 @@ const buildMapHtml = (
   .pop-meta{font-size:11px;color:#5C6B73;margin-top:2px;}
   /* Tile-unavailable banner — appears when USGS Topo tiles repeatedly fail. */
   .tile-banner{
-    position:absolute;top:10px;left:50%;transform:translate(-50%,-150%);
+    position:absolute;top:60px;left:50%;transform:translate(-50%,-150%);
     z-index:1000;pointer-events:none;
     background:#0A1128;color:#fff;
     padding:8px 14px;border-radius:999px;
@@ -187,7 +188,7 @@ const buildMapHtml = (
 <div id="m"></div>
 <div id="tile-banner" class="tile-banner" role="status" aria-live="polite">
   <svg viewBox="0 0 24 24" fill="none" stroke="#F4A261" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l10 18H2L12 3z"/><path d="M12 10v5"/><path d="M12 18v.01"/></svg>
-  <span>Map tiles unavailable — check your connection.</span>
+  <span>Map tiles unavailable - check your connection.</span>
 </div>
 <script>${atob(LEAFLET_JS_B64).replace(/<\//g, "<\\/")}</script>
 <script>
@@ -303,7 +304,7 @@ const buildMapHtml = (
     if (__tileErrCount < 12 || !__tileBanner) return;
     var span = __tileBanner.querySelector('span');
     if (!span) return;
-    span.textContent = 'Map tiles unavailable — check your connection.';
+    span.textContent = 'Map tiles unavailable - check your connection.';
     __tileBanner.classList.add('show');
   });
   usgsTopo.on('tileload', function(){
@@ -867,6 +868,28 @@ export default function MapScreen() {
       cancelled = true;
     };
   }, []);
+  // Whenever this screen regains focus (e.g. user switched back from the
+  // river-detail page after tapping "Download offline map"), re-read the
+  // tile manifest. If it changed since the last load we update state
+  // which rebuilds the HTML and remounts the WebView so the brand-new
+  // file:// tile URLs are picked up — no app restart required.
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      (async () => {
+        const merged = await getMergedOfflineManifest();
+        if (cancelled) return;
+        setOfflineTiles((prev) => {
+          const a = prev?.tileToUrl ? Object.keys(prev.tileToUrl).length : 0;
+          const b = merged?.tileToUrl ? Object.keys(merged.tileToUrl).length : 0;
+          return a !== b ? merged : prev;
+        });
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }, [])
+  );
 
   // HTML is generated ONCE per mount. On first mount we seed the map with
   // any previously-saved view so the user lands where they left off.
