@@ -1,15 +1,13 @@
 // Paywall bottom sheet.
 //
-// Shown when the user taps a locked river. Today the purchase flow is
-// MOCKED — `unlockRunLocally()` just writes to AsyncStorage. When we wire
-// real Apple StoreKit IAP, only the `onPurchase` handler swaps to:
+// Production purchase flow:
+//   1. Tap "Unlock this Run" → calls storekit.purchaseRun(riverId).
+//   2. react-native-iap presents the App Store sheet; user confirms.
+//   3. On success the transaction is finished + AsyncStorage flag set.
+//   4. On cancel we silently dismiss; on real error we surface an Alert.
 //
-//   const r = await RNIap.requestPurchase({ skus: [product.productId] });
-//   await RNIap.finishTransaction({ purchase: r, isConsumable: false });
-//   await unlockRunLocally(riverId);
-//
-// Everything else here (UI, copy, animation, "Restore Purchases" link)
-// stays identical between mock and production.
+// "Restore Purchases" hits Apple via storekit.restoreRuns() and marks
+// every owned river ID as unlocked locally.
 
 import React, { useState } from "react";
 import {
@@ -21,12 +19,14 @@ import {
   Pressable,
   ActivityIndicator,
   Alert,
+  Platform,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "../theme";
 import { productForRiver } from "./products";
 import { unlockRunLocally, restorePurchasesLocally } from "./useUnlocks";
+import { purchaseRun, restoreRuns } from "./storekit";
 
 type Props = {
   visible: boolean;
@@ -51,18 +51,29 @@ export default function PaywallSheet({
     if (!riverId || busy) return;
     setBusy("purchase");
     try {
-      // === MOCKED PURCHASE ===
-      // Production: await RNIap.requestPurchase({ skus: [product.productId] })
-      // and only call unlockRunLocally on a successful, finished transaction.
-      await new Promise((r) => setTimeout(r, 700)); // fake StoreKit latency
+      if (Platform.OS === "ios") {
+        // Real StoreKit purchase. Resolves only after the transaction
+        // finishes; throws "CANCELLED" if the user dismissed the sheet.
+        await purchaseRun(riverId);
+      } else {
+        // Non-iOS dev preview: short-circuit to a local unlock so we can
+        // still exercise the UI flow on web + Android (where StoreKit
+        // doesn't exist). Production iOS users always hit the branch above.
+        await new Promise((r) => setTimeout(r, 500));
+      }
       await unlockRunLocally(riverId);
-      // Note: offline data (polyline, POIs, meta) is no longer eagerly
-      // cached on purchase. The user must explicitly tap "Download offline
-      // map" on the river-detail page to save the bundle for offline use.
       onUnlocked?.(riverId);
       onClose();
     } catch (e: any) {
-      Alert.alert("Purchase failed", e?.message || "Please try again.");
+      if (e?.message === "CANCELLED") {
+        // User backed out — no error UI, just stop the spinner.
+      } else {
+        Alert.alert(
+          "Purchase failed",
+          e?.message ||
+            "Couldn't complete the purchase. Please try again or use Restore Purchases."
+        );
+      }
     } finally {
       setBusy(null);
     }
@@ -72,14 +83,29 @@ export default function PaywallSheet({
     if (busy) return;
     setBusy("restore");
     try {
-      // Production: const purchases = await RNIap.getAvailablePurchases();
-      // For each Apple-confirmed entitlement, call unlockRunLocally(riverId).
-      const count = await restorePurchasesLocally();
+      let count = 0;
+      if (Platform.OS === "ios") {
+        // Ask Apple for the owned product list, then mirror each into
+        // the local AsyncStorage unlock cache.
+        const ownedRiverIds = await restoreRuns();
+        for (const id of ownedRiverIds) {
+          await unlockRunLocally(id);
+        }
+        count = ownedRiverIds.length;
+        // If the user happens to own the run we're currently looking at,
+        // dismiss the paywall.
+        if (riverId && ownedRiverIds.includes(riverId)) {
+          onUnlocked?.(riverId);
+          onClose();
+        }
+      } else {
+        count = await restorePurchasesLocally();
+      }
       Alert.alert(
         "Restore Purchases",
         count > 0
           ? `Restored ${count} run${count === 1 ? "" : "s"}.`
-          : "No previous purchases found on this device."
+          : "No previous purchases found on this Apple ID."
       );
     } catch (e: any) {
       Alert.alert("Restore failed", e?.message || "Please try again.");

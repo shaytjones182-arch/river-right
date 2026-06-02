@@ -67,7 +67,8 @@
           "isAndroidForegroundServiceEnabled": true
         }
       ],
-      "expo-font"
+      "expo-font",
+      "react-native-iap"
     ],
     "experiments": {
       "typedRoutes": true

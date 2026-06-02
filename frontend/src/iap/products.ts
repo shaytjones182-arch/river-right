@@ -1,13 +1,13 @@
 // IAP product catalog.
 //
-// Today: hardcoded $5 price for every locked river.
-// Production: replace `priceUSD`/`title` with values fetched from
-// `RNIap.getProducts(productIds)` so the values come straight from
-// App Store Connect (handles localization + tax automatically).
+// Today: real App Store Connect product IDs (one per river run). The
+// `displayPrice` is filled in from a live store fetch when available
+// (see `storekit.ts → primeProductPrices`) and falls back to the
+// hardcoded $5 placeholder otherwise so the UI never breaks offline /
+// before the store has connected.
 //
-// `productIdFor(riverId)` returns the SKU to register with App Store Connect.
-
-const SKU_PREFIX = "com.riverright.run.";
+// To add a new river: insert an entry in RIVER_TO_PRODUCT_ID and create
+// the matching non-consumable in App Store Connect.
 
 export type RunProduct = {
   riverId: string;
@@ -21,9 +21,31 @@ export type RunProduct = {
 export const DEFAULT_RUN_PRICE_USD = 5;
 export const DEFAULT_RUN_PRICE_DISPLAY = "$5.00";
 
+// ─── River → App Store product ID map ──────────────────────────────────
+// IDs MUST exactly match what's configured in App Store Connect.
+const RIVER_TO_PRODUCT_ID: Record<string, string> = {
+  "green-river-desolation": "com.riverrightwhitewater.deso_map",
+};
+
+// In-memory cache of live App Store prices (populated by storekit.ts after
+// it fetches products at startup). Keyed by product ID, value is the
+// localized price string returned by Apple (e.g. "$4.99", "₹399.00").
+const LIVE_PRICE_BY_PRODUCT_ID: Record<string, string> = {};
+
+export function setLivePrice(productId: string, localizedPrice: string) {
+  if (productId && localizedPrice) LIVE_PRICE_BY_PRODUCT_ID[productId] = localizedPrice;
+}
+
 export function productIdFor(riverId: string): string {
-  // Replace non-SKU-safe characters with hyphens.
-  return SKU_PREFIX + riverId.replace(/[^a-z0-9-]/g, "-");
+  // Use the App Store product ID if we have one mapped; fall back to a
+  // synthetic SKU for rivers that don't have a real product yet (so the
+  // UI still shows a placeholder $5 button before App Store Connect setup).
+  return RIVER_TO_PRODUCT_ID[riverId] || `com.riverright.run.${riverId}`;
+}
+
+/** All product IDs we should fetch from the App Store at startup. */
+export function allKnownProductIds(): string[] {
+  return Object.values(RIVER_TO_PRODUCT_ID);
 }
 
 export function productForRiver(
@@ -31,10 +53,15 @@ export function productForRiver(
   overridePriceUSD?: number
 ): RunProduct {
   const price = overridePriceUSD ?? DEFAULT_RUN_PRICE_USD;
+  const productId = productIdFor(riverId);
+  const live = LIVE_PRICE_BY_PRODUCT_ID[productId];
   return {
     riverId,
-    productId: productIdFor(riverId),
+    productId,
     priceUSD: price,
-    displayPrice: `$${price.toFixed(2)}`,
+    // Prefer the live App Store price string when available so the user
+    // sees the EXACT price Apple will charge (handles localization +
+    // App Store discounts automatically).
+    displayPrice: live || `$${price.toFixed(2)}`,
   };
 }

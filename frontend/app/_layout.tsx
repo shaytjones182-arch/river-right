@@ -1,4 +1,5 @@
 import { Tabs } from "expo-router";
+import { useEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -9,9 +10,29 @@ import { useTermsAcceptance } from "../src/useTermsAcceptance";
 // module top level so iOS / Android can find it on cold launch (required
 // even before the user taps Start on the Track tab).
 import "../src/locationBackground";
+import { initStoreKit, restoreRuns } from "../src/iap/storekit";
+import { unlockRunLocally } from "../src/iap/useUnlocks";
 
 export default function RootLayout() {
   const { status, accept } = useTermsAcceptance();
+
+  // Fire-and-forget IAP bootstrap: open the StoreKit connection, prime
+  // product prices, and silently sync any previously-purchased runs into
+  // the local AsyncStorage unlock cache (handles app reinstalls + new
+  // devices on the same Apple ID without user intervention).
+  useEffect(() => {
+    (async () => {
+      try {
+        await initStoreKit();
+        const ownedRiverIds = await restoreRuns();
+        for (const id of ownedRiverIds) {
+          await unlockRunLocally(id);
+        }
+      } catch {
+        /* best-effort */
+      }
+    })();
+  }, []);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
