@@ -894,6 +894,19 @@ export default function Track() {
     resetBackgroundQueue().catch(() => {});
   };
 
+  // Recompute totalSec + movingSec from refs/timestamps. Cheap; safe to
+  // call from anywhere (tick, AppState foreground, snapshot resume).
+  const recomputeTimers = useCallback(() => {
+    const start = dayStartedAtRef.current;
+    if (start == null) return;
+    const now = Date.now();
+    const pAt = pausedAtRef.current;
+    const liveActiveMs =
+      now - start - pausedMsRef.current - (pAt != null ? now - pAt : 0);
+    setTotalSec(Math.max(0, Math.floor(liveActiveMs / 1000)));
+    setMovingSec(Math.max(0, Math.floor(movingMsRef.current / 1000)));
+  }, []);
+
   // On Track-tab mount and on every app foreground, fold any background
   // pings that arrived while the JS engine was suspended into live state.
   useEffect(() => {
@@ -902,10 +915,16 @@ export default function Track() {
     const sub = AppState.addEventListener("change", (next) => {
       if (next === "active") {
         mergeBackgroundPings().catch(() => {});
+        // Force a recompute IMMEDIATELY — iOS sometimes delays the next
+        // setInterval tick by several seconds after foregrounding, which
+        // makes the stopwatch appear "frozen" to the user. By manually
+        // re-deriving from `Date.now()` here we jump straight to the
+        // correct elapsed time the instant the app becomes visible.
+        recomputeTimers();
       }
     });
     return () => sub.remove();
-  }, [mergeBackgroundPings]);
+  }, [mergeBackgroundPings, recomputeTimers]);
 
   // ── Active-trip persistence ─────────────────────────────────────────────
   // Keep an up-to-date snapshot of the in-progress trip on disk so we can
@@ -1030,18 +1049,7 @@ export default function Track() {
     // based on `Date.now()` + `movingMsRef.current`, not an incrementing
     // counter, so a multi-hour suspend resumes cleanly).
     if (!tickRef.current) {
-      tickRef.current = setInterval(() => {
-        const start = dayStartedAtRef.current;
-        if (start == null) return;
-        const now = Date.now();
-        const pAt = pausedAtRef.current;
-        // Active wall-clock = (now - start) - (paused milliseconds before
-        // last cycle) - (current pause-in-progress duration if any).
-        const liveActiveMs =
-          now - start - pausedMsRef.current - (pAt != null ? now - pAt : 0);
-        setTotalSec(Math.max(0, Math.floor(liveActiveMs / 1000)));
-        setMovingSec(Math.max(0, Math.floor(movingMsRef.current / 1000)));
-      }, 1000);
+      tickRef.current = setInterval(recomputeTimers, 1000);
     }
     if (!subRef.current) {
       subRef.current = await Location.watchPositionAsync(
