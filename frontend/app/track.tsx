@@ -658,6 +658,19 @@ export default function Track() {
   const MAX_GPS_ACCURACY_M = 25; // discard pings with reported accuracy worse than 25 m
   const MIN_MOVE_MILES = 0.0031; // ≈ 5 m. Smaller deltas are GPS noise, not real movement
   const MAX_JUMP_MILES = 1.0;    // any single-step >1 mi is a teleport (GPS glitch), drop it
+  // ── Anchor-based motion gate ───────────────────────────────────────────
+  // Force speed AND distance to stay at zero until we've travelled a hard
+  // radius from the stationary anchor — this eliminates the "8 mph at
+  // standstill" symptom caused by raw Doppler/GPS noise. Once we exceed
+  // the radius we "unlock" and show raw Doppler speed verbatim. If
+  // Doppler stays under IDLE_SPEED_MPH for IDLE_RELOCK_MS continuously
+  // we re-lock and reset the anchor to the current position.
+  const WAKE_RADIUS_MILES = 0.00473; // 25 ft
+  const IDLE_SPEED_MPH = 0.3;
+  const IDLE_RELOCK_MS = 10_000;
+  const motionLockedRef = useRef(true);
+  const anchorRef = useRef<{ lat: number; lon: number } | null>(null);
+  const idleSinceRef = useRef<number | null>(null);
 
   // Drop a single GPS sample? Returns the rejection reason for debug logs.
   function rejectReasonForFix(
@@ -816,9 +829,6 @@ export default function Track() {
   // identical regardless of where the point came from.
   const appendTripPoint = useCallback((p: TripPoint & { accuracy?: number | null }) => {
     setCoord({ lat: p.lat, lon: p.lon, t: p.t });
-    speedRef.current = p.speed;
-    setSpeedMph(p.speed);
-    setMaxMph((m) => (p.speed > m ? p.speed : m));
     setPoints((prev) => {
       const last = prev.length ? prev[prev.length - 1] : null;
       const delta = last ? haversineMiles(last, p) : 0;
@@ -830,16 +840,57 @@ export default function Track() {
         // later once the GPS settles.
         return prev;
       }
-      if (last) {
-        // Only count distance when movement exceeds the 5 m floor — this
-        // is what kills the "8 mph at standstill" bug. Sub-floor deltas
-        // are GPS jitter and contribute neither distance nor moving time.
-        if (delta >= MIN_MOVE_MILES) {
-          setDistMiles((d) => d + delta);
-          movingMsRef.current += movingDeltaMsFor(last.t, p.t, p.speed);
+      // ── Anchor-based motion gate ──────────────────────────────────────
+      // If we have no anchor yet (first ping), drop one here and stay
+      // locked. While locked, displayed speed = 0 + distance frozen.
+      if (anchorRef.current == null) {
+        anchorRef.current = { lat: p.lat, lon: p.lon };
+      }
+      const distFromAnchor = haversineMiles(anchorRef.current, p);
+      if (motionLockedRef.current) {
+        // Have we travelled far enough to call this real motion?
+        if (distFromAnchor >= WAKE_RADIUS_MILES) {
+          motionLockedRef.current = false;
+          idleSinceRef.current = null;
+          // Re-anchor to the current point so distance from anchor stays
+          // bounded as we move (otherwise it'd grow without limit — we
+          // never need to know "5 miles from start"; we only care about
+          // "did we move far enough since the last stop").
+          anchorRef.current = { lat: p.lat, lon: p.lon };
         }
       }
-      return [...prev, p];
+      const locked = motionLockedRef.current;
+      // Track idle window (Doppler under threshold while moving).
+      if (!locked) {
+        if (p.speed < IDLE_SPEED_MPH) {
+          if (idleSinceRef.current == null) idleSinceRef.current = p.t;
+          else if (p.t - idleSinceRef.current >= IDLE_RELOCK_MS) {
+            motionLockedRef.current = true;
+            anchorRef.current = { lat: p.lat, lon: p.lon };
+            idleSinceRef.current = null;
+          }
+        } else {
+          idleSinceRef.current = null;
+          // While moving, keep the anchor rolling — every accepted ping
+          // becomes the latest "we were definitely here" reference.
+          anchorRef.current = { lat: p.lat, lon: p.lon };
+        }
+      }
+      // Effective speed displayed + recorded into the trip point.
+      const effectiveSpeed = locked ? 0 : p.speed;
+      speedRef.current = effectiveSpeed;
+      setSpeedMph(effectiveSpeed);
+      setMaxMph((m) => (effectiveSpeed > m ? effectiveSpeed : m));
+      if (last && !locked && delta >= MIN_MOVE_MILES) {
+        // Distance only accrues while the motion gate is OPEN — kills the
+        // "distance ticks up while stationary" bug. Same for moving-time.
+        setDistMiles((d) => d + delta);
+        movingMsRef.current += movingDeltaMsFor(last.t, p.t, effectiveSpeed);
+      }
+      // Persist the trip point with the EFFECTIVE speed (so post-trip
+      // averages don't re-introduce the noise).
+      const recordedPoint: TripPoint = { ...p, speed: effectiveSpeed };
+      return [...prev, recordedPoint];
     });
     sendJs(`window.updatePos(${p.lat}, ${p.lon}, true)`);
   }, [sendJs]);
@@ -888,6 +939,11 @@ export default function Track() {
     movingMsRef.current = 0;
     pausedMsRef.current = 0;
     pausedAtRef.current = null;
+    // Reset motion gate for the fresh day so the speed/distance lock
+    // re-anchors on the first ping we receive.
+    motionLockedRef.current = true;
+    anchorRef.current = null;
+    idleSinceRef.current = null;
     sendJs(`window.setPath([])`);
     // Wipe any stale background-queue pings left over from a previous
     // session — they'd otherwise be merged in on next foreground.
