@@ -26,7 +26,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "../theme";
 import { productForRiver } from "./products";
 import { unlockRunLocally, restorePurchasesLocally } from "./useUnlocks";
-import { purchaseRun, restoreRuns } from "./storekit";
+import { purchaseRun, restoreRuns, getStoreKitTrace } from "./storekit";
 
 type Props = {
   visible: boolean;
@@ -182,6 +182,20 @@ export default function PaywallSheet({
               <Text style={styles.secondaryLink}>
                 {busy === "restore" ? "Restoring…" : "Restore Purchases"}
               </Text>
+            </TouchableOpacity>
+            <Text style={styles.secondaryDivider}>•</Text>
+            <TouchableOpacity
+              testID="paywall-diagnostics-btn"
+              onPress={() => {
+                Alert.alert(
+                  "IAP Diagnostics",
+                  `Product ID:\n${product.productId}\n\nDisplay price: ${product.displayPrice}\n\n--- StoreKit trace ---\n${getStoreKitTrace()}`
+                );
+              }}
+              hitSlop={8}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.secondaryLink}>Diagnostics</Text>
             </TouchableOpacity>
             <Text style={styles.secondaryDivider}>•</Text>
             <TouchableOpacity
