@@ -18,7 +18,7 @@ import { COLORS } from "./theme";
 export default function TermsOfServiceContent() {
   return (
     <View>
-      <Text style={styles.updated}>Last updated: May 17, 2026</Text>
+      <Text style={styles.updated}>Last updated: June 4, 2026</Text>
 
       {/* ─── SAFETY DISCLAIMER (top, can't miss it) ──────────────────── */}
       <View style={styles.warnBox}>
@@ -60,12 +60,20 @@ export default function TermsOfServiceContent() {
         limited liability company (&ldquo;RiverRight,&rdquo; &ldquo;we,&rdquo; &ldquo;our,&rdquo; or &ldquo;us&rdquo;).
       </Section>
 
-      <Section title="2. Eligibility">
-        You must be at least 18 years old to purchase content within the App
-        and to enter into these Terms. By using the App you represent that
-        you meet this requirement. Users under 18 may only use the App
-        under the supervision of a parent or legal guardian who accepts
-        these Terms on the minor&apos;s behalf.
+      <Section title="2. Eligibility — 18 or Older Only">
+        You must be{" "}
+        <Text style={styles.bold}>
+          at least 18 years of age and legally competent to enter into a
+          binding contract
+        </Text>{" "}
+        to download, install, or use the App. By using the App you
+        represent that you meet this requirement.{" "}
+        <Text style={styles.bold}>
+          The App is not intended for, and may not be used by, anyone
+          under the age of 18, with or without parental consent.
+        </Text>{" "}
+        If you are under 18, do not download or use this App. If we learn
+        that a user is under 18, we will terminate that user&apos;s access.
       </Section>
 
       <Section title="3. Informational Use Only — No Professional Advice">
@@ -167,7 +175,26 @@ export default function TermsOfServiceContent() {
         conditions through in-person scouting from shore, local guides,
         local outfitters, river managers, recent trip reports, current
         flow gauges, weather forecasts, and any other sources a reasonable
-        paddler would consult.
+        paddler would consult;
+        {"\n\n"}(vii){" "}
+        <Text style={styles.bold}>
+          THE APP HAS NO EMERGENCY-CONTACT, SOS, BEACON, MAYDAY, OR
+          DISTRESS-SIGNALING CAPABILITY OF ANY KIND.
+        </Text>{" "}
+        The App does <Text style={styles.bold}>not</Text> contact 911,
+        emergency services, search-and-rescue, the U.S. Coast Guard,
+        sheriff&apos;s dispatch, BLM rangers, or any other emergency
+        responder. The App cannot transmit your position to anyone. The
+        App will not detect that you are in distress. If you experience or
+        witness an emergency,{" "}
+        <Text style={styles.bold}>
+          you must use an independent device or service designed for
+          emergency signaling
+        </Text>{" "}
+        — such as a satellite messenger (e.g. Garmin inReach, ZOLEO),
+        Personal Locator Beacon (PLB), VHF radio, cellular 911, or your
+        own backup plan agreed to with a responsible third party before
+        launching.
         {"\n\n"}<Text style={styles.bold}>
           (d) Offline use carries additional risks you assume.
         </Text>{" "}
@@ -280,16 +307,23 @@ export default function TermsOfServiceContent() {
       <Section title="8. In-App Purchases">
         Certain river runs, features, or content within the App are made
         available only after a one-time in-app purchase processed through
-        the Apple App Store. Pricing is shown in the App before purchase
-        and is subject to change. All purchases are{" "}
+        the official platform store on which you installed the App —
+        currently the <Text style={styles.bold}>Apple App Store</Text>{" "}
+        for iOS, and (if and when an Android version is released) the
+        <Text style={styles.bold}> Google Play Store</Text> for Android.
+        Pricing is shown in the App before purchase and is subject to
+        change. All purchases are{" "}
         <Text style={styles.bold}>final and non-refundable</Text> except
-        where required by Apple App Store policy or applicable law.
-        Purchases are tied to the Apple ID used to make them and may be
-        restored on the same Apple ID. Loss of access due to device
-        loss, account closure, transfer to a different Apple ID, or
-        deletion of the App is not the responsibility of RiverRight.
-        {"\n\n"}For payment, refund, or billing issues, you must contact
-        Apple directly per its App Store Terms of Sale.
+        where required by the applicable platform store&apos;s policy or
+        applicable law. Purchases are tied to the account (Apple ID or
+        Google account) used to make them and may be restored on the same
+        account. Loss of access due to device loss, account closure,
+        transfer to a different account, or deletion of the App is not
+        the responsibility of RiverRight.
+        {"\n\n"}For payment, refund, or billing issues, you must contact{" "}
+        <Text style={styles.bold}>Apple</Text> (for iOS purchases) or{" "}
+        <Text style={styles.bold}>Google</Text> (for Android purchases)
+        directly, per the applicable platform&apos;s Terms of Sale.
       </Section>
 
       <Section title="9. User-Generated Data">
@@ -401,7 +435,14 @@ export default function TermsOfServiceContent() {
         {"\n"}• claims that, as a matter of Colorado public policy or
         non-waivable statute, cannot be released in advance;
         {"\n"}• claims arising under consumer-protection statutes to the
-        extent such statutes prohibit pre-dispute waiver.
+        extent such statutes prohibit pre-dispute waiver;
+        {"\n"}•{" "}
+        <Text style={styles.bold}>wrongful death claims</Text> to the
+        extent the law of the jurisdiction whose law governs the claim
+        prohibits the prospective release of such claims. In jurisdictions
+        where pre-injury wrongful death releases are permitted (such as
+        Colorado), this release applies to wrongful death claims to the
+        maximum extent permitted by law.
         {"\n\n"}<Text style={styles.bold}>
           (c) Limitation of Liability (Cap).
         </Text>{" "}
@@ -465,55 +506,144 @@ export default function TermsOfServiceContent() {
       </Section>
 
       <Section title="12. Indemnification">
-        You agree to defend, indemnify, and hold harmless RiverRight LLC
+        <Text style={styles.bold}>To the maximum extent permitted by law</Text>
+        , you agree to defend, indemnify, and hold harmless RiverRight LLC
         and its members, officers, employees, contractors, agents,
-        licensors, and suppliers from and against any and all claims,
+        licensors, and suppliers from and against any third-party claims,
         damages, obligations, losses, liabilities, costs, debts, and
-        expenses (including reasonable attorneys&apos; fees) arising from or
-        relating to: (a) your use or misuse of the App or Content; (b) any
-        injury, illness, death, or property damage that you, your guests,
-        or any third party suffers in connection with your river
-        activities; (c) your violation of these Terms; or (d) your
-        violation of any law or third-party right.
+        expenses (including reasonable attorneys&apos; fees){" "}
+        <Text style={styles.bold}>
+          to the extent caused by or arising from your own
+        </Text>
+        : (a) misuse of the App or Content in violation of these Terms;
+        (b) violation of these Terms; (c) violation of any law or
+        third-party right; or (d) negligent or intentional acts or
+        omissions during your river activities. This indemnification does
+        not apply to claims arising from the willful and wanton conduct,
+        gross negligence, or intentional misconduct of a RiverRight party,
+        nor to any claim that cannot be indemnified as a matter of public
+        policy or non-waivable statute in the jurisdiction whose law
+        governs the claim.
       </Section>
 
-      <Section title="13. Third-Party Data Sources">
+      <Section title="13. Third-Party Data Sources & Open-Data Attribution">
         The App incorporates data from third parties (including but not
-        limited to the U.S. Geological Survey and OpenStreetMap). RiverRight
-        does not control, verify, or warrant the accuracy of third-party
-        data and disclaims all liability arising from such data. See the
-        Attributions section of the App for details and links.
+        limited to the U.S. Geological Survey, the Bureau of Land
+        Management, OpenStreetMap contributors, and the U.S. Geological
+        Survey 3DEP / National Map programs). RiverRight does not
+        control, verify, or warrant the accuracy of third-party data and
+        disclaims all liability arising from such data.
+        {"\n\n"}
+        Map data from{" "}
+        <Text style={styles.bold}>OpenStreetMap</Text> contributors is
+        provided under the{" "}
+        <Text style={styles.bold}>
+          Open Database License (ODbL) v1.0
+        </Text>{" "}
+        (
+        <Text style={styles.bold}>
+          https://opendatacommons.org/licenses/odbl/1-0/
+        </Text>
+        ). Derivative data created from OpenStreetMap and distributed in
+        the App is offered under the same ODbL terms. Full attribution,
+        license text, and source links are listed in the{" "}
+        <Text style={styles.bold}>Attributions</Text> screen accessible
+        from the Profile menu in the App.
       </Section>
 
-      <Section title="14. Modifications">
+      <Section title="14. User-Generated Content (Reserved)">
+        The current version of the App does{" "}
+        <Text style={styles.bold}>not</Text> accept user submissions of
+        trip reports, hazard reports, photos, comments, or any other
+        user-generated content (&ldquo;UGC&rdquo;). If a future version of the App
+        introduces a UGC feature, the following terms apply automatically
+        and you accept them by using that feature: (a) you retain
+        ownership of your UGC; (b) you grant RiverRight a perpetual,
+        worldwide, royalty-free, sublicensable license to host, display,
+        reproduce, modify, and distribute your UGC for purposes of
+        operating and promoting the App; (c) you represent that you own
+        or have the rights to your UGC and that it does not infringe any
+        third party&apos;s rights; (d) you agree not to submit illegal,
+        defamatory, harassing, or false-safety content; and (e)
+        RiverRight may remove any UGC at its sole discretion. UGC about
+        river conditions, hazards, or rapid difficulty is{" "}
+        <Text style={styles.bold}>
+          provided as one paddler&apos;s opinion, not a safety guarantee
+        </Text>
+        , and the disclaimers in Sections 3, 4, 5, 6, and 10 apply in
+        full to all UGC.
+      </Section>
+
+      <Section title="15. Modifications">
         We reserve the right to modify the App, the Content, pricing, and
-        these Terms at any time. Material changes to the Terms will be
-        surfaced in-app and will become effective when posted. Your
-        continued use of the App after a change constitutes your
-        acceptance of the revised Terms. If you do not agree, your only
-        remedy is to stop using the App.
+        these Terms at any time.
+        {"\n\n"}A change is{" "}
+        <Text style={styles.bold}>&ldquo;material&rdquo;</Text> if it: (a)
+        meaningfully changes the scope of the release of liability,
+        indemnification, dispute-resolution, arbitration, class-action
+        waiver, or limitation-of-liability provisions; (b) introduces
+        a new category of fee, subscription, or recurring charge; (c)
+        meaningfully changes how user data is collected, used, retained,
+        or shared; or (d) meaningfully restricts a user&apos;s rights or
+        remedies under these Terms.
+        {"\n\n"}For{" "}
+        <Text style={styles.bold}>material changes</Text>, RiverRight
+        will surface an in-app notice and require you to{" "}
+        <Text style={styles.bold}>affirmatively re-accept</Text> the
+        updated Terms before further using the App. If you do not agree
+        to a material change, your only remedy is to stop using the App
+        and request a refund for any unused in-app purchase to the
+        extent the applicable platform store&apos;s policy permits.
+        {"\n\n"}For non-material changes (typos, formatting, contact-info
+        updates, clarifications that do not affect a user&apos;s rights),
+        the revised Terms become effective when posted in the App and
+        your continued use constitutes acceptance.
       </Section>
 
-      <Section title="15. Termination">
-        We may suspend or terminate your access to the App, with or without
-        notice, for any reason including violation of these Terms. Upon
-        termination, all rights granted to you under these Terms cease
-        immediately. Sections 4 (Assumption of Risk &amp; Static-Data
-        Disclaimer), 5 (Ground Truth), 6 (No Warranty of Accuracy), 10
-        (No Warranties), 11 (Release of Liability and Covenant Not to
-        Sue), 12 (Indemnification), 16 (Governing Law), and 17 (Dispute
-        Resolution) survive any termination.
+      <Section title="16. Termination">
+        We may suspend or terminate your access to the App, with or
+        without notice, for any reason including violation of these
+        Terms. Upon termination, all rights granted to you under these
+        Terms cease immediately. Sections 4 (Assumption of Risk &amp;
+        Static-Data Disclaimer), 5 (Ground Truth), 6 (No Warranty of
+        Accuracy), 10 (No Warranties), 11 (Release of Liability and
+        Covenant Not to Sue), 12 (Indemnification), 17 (Governing Law),
+        and 18 (Dispute Resolution) survive any termination.
       </Section>
 
-      <Section title="16. Governing Law">
+      <Section title="17. Governing Law & State-Specific Carve-Outs">
         These Terms are governed by the laws of the{" "}
         <Text style={styles.bold}>State of Colorado, USA</Text>, without
         regard to its conflict-of-laws principles. The United Nations
         Convention on Contracts for the International Sale of Goods does
         not apply.
+        {"\n\n"}
+        <Text style={styles.bold}>State-specific carve-out.</Text> You
+        and RiverRight acknowledge that certain U.S. states (including
+        but not limited to{" "}
+        <Text style={styles.bold}>
+          California, Louisiana, Montana, New Jersey, New York, Oregon,
+          Virginia, Vermont, West Virginia, and Wisconsin
+        </Text>
+        ) have laws, public policies, or constitutional provisions that
+        limit the enforceability of certain releases of liability,
+        limitations of liability, indemnification clauses, arbitration
+        agreements, choice-of-law clauses, and/or class-action waivers
+        as applied to residents of those states. To the extent the law
+        of any such state would otherwise apply and would render any
+        provision of these Terms unenforceable as to a user resident in
+        that state, that provision shall be{" "}
+        <Text style={styles.bold}>
+          enforced to the maximum extent permitted by the law of that
+          state
+        </Text>
+        , and the remainder of these Terms shall remain in full force.
+        Nothing in these Terms is intended to override any non-waivable
+        consumer-protection right granted by the user&apos;s state of
+        residence.
       </Section>
 
-      <Section title="17. Dispute Resolution & Class-Action Waiver">
+      <Section title="18. Dispute Resolution & Class-Action Waiver">
         Any dispute arising out of or relating to these Terms or the App
         shall be resolved exclusively by{" "}
         <Text style={styles.bold}>individual, binding arbitration</Text>{" "}
@@ -524,27 +654,40 @@ export default function TermsOfServiceContent() {
         <Text style={styles.bold}>class action</Text>, class arbitration,
         or representative action. Either party may seek injunctive relief
         in a court of competent jurisdiction in Colorado for intellectual
-        property or in-app purchase enforcement.
+        property or in-app purchase enforcement. To the extent the law
+        of a user&apos;s state of residence prohibits enforcement of
+        mandatory arbitration or class-action waivers, this Section is
+        limited and severable as provided in Sections 17 and 19.
       </Section>
 
-      <Section title="18. Severability">
-        If any provision of these Terms is found unenforceable, the
-        remaining provisions remain in full effect.
+      <Section title="19. Severability">
+        If any provision of these Terms is held invalid, illegal, or
+        unenforceable in any jurisdiction, that provision shall be (a)
+        reformed and enforced to the maximum extent permitted in that
+        jurisdiction, or, if not reformable, (b) severed from these
+        Terms as applied in that jurisdiction only. The remaining
+        provisions and the remaining applications of the affected
+        provision shall continue in full force and effect.
       </Section>
 
-      <Section title="19. Entire Agreement">
-        These Terms, together with the Privacy Policy (when published) and
-        any in-app purchase terms, constitute the entire agreement between
-        you and RiverRight regarding the App.
+      <Section title="20. Entire Agreement">
+        These Terms, together with the{" "}
+        <Text style={styles.bold}>RiverRight Privacy Policy</Text>{" "}
+        (available in the App and at{" "}
+        <Text style={styles.bold}>
+          contact@riverrightwhitewater.com
+        </Text>{" "}
+        upon request) and any in-app purchase terms, constitute the
+        entire agreement between you and RiverRight regarding the App
+        and supersede any prior oral or written communications.
       </Section>
 
-      <Section title="20. Contact">
+      <Section title="21. Contact">
         Questions, notices, or concerns may be sent to:
         {"\n\n"}RiverRight LLC
         {"\n"}State of Colorado, USA
         {"\n"}Email:{" "}
-        <Text style={styles.bold}>[support@riverright.app]</Text>{" "}
-        (placeholder — replace before publishing)
+        <Text style={styles.bold}>contact@riverrightwhitewater.com</Text>
       </Section>
 
       <Text style={styles.footerNote}>© 2025 RiverRight LLC. All rights reserved.</Text>

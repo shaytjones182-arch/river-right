@@ -7,7 +7,7 @@
 import { useEffect, useState, useCallback } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export const TERMS_VERSION = "2.0.0";
+export const TERMS_VERSION = "3.0.0";
 const STORAGE_KEY = "@riverright:terms_accepted_version";
 
 type Status = "loading" | "accepted" | "needs-acceptance";

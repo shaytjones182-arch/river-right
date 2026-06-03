@@ -38,12 +38,36 @@ type Props = {
 export default function TermsAcceptanceModal({ visible, onAccept }: Props) {
   const [checked, setChecked] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  // Proper clickwrap requirement (legal best practice): user can only
+  // tick the "I have read" box AFTER they have actually opened the full
+  // Terms and scrolled to the bottom of the document. Browsewrap or a
+  // checkbox without forced scrolling is increasingly being rejected by
+  // courts. Tracked separately from `expanded` so collapsing/re-opening
+  // doesn't lose the "you read it" credit.
+  const [scrolledToBottom, setScrolledToBottom] = useState(false);
   const insets = useSafeAreaInsets();
 
   const toggleExpanded = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpanded((v) => !v);
   };
+
+  const handleScroll = (e: any) => {
+    const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent;
+    // 80px slack so users don't have to land exactly on the last pixel
+    if (
+      layoutMeasurement.height + contentOffset.y >=
+      contentSize.height - 80
+    ) {
+      if (!scrolledToBottom) setScrolledToBottom(true);
+    }
+  };
+
+  // The Accept gate: user must have read (expanded + scrolled) AND
+  // affirmatively checked the box. Disable the box itself until they
+  // have read so they can't blindly tap-tap-Accept.
+  const readGateSatisfied = expanded && scrolledToBottom;
+  const canAccept = checked && readGateSatisfied;
 
   return (
     <Modal
@@ -71,6 +95,8 @@ export default function TermsAcceptanceModal({ visible, onAccept }: Props) {
           style={{ flex: 1 }}
           contentContainerStyle={styles.scrollPad}
           showsVerticalScrollIndicator={false}
+          onScroll={handleScroll}
+          scrollEventThrottle={32}
         >
           {/* Warning headline */}
           <View style={styles.warnBox}>
@@ -163,9 +189,12 @@ export default function TermsAcceptanceModal({ visible, onAccept }: Props) {
         >
           <TouchableOpacity
             testID="terms-acceptance-checkbox-row"
-            style={styles.checkRow}
-            onPress={() => setChecked((v) => !v)}
-            activeOpacity={0.7}
+            style={[styles.checkRow, !readGateSatisfied && styles.checkRowDisabled]}
+            onPress={() => {
+              if (!readGateSatisfied) return; // gate: must read first
+              setChecked((v) => !v);
+            }}
+            activeOpacity={readGateSatisfied ? 0.7 : 1}
           >
             <View style={[styles.checkbox, checked && styles.checkboxOn]}>
               {checked ? (
@@ -178,20 +207,28 @@ export default function TermsAcceptanceModal({ visible, onAccept }: Props) {
             </Text>
           </TouchableOpacity>
 
+          {!readGateSatisfied && (
+            <Text style={styles.readHint} testID="terms-acceptance-read-hint">
+              {!expanded
+                ? "Open “Full Terms of Service” above and scroll to the bottom to continue."
+                : "Scroll to the bottom of the Terms above to continue."}
+            </Text>
+          )}
+
           <TouchableOpacity
             testID="terms-acceptance-accept-btn"
-            disabled={!checked}
+            disabled={!canAccept}
             onPress={onAccept}
             activeOpacity={0.85}
             style={[
               styles.acceptBtn,
-              !checked && styles.acceptBtnDisabled,
+              !canAccept && styles.acceptBtnDisabled,
             ]}
           >
             <Text
               style={[
                 styles.acceptBtnText,
-                !checked && styles.acceptBtnTextDisabled,
+                !canAccept && styles.acceptBtnTextDisabled,
               ]}
             >
               Accept & Continue
@@ -360,6 +397,17 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingVertical: 8,
     marginBottom: 6,
+  },
+  checkRowDisabled: {
+    opacity: 0.4,
+  },
+  readHint: {
+    fontSize: 11.5,
+    color: COLORS.textMuted,
+    fontWeight: "700",
+    fontStyle: "italic",
+    marginBottom: 10,
+    marginTop: -2,
   },
   checkbox: {
     width: 24,
