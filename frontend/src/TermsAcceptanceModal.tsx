@@ -21,6 +21,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "./theme";
 import TermsOfServiceContent from "./TermsOfServiceContent";
+import PrivacyPolicyContent from "./PrivacyPolicyContent";
 
 // Enable smooth LayoutAnimation expand/collapse on Android.
 if (
@@ -161,7 +162,7 @@ export default function TermsAcceptanceModal({ visible, onAccept }: Props) {
               color={COLORS.primary}
             />
             <Text style={styles.dropdownHeaderText}>
-              Full Terms of Service
+              Full Terms of Service & Privacy Policy
             </Text>
             <Ionicons
               name={expanded ? "chevron-up" : "chevron-down"}
@@ -175,7 +176,11 @@ export default function TermsAcceptanceModal({ visible, onAccept }: Props) {
               testID="terms-acceptance-expanded-content"
               style={styles.dropdownBody}
             >
+              <Text style={styles.embeddedDocHeading}>Terms of Service</Text>
               <TermsOfServiceContent />
+              <View style={styles.embeddedDivider} />
+              <Text style={styles.embeddedDocHeading}>Privacy Policy</Text>
+              <PrivacyPolicyContent />
             </View>
           ) : null}
         </ScrollView>
@@ -202,16 +207,16 @@ export default function TermsAcceptanceModal({ visible, onAccept }: Props) {
               ) : null}
             </View>
             <Text style={styles.checkText}>
-              I have read the Terms of Service in full, and I understand
-              that I use RiverRight at my own risk.
+              I have read the Terms of Service and the Privacy Policy in
+              full, and I understand that I use RiverRight at my own risk.
             </Text>
           </TouchableOpacity>
 
           {!readGateSatisfied && (
             <Text style={styles.readHint} testID="terms-acceptance-read-hint">
               {!expanded
-                ? "Open “Full Terms of Service” above and scroll to the bottom to continue."
-                : "Scroll to the bottom of the Terms above to continue."}
+                ? "Open “Full Terms of Service & Privacy Policy” above and scroll to the bottom to continue."
+                : "Scroll to the bottom of the document above to continue."}
             </Text>
           )}
 
@@ -397,6 +402,20 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingVertical: 8,
     marginBottom: 6,
+  },
+  embeddedDocHeading: {
+    fontSize: 17,
+    fontWeight: "900",
+    color: COLORS.textMain,
+    letterSpacing: -0.3,
+    marginTop: 4,
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  embeddedDivider: {
+    height: 1,
+    backgroundColor: COLORS.border,
+    marginVertical: 22,
   },
   checkRowDisabled: {
     opacity: 0.4,

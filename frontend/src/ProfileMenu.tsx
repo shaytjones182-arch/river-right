@@ -107,7 +107,7 @@ export default function ProfileMenu({ testID }: ProfileMenuProps) {
             <MenuRow
               testID="profile-menu-terms"
               icon="document-text-outline"
-              label="Terms of Service"
+              label="Terms of Service & Privacy Policy"
               onPress={() => go("/about/terms")}
             />
             <MenuRow

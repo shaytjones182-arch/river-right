@@ -18,7 +18,7 @@ import { COLORS } from "./theme";
 export default function TermsOfServiceContent() {
   return (
     <View>
-      <Text style={styles.updated}>Last updated: June 4, 2026</Text>
+      <Text style={styles.updated}>Last updated: June 3, 2026</Text>
 
       {/* ─── SAFETY DISCLAIMER (top, can't miss it) ──────────────────── */}
       <View style={styles.warnBox}>
@@ -690,7 +690,7 @@ export default function TermsOfServiceContent() {
         <Text style={styles.bold}>contact@riverrightwhitewater.com</Text>
       </Section>
 
-      <Text style={styles.footerNote}>© 2025 RiverRight LLC. All rights reserved.</Text>
+      <Text style={styles.footerNote}>© 2026 RiverRight LLC. All rights reserved.</Text>
     </View>
   );
 }

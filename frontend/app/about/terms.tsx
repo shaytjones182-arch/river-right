@@ -16,6 +16,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { COLORS } from "../../src/theme";
 import TermsOfServiceContent from "../../src/TermsOfServiceContent";
+import PrivacyPolicyContent from "../../src/PrivacyPolicyContent";
 
 export default function TermsOfService() {
   const router = useRouter();
@@ -31,12 +32,20 @@ export default function TermsOfService() {
         >
           <Ionicons name="arrow-back" size={22} color={COLORS.textMain} />
         </TouchableOpacity>
-        <Text style={styles.title}>Terms of Service</Text>
+        <Text style={styles.title} numberOfLines={1}>
+          Terms & Privacy
+        </Text>
         <View style={{ width: 36 }} />
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 60 }}>
+        <Text style={styles.docHeading}>Terms of Service</Text>
         <TermsOfServiceContent />
+
+        <View style={styles.divider} />
+
+        <Text style={styles.docHeading}>Privacy Policy</Text>
+        <PrivacyPolicyContent />
       </ScrollView>
     </SafeAreaView>
   );
@@ -68,5 +77,18 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     color: COLORS.textMain,
     letterSpacing: -0.3,
+  },
+  docHeading: {
+    fontSize: 22,
+    fontWeight: "900",
+    color: COLORS.textMain,
+    letterSpacing: -0.5,
+    marginBottom: 14,
+    textAlign: "center",
+  },
+  divider: {
+    height: 1,
+    backgroundColor: COLORS.border,
+    marginVertical: 32,
   },
 });
