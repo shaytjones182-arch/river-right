@@ -427,7 +427,13 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
     var ll = path.getLatLngs(); ll.push([lat, lon]);
     path.setLatLngs(ll);
     pathInner.setLatLngs(ll);
-    if (follow) map.panTo([lat, lon], { animate:true });
+    // Only re-center if the caller asked to follow AND the user hasn't
+    // manually scrolled/zoomed the map. This kills the "GPS pings keep
+    // dragging the map back" bug — the re-center FAB is now the ONLY way
+    // to snap back once the user has touched the map.
+    if (follow && !userInteracted) {
+      map.panTo([lat, lon], { animate:true });
+    }
   };
   window.setPath = function(arr) {
     path.setLatLngs(arr);
@@ -671,6 +677,9 @@ export default function Track() {
   const motionLockedRef = useRef(true);
   const anchorRef = useRef<{ lat: number; lon: number } | null>(null);
   const idleSinceRef = useRef<number | null>(null);
+  // Single-shot guard so we only nag about missing "Always Allow"
+  // location permission once per app session.
+  const bgWarningShownRef = useRef(false);
 
   // Drop a single GPS sample? Returns the rejection reason for debug logs.
   function rejectReasonForFix(
@@ -884,8 +893,16 @@ export default function Track() {
       if (last && !locked && delta >= MIN_MOVE_MILES) {
         // Distance only accrues while the motion gate is OPEN — kills the
         // "distance ticks up while stationary" bug. Same for moving-time.
-        setDistMiles((d) => d + delta);
-        movingMsRef.current += movingDeltaMsFor(last.t, p.t, effectiveSpeed);
+        // ALSO: skip the FIRST delta after unlock (when the previous
+        // recorded point was still locked, identifiable by speed === 0).
+        // That delta is the "catch-up" gap from the stationary anchor
+        // and would otherwise spike the average above the max Doppler
+        // reading at the very start of motion.
+        const isFirstUnlockDelta = last.speed === 0;
+        if (!isFirstUnlockDelta) {
+          setDistMiles((d) => d + delta);
+          movingMsRef.current += movingDeltaMsFor(last.t, p.t, effectiveSpeed);
+        }
       }
       // Persist the trip point with the EFFECTIVE speed (so post-trip
       // averages don't re-introduce the noise).
@@ -1115,13 +1132,22 @@ export default function Track() {
     }
     // Also kick off the background TaskManager updates so GPS keeps
     // streaming when the phone is locked / app is backgrounded. Asks for
-    // the secondary "Always" permission if we don't already have it; we
-    // tolerate a denial gracefully (the foreground sub will still record
-    // pings whenever the user is actively looking at the tab).
+    // the secondary "Always" permission if we don't already have it.
+    // We surface a CLEAR Alert if the user denied Always — without it,
+    // iOS will suspend GPS the moment the screen turns off and the trip
+    // recording silently degrades to "foreground only" (which is what
+    // produced the 1.91 mi out of 20 mi report).
     try {
       const okBg = await ensureBackgroundPermission();
       if (okBg) {
         await startBackgroundLocation();
+      } else if (!bgWarningShownRef.current) {
+        bgWarningShownRef.current = true;
+        Alert.alert(
+          "Background GPS not enabled",
+          "RiverRight needs \"Always Allow\" location access to keep recording your trip while the phone is locked or in your drybag.\n\nWithout it, tracking will pause whenever the screen turns off and your distance / moving time will be undercounted.\n\nOpen Settings → Privacy & Security → Location Services → RiverRight → Always to fix this.",
+          [{ text: "OK" }]
+        );
       }
     } catch (e) {
       console.warn("background-location start failed:", e);

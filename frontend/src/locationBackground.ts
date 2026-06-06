@@ -117,7 +117,12 @@ export async function startBackgroundLocation(): Promise<boolean> {
       // iOS won't try to auto-pause "because the user stopped walking".
       activityType: Location.ActivityType.OtherNavigation,
       pausesUpdatesAutomatically: false,
-      showsBackgroundLocationIndicator: false,
+      // Show the iOS blue/green pill-shaped indicator at the top of the
+      // screen ("RiverRight is using your location"). This both reassures
+      // the user that GPS is actively running in the background AND
+      // signals to iOS that the app is a legit nav app, which helps
+      // avoid aggressive throttling during multi-hour offline trips.
+      showsBackgroundLocationIndicator: true,
       foregroundService: {
         notificationTitle: "RiverRight is recording your trip",
         notificationBody:
