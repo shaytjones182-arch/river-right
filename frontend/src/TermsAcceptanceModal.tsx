@@ -38,24 +38,30 @@ type Props = {
 
 export default function TermsAcceptanceModal({ visible, onAccept }: Props) {
   const [checked, setChecked] = useState(false);
-  const [expanded, setExpanded] = useState(false);
+  const [tosOpen, setTosOpen] = useState(false);
+  const [privOpen, setPrivOpen] = useState(false);
   // Proper clickwrap requirement (legal best practice): user can only
-  // tick the "I have read" box AFTER they have actually opened the full
-  // Terms and scrolled to the bottom of the document. Browsewrap or a
-  // checkbox without forced scrolling is increasingly being rejected by
-  // courts. Tracked separately from `expanded` so collapsing/re-opening
-  // doesn't lose the "you read it" credit.
+  // tick the "I have read" box AFTER they have opened BOTH dropdowns
+  // AND scrolled to the bottom of the document area.
   const [scrolledToBottom, setScrolledToBottom] = useState(false);
   const insets = useSafeAreaInsets();
 
-  const toggleExpanded = () => {
+  const toggleTos = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setExpanded((v) => !v);
+    setTosOpen((v) => !v);
+    // Once a dropdown is opened, the user could now meaningfully scroll
+    // through new content — reset the scroll-to-bottom credit so they
+    // must re-prove they reached the new bottom.
+    setScrolledToBottom(false);
+  };
+  const togglePriv = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setPrivOpen((v) => !v);
+    setScrolledToBottom(false);
   };
 
   const handleScroll = (e: any) => {
     const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent;
-    // 80px slack so users don't have to land exactly on the last pixel
     if (
       layoutMeasurement.height + contentOffset.y >=
       contentSize.height - 80
@@ -64,10 +70,9 @@ export default function TermsAcceptanceModal({ visible, onAccept }: Props) {
     }
   };
 
-  // The Accept gate: user must have read (expanded + scrolled) AND
-  // affirmatively checked the box. Disable the box itself until they
-  // have read so they can't blindly tap-tap-Accept.
-  const readGateSatisfied = expanded && scrolledToBottom;
+  // User must have opened BOTH dropdowns AND scrolled to bottom of the
+  // final view before they can tick the box.
+  const readGateSatisfied = tosOpen && privOpen && scrolledToBottom;
   const canAccept = checked && readGateSatisfied;
 
   return (
@@ -146,40 +151,67 @@ export default function TermsAcceptanceModal({ visible, onAccept }: Props) {
             body="By using RiverRight you accept these terms and assume full responsibility for your safety and your group's safety."
           />
 
-          {/* Expandable full Terms of Service dropdown */}
+          {/* Separate dropdowns: Terms of Service + Privacy Policy.
+              User must open BOTH (and scroll to the bottom of the last
+              opened one) before the "I have read" checkbox unlocks. */}
           <TouchableOpacity
-            testID="terms-acceptance-expand-toggle"
+            testID="terms-acceptance-expand-tos"
             style={[
               styles.dropdownHeader,
-              expanded && styles.dropdownHeaderOpen,
+              tosOpen && styles.dropdownHeaderOpen,
             ]}
             activeOpacity={0.7}
-            onPress={toggleExpanded}
+            onPress={toggleTos}
           >
             <Ionicons
               name="document-text-outline"
               size={18}
               color={COLORS.primary}
             />
-            <Text style={styles.dropdownHeaderText}>
-              Full Terms of Service & Privacy Policy
-            </Text>
+            <Text style={styles.dropdownHeaderText}>Terms of Service</Text>
             <Ionicons
-              name={expanded ? "chevron-up" : "chevron-down"}
+              name={tosOpen ? "chevron-up" : "chevron-down"}
               size={20}
               color={COLORS.primary}
             />
           </TouchableOpacity>
-
-          {expanded ? (
+          {tosOpen ? (
             <View
-              testID="terms-acceptance-expanded-content"
+              testID="terms-acceptance-tos-content"
               style={styles.dropdownBody}
             >
-              <Text style={styles.embeddedDocHeading}>Terms of Service</Text>
               <TermsOfServiceContent />
-              <View style={styles.embeddedDivider} />
-              <Text style={styles.embeddedDocHeading}>Privacy Policy</Text>
+            </View>
+          ) : null}
+
+          <View style={{ height: 12 }} />
+
+          <TouchableOpacity
+            testID="terms-acceptance-expand-privacy"
+            style={[
+              styles.dropdownHeader,
+              privOpen && styles.dropdownHeaderOpen,
+            ]}
+            activeOpacity={0.7}
+            onPress={togglePriv}
+          >
+            <Ionicons
+              name="shield-checkmark-outline"
+              size={18}
+              color={COLORS.primary}
+            />
+            <Text style={styles.dropdownHeaderText}>Privacy Policy</Text>
+            <Ionicons
+              name={privOpen ? "chevron-up" : "chevron-down"}
+              size={20}
+              color={COLORS.primary}
+            />
+          </TouchableOpacity>
+          {privOpen ? (
+            <View
+              testID="terms-acceptance-privacy-content"
+              style={styles.dropdownBody}
+            >
               <PrivacyPolicyContent />
             </View>
           ) : null}
@@ -214,8 +246,8 @@ export default function TermsAcceptanceModal({ visible, onAccept }: Props) {
 
           {!readGateSatisfied && (
             <Text style={styles.readHint} testID="terms-acceptance-read-hint">
-              {!expanded
-                ? "Open “Full Terms of Service & Privacy Policy” above and scroll to the bottom to continue."
+              {!tosOpen || !privOpen
+                ? "Open BOTH the Terms of Service and Privacy Policy dropdowns above, then scroll to the bottom."
                 : "Scroll to the bottom of the document above to continue."}
             </Text>
           )}

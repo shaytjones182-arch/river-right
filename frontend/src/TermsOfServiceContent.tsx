@@ -673,7 +673,11 @@ export default function TermsOfServiceContent() {
       <Section title="20. Entire Agreement">
         These Terms, together with the{" "}
         <Text style={styles.bold}>RiverRight Privacy Policy</Text>{" "}
-        (available in the App and at{" "}
+        (available in the App, online at{" "}
+        <Text style={styles.bold}>
+          https://privacy-policy.riverrightwhitewater.com
+        </Text>
+        , and via email at{" "}
         <Text style={styles.bold}>
           contact@riverrightwhitewater.com
         </Text>{" "}
