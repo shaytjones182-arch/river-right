@@ -9,12 +9,6 @@
 // can be shared with the first-launch acceptance modal's expandable
 // dropdown. Edit copy there, not here.
 
-import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import { COLORS } from "../../src/theme";
 import React, { useState } from "react";
 import {
   View,
