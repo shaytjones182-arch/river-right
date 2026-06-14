@@ -23,6 +23,7 @@ import {
   TripDay,
 } from "../../src/storage";
 import { COLORS } from "../../src/theme";
+import TripMapView from "../../src/TripMapView";
 
 export default function TripDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -96,6 +97,20 @@ export default function TripDetail() {
 
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32 }}>
         <Text style={styles.subdate}>{fmtDate(trip.createdAt)}</Text>
+
+        {/* Combined route map — concatenates all daily point arrays. */}
+        {(() => {
+          const allPoints = trip.days.flatMap((d) =>
+            (d.points || []).map((p) => ({ lat: p.lat, lon: p.lon }))
+          );
+          if (allPoints.length < 2) return null;
+          return (
+            <View style={{ marginBottom: 16 }}>
+              <Text style={styles.overline}>Your route</Text>
+              <TripMapView points={allPoints} />
+            </View>
+          );
+        })()}
 
         {/* Trip-wide totals */}
         <View style={styles.totalsCard}>
