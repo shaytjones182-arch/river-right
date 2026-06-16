@@ -680,6 +680,17 @@ export default function Track() {
   const motionLockedRef = useRef(true);
   const anchorRef = useRef<{ lat: number; lon: number } | null>(null);
   const idleSinceRef = useRef<number | null>(null);
+  // ── Max-speed glitch filter ────────────────────────────────────────────
+  // GPS multipath inside canyons can produce single-frame Doppler spikes
+  // (e.g. "8 mph" reading while hiking). To accept a new record we now
+  // require: (a) iOS-reported speedAccuracy is within tolerance, (b) the
+  // speed is sustained or exceeded on the IMMEDIATELY-NEXT accepted ping,
+  // and (c) the implied speed from position-delta corroborates it.
+  const MAX_SPEED_ACCURACY_MPS = 2.0;       // ≤ 2 m/s uncertainty (≈ 4.5 mph)
+  const MAX_SPEED_OVERSHOOT_RATIO = 1.6;    // reported ≤ 1.6× implied
+  // Pending candidate: { speed, t } — the speed-record claim still
+  // needs a second confirming ping before it can write to setMaxMph.
+  const maxCandidateRef = useRef<{ speed: number; t: number } | null>(null);
   // Single-shot guard so we only nag about missing "Always Allow"
   // location permission once per app session.
   const bgWarningShownRef = useRef(false);
@@ -839,7 +850,7 @@ export default function Track() {
   // Shared insertion path used by both the foreground watcher and the
   // background-queue drainer. Keeps distance + max-speed bookkeeping
   // identical regardless of where the point came from.
-  const appendTripPoint = useCallback((p: TripPoint & { accuracy?: number | null }) => {
+  const appendTripPoint = useCallback((p: TripPoint & { accuracy?: number | null; speedAccuracy?: number | null }) => {
     setCoord({ lat: p.lat, lon: p.lon, t: p.t });
     setPoints((prev) => {
       const last = prev.length ? prev[prev.length - 1] : null;
@@ -892,7 +903,48 @@ export default function Track() {
       const effectiveSpeed = locked ? 0 : p.speed;
       speedRef.current = effectiveSpeed;
       setSpeedMph(effectiveSpeed);
-      setMaxMph((m) => (effectiveSpeed > m ? effectiveSpeed : m));
+      // ── Max-speed acceptance ──────────────────────────────────────────
+      // Block obvious GPS multipath / canyon-wall reflection glitches.
+      // A new max only sticks if ALL of these are true:
+      //   1. The motion gate is open (speed makes sense at all).
+      //   2. iOS speedAccuracy is reasonable (≤ 2 m/s uncertainty).
+      //      A value of -1 / null means iOS couldn't compute it; we
+      //      treat that as "unknown" and reject the candidate.
+      //   3. Implied speed (from position delta vs. time delta) is
+      //      close to the reported speed — kills 8 mph readings while
+      //      we only moved 1 m in the last 2 s.
+      //   4. A PREVIOUS ping in the same session at ≥ this speed
+      //      exists — i.e. the same record was claimed twice in a
+      //      row. Single-frame spikes never make it through.
+      if (!locked && effectiveSpeed > 0) {
+        const sa = p.speedAccuracy;
+        const goodAccuracy = sa != null && sa >= 0 && sa <= MAX_SPEED_ACCURACY_MPS;
+        let goodImplied = true;
+        if (last) {
+          const dtSec = Math.max(0.5, (p.t - last.t) / 1000);
+          const impliedMph = (delta / dtSec) * 3600; // miles/hr
+          // Allow some slack for tight turns + Doppler vs straight-line
+          // distance. Reject only when reported is implausibly higher.
+          if (impliedMph * MAX_SPEED_OVERSHOOT_RATIO < effectiveSpeed) {
+            goodImplied = false;
+          }
+        }
+        const candidate = maxCandidateRef.current;
+        if (goodAccuracy && goodImplied) {
+          if (candidate && effectiveSpeed >= candidate.speed * 0.9) {
+            // Confirmed across two consecutive accepted pings → admit.
+            setMaxMph((m) => (effectiveSpeed > m ? effectiveSpeed : m));
+            maxCandidateRef.current = { speed: effectiveSpeed, t: p.t };
+          } else {
+            // Park it as a candidate; needs the next ping to confirm.
+            maxCandidateRef.current = { speed: effectiveSpeed, t: p.t };
+          }
+        } else {
+          // Bad-quality ping — drop the running candidate so a spike
+          // doesn't get retroactively confirmed by a clean follow-up.
+          maxCandidateRef.current = null;
+        }
+      }
       if (last && !locked && delta >= MIN_MOVE_MILES) {
         // Distance only accrues while the motion gate is OPEN — kills the
         // "distance ticks up while stationary" bug. Same for moving-time.
@@ -923,6 +975,9 @@ export default function Track() {
       t: loc.timestamp,
       speed,
       accuracy: loc.coords.accuracy ?? null,
+      // iOS-only on most devices; null on Android / older iOS. Used by
+      // the max-speed gate to filter out canyon-wall multipath glitches.
+      speedAccuracy: (loc.coords as any).speedAccuracy ?? null,
     });
   };
 
@@ -964,6 +1019,7 @@ export default function Track() {
     motionLockedRef.current = true;
     anchorRef.current = null;
     idleSinceRef.current = null;
+    maxCandidateRef.current = null;
     sendJs(`window.setPath([])`);
     // Wipe any stale background-queue pings left over from a previous
     // session — they'd otherwise be merged in on next foreground.
