@@ -296,21 +296,31 @@ const buildMapHtml = (
   // any cache-miss tiles already paint a clean transparent square
   // via errorTileUrl. The banner only ever trips for users with NO
   // offline cache who have lost their network connection.
+  // Tile-error banner. We only surface this when the network is REALLY
+  // down — not on transient hiccups while fast-panning (Leaflet pre-
+  // fetches tiles outside the viewport; the slow / cancelled ones fire
+  // tileerror even when visible tiles paint cleanly). Heuristic:
+  //   • Banner shows ONLY when we accumulate > 20 errors AND no
+  //     successful tileload has happened in the last 5 seconds.
+  //   • ANY successful tileload immediately resets the counter and
+  //     hides the banner — if even one tile is coming through, the
+  //     network is fine.
+  //   • Users with offline coverage downloaded skip the banner entirely.
   var __tileErrCount = 0;
+  var __lastTileLoadAt = Date.now();
   var __tileBanner = document.getElementById('tile-banner');
   usgsTopo.on('tileerror', function(){
     if (HAVE_OFFLINE) return;
     __tileErrCount++;
-    if (__tileErrCount < 12 || !__tileBanner) return;
+    if (__tileErrCount < 20 || !__tileBanner) return;
+    if (Date.now() - __lastTileLoadAt < 5000) return;
     var span = __tileBanner.querySelector('span');
     if (!span) return;
     span.textContent = 'Map tiles unavailable - check your connection.';
     __tileBanner.classList.add('show');
   });
   usgsTopo.on('tileload', function(){
-    if (__tileErrCount > 0) __tileErrCount = Math.max(0, __tileErrCount - 1);
-  });
-  usgsTopo.on('tileload', function(){
+    __lastTileLoadAt = Date.now();
     if (__tileErrCount > 0) {
       __tileErrCount = 0;
       if (__tileBanner) __tileBanner.classList.remove('show');

@@ -248,21 +248,24 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
   // signalled they want offline functionality and any cache-miss tile
   // paints transparent via errorTileUrl anyway. Banner only fires for
   // users with NO offline cache who have actually lost connectivity.
+  // Tile-error banner. Only surfaces during sustained network failure
+  // (not transient hiccups during fast panning, which are normal).
+  // Suppressed entirely when offline tiles are present.
   var __tileErrCount = 0;
+  var __lastTileLoadAt = Date.now();
   var __tileBanner = document.getElementById('tile-banner');
   usgsTopo.on('tileerror', function(){
     if (HAVE_OFFLINE) return;
     __tileErrCount++;
-    if (__tileErrCount < 12 || !__tileBanner) return;
+    if (__tileErrCount < 20 || !__tileBanner) return;
+    if (Date.now() - __lastTileLoadAt < 5000) return;
     var span = __tileBanner.querySelector('span');
     if (!span) return;
     span.textContent = 'Map tiles unavailable - check your connection.';
     __tileBanner.classList.add('show');
   });
   usgsTopo.on('tileload', function(){
-    if (__tileErrCount > 0) __tileErrCount = Math.max(0, __tileErrCount - 1);
-  });
-  usgsTopo.on('tileload', function(){
+    __lastTileLoadAt = Date.now();
     if (__tileErrCount > 0) {
       __tileErrCount = 0;
       if (__tileBanner) __tileBanner.classList.remove('show');
