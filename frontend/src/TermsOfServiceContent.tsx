@@ -18,7 +18,7 @@ import { COLORS } from "./theme";
 export default function TermsOfServiceContent() {
   return (
     <View>
-      <Text style={styles.updated}>Last updated: June 3, 2026</Text>
+      <Text style={styles.updated}>Last updated: June 17, 2026</Text>
 
       {/* ─── SAFETY DISCLAIMER (top, can't miss it) ──────────────────── */}
       <View style={styles.warnBox}>
@@ -556,17 +556,21 @@ export default function TermsOfServiceContent() {
         <Text style={styles.bold}>not</Text> accept user submissions of
         trip reports, hazard reports, photos, comments, or any other
         user-generated content (&ldquo;UGC&rdquo;). If a future version of the App
-        introduces a UGC feature, the following terms apply automatically
-        and you accept them by using that feature: (a) you retain
-        ownership of your UGC; (b) you grant RiverRight a perpetual,
-        worldwide, royalty-free, sublicensable license to host, display,
-        reproduce, modify, and distribute your UGC for purposes of
-        operating and promoting the App; (c) you represent that you own
-        or have the rights to your UGC and that it does not infringe any
-        third party&apos;s rights; (d) you agree not to submit illegal,
-        defamatory, harassing, or false-safety content; and (e)
-        RiverRight may remove any UGC at its sole discretion. UGC about
-        river conditions, hazards, or rapid difficulty is{" "}
+        introduces a UGC feature,{" "}
+        <Text style={styles.bold}>
+          the following terms will be presented for your affirmative
+          acceptance before you may use that feature, consistent with
+          Section 15
+        </Text>
+        : (a) you retain ownership of your UGC; (b) you grant RiverRight
+        a perpetual, worldwide, royalty-free, sublicensable license to
+        host, display, reproduce, modify, and distribute your UGC for
+        purposes of operating and promoting the App; (c) you represent
+        that you own or have the rights to your UGC and that it does not
+        infringe any third party&apos;s rights; (d) you agree not to
+        submit illegal, defamatory, harassing, or false-safety content;
+        and (e) RiverRight may remove any UGC at its sole discretion.
+        UGC about river conditions, hazards, or rapid difficulty is{" "}
         <Text style={styles.bold}>
           provided as one paddler&apos;s opinion, not a safety guarantee
         </Text>
@@ -675,7 +679,7 @@ export default function TermsOfServiceContent() {
         <Text style={styles.bold}>RiverRight Privacy Policy</Text>{" "}
         (available in the App, online at{" "}
         <Text style={styles.bold}>
-          https://privacy-policy.riverrightwhitewater.com
+          https://riverrightwhitewater.com/#privacy
         </Text>
         , and via email at{" "}
         <Text style={styles.bold}>

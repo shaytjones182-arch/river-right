@@ -17,7 +17,7 @@ import { COLORS } from "./theme";
 export default function PrivacyPolicyContent() {
   return (
     <View>
-      <Text style={styles.updated}>Last updated: June 3, 2026</Text>
+      <Text style={styles.updated}>Last updated: June 17, 2026</Text>
 
       <Section title="Overview">
         RiverRight LLC (&ldquo;RiverRight,&rdquo; &ldquo;we,&rdquo; &ldquo;our,&rdquo; or &ldquo;us&rdquo;) does
