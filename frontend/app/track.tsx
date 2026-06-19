@@ -677,9 +677,19 @@ export default function Track() {
   const WAKE_RADIUS_MILES = 0.00473; // 25 ft
   const IDLE_SPEED_MPH = 0.3;
   const IDLE_RELOCK_MS = 10_000;
+  // Motion gate: starts LOCKED on first ping; unlocks only after we see
+  // TWO consecutive pings past the wake radius (single drift spikes can
+  // exceed 25 ft and would otherwise unlock the gate by themselves).
   const motionLockedRef = useRef(true);
+  const wakeCandidateRef = useRef<{ lat: number; lon: number; t: number } | null>(null);
   const anchorRef = useRef<{ lat: number; lon: number } | null>(null);
   const idleSinceRef = useRef<number | null>(null);
+  // Set TRUE for exactly one ping after the LOCKED→MOVING transition.
+  // Used to suppress the giant "catch-up" delta between the anchor and
+  // the first confirmed moving point (would otherwise spike avg speed
+  // above max). Replaces the older `last.speed === 0` hack that
+  // incorrectly skipped background pings with missing Doppler data.
+  const justUnlockedRef = useRef(false);
   // ── Max-speed glitch filter ────────────────────────────────────────────
   // GPS multipath inside canyons can produce single-frame Doppler spikes
   // (e.g. "8 mph" reading while hiking). To accept a new record we now
@@ -864,22 +874,35 @@ export default function Track() {
         return prev;
       }
       // ── Anchor-based motion gate ──────────────────────────────────────
-      // If we have no anchor yet (first ping), drop one here and stay
-      // locked. While locked, displayed speed = 0 + distance frozen.
+      // Drop initial anchor on first ping. While LOCKED, ALL distance
+      // and moving-time accumulation is suppressed unconditionally —
+      // this is the "cold lock" that prevents the 0.02-mile-overnight
+      // ghost drift from being added to the odometer.
       if (anchorRef.current == null) {
         anchorRef.current = { lat: p.lat, lon: p.lon };
       }
       const distFromAnchor = haversineMiles(anchorRef.current, p);
       if (motionLockedRef.current) {
-        // Have we travelled far enough to call this real motion?
+        // To open the gate we need TWO consecutive pings past the wake
+        // radius. A single drift spike past 25 ft (common in canyons /
+        // under wet drybags) is no longer enough.
         if (distFromAnchor >= WAKE_RADIUS_MILES) {
-          motionLockedRef.current = false;
-          idleSinceRef.current = null;
-          // Re-anchor to the current point so distance from anchor stays
-          // bounded as we move (otherwise it'd grow without limit — we
-          // never need to know "5 miles from start"; we only care about
-          // "did we move far enough since the last stop").
-          anchorRef.current = { lat: p.lat, lon: p.lon };
+          const wc = wakeCandidateRef.current;
+          if (wc) {
+            // Second confirming ping → unlock for real.
+            motionLockedRef.current = false;
+            idleSinceRef.current = null;
+            wakeCandidateRef.current = null;
+            justUnlockedRef.current = true;
+            anchorRef.current = { lat: p.lat, lon: p.lon };
+          } else {
+            wakeCandidateRef.current = { lat: p.lat, lon: p.lon, t: p.t };
+          }
+        } else {
+          // Inside the wake radius — discard any pending candidate so
+          // ping-to-ping random drift across the boundary can't sneak
+          // through as "two consecutive pings past".
+          wakeCandidateRef.current = null;
         }
       }
       const locked = motionLockedRef.current;
@@ -947,14 +970,14 @@ export default function Track() {
       }
       if (last && !locked && delta >= MIN_MOVE_MILES) {
         // Distance only accrues while the motion gate is OPEN — kills the
-        // "distance ticks up while stationary" bug. Same for moving-time.
-        // ALSO: skip the FIRST delta after unlock (when the previous
-        // recorded point was still locked, identifiable by speed === 0).
-        // That delta is the "catch-up" gap from the stationary anchor
-        // and would otherwise spike the average above the max Doppler
-        // reading at the very start of motion.
-        const isFirstUnlockDelta = last.speed === 0;
-        if (!isFirstUnlockDelta) {
+        // "distance ticks up while stationary" bug. ALSO: skip exactly
+        // ONE delta right after the LOCKED→MOVING transition (the giant
+        // catch-up gap from the stationary anchor). Replaces the older
+        // "last.speed === 0" hack that incorrectly dropped legitimate
+        // background pings whose Doppler-speed field was zero/null.
+        if (justUnlockedRef.current) {
+          justUnlockedRef.current = false;
+        } else {
           setDistMiles((d) => d + delta);
           movingMsRef.current += movingDeltaMsFor(last.t, p.t, effectiveSpeed);
         }
@@ -995,10 +1018,46 @@ export default function Track() {
     const fresh = queued
       .filter((q) => q.ts > lastT)
       .sort((a, b) => a.ts - b.ts);
+    // ── Background catch-up: stitch buffered pings into one continuous
+    // chain. iOS sometimes delivers a batch of throttled pings on wake,
+    // and many of those pings arrive WITHOUT Doppler speed (the OS just
+    // sends position + timestamp). To prevent the gate from collapsing
+    // and dropping distance, we estimate per-ping speed from the
+    // position delta vs. the immediately-previous accepted point.
+    let prevForSpeed: { lat: number; lon: number; t: number } | null =
+      pointsRef.current.length
+        ? {
+            lat: pointsRef.current[pointsRef.current.length - 1].lat,
+            lon: pointsRef.current[pointsRef.current.length - 1].lon,
+            t: pointsRef.current[pointsRef.current.length - 1].t,
+          }
+        : null;
     for (const q of fresh) {
-      const speedMph =
+      let speedMph =
         q.speed && q.speed > 0 ? q.speed * 2.23694 : 0;
-      appendTripPoint({ lat: q.lat, lon: q.lon, t: q.ts, speed: speedMph });
+      // If iOS didn't report Doppler speed for this ping, derive it
+      // from how far we moved since the previous accepted fix. This
+      // is the "catch-up" step — it's what makes our distance match
+      // AllTrails after a screen-locked drive instead of lagging far
+      // behind it.
+      if (speedMph === 0 && prevForSpeed) {
+        const miles = haversineMiles(prevForSpeed, { lat: q.lat, lon: q.lon });
+        const dtHr = Math.max(0.0001, (q.ts - prevForSpeed.t) / 3_600_000);
+        const impliedMph = miles / dtHr;
+        // Cap at 80 mph defensively — anything higher between two BG
+        // pings is a GPS teleport, not real motion. The accuracy /
+        // jump filters in appendTripPoint will throw it out anyway,
+        // but we don't want this estimate itself to be ridiculous.
+        if (impliedMph > 0 && impliedMph < 80) speedMph = impliedMph;
+      }
+      appendTripPoint({
+        lat: q.lat,
+        lon: q.lon,
+        t: q.ts,
+        speed: speedMph,
+        accuracy: q.acc ?? null,
+      });
+      prevForSpeed = { lat: q.lat, lon: q.lon, t: q.ts };
     }
   }, [appendTripPoint]);
 
@@ -1019,6 +1078,8 @@ export default function Track() {
     motionLockedRef.current = true;
     anchorRef.current = null;
     idleSinceRef.current = null;
+    wakeCandidateRef.current = null;
+    justUnlockedRef.current = false;
     maxCandidateRef.current = null;
     sendJs(`window.setPath([])`);
     // Wipe any stale background-queue pings left over from a previous
@@ -1241,11 +1302,20 @@ export default function Track() {
     stopBackgroundLocation().catch(() => {});
   };
 
-  // Build a TripDay snapshot from current accumulators
-  const snapshotCurrentDay = (): TripDay => {
+  // Build a TripDay snapshot from current accumulators.
+  // `wasLogged` flags whether this snapshot was triggered by the user
+  // tapping "Log Day" (true) vs being auto-finalized when they tapped
+  // "End Trip" without ever logging a day (false). The trip detail
+  // screen uses this to decide whether to render the "By day" breakdown.
+  const snapshotCurrentDay = (wasLogged: boolean): TripDay => {
     const dayNumber = loggedDays.length + 1;
     const startedAt = dayStartedAtRef.current || Date.now();
-    const avg = movingSec > 0 ? distMiles / (movingSec / 3600) : 0;
+    // Trip-average speed uses TOTAL elapsed time (not just moving time)
+    // so brief ghost-drift "moving" intervals don't inflate the displayed
+    // value. With this rule, 0.02 miles accumulated over a 7.5-hour
+    // overnight session correctly resolves to ~0.0 mph instead of
+    // scaling up against a 30-second "moving" denominator.
+    const avg = totalSec > 0 ? distMiles / (totalSec / 3600) : 0;
     return {
       dayNumber,
       startedAt,
@@ -1256,6 +1326,7 @@ export default function Track() {
       totalSec,
       maxMph,
       avgMph: avg,
+      wasLogged,
     };
   };
 
@@ -1297,7 +1368,7 @@ export default function Track() {
   };
 
   const handleLogDay = () => {
-    const day = snapshotCurrentDay();
+    const day = snapshotCurrentDay(true);
     setLoggedDays((prev) => [...prev, day]);
     // Stay in 'idle' so the START TRIP button is shown again for the next day
     setTripState("idle");
@@ -1310,7 +1381,7 @@ export default function Track() {
     const hasActiveDay = dayStartedAtRef.current !== null && (points.length > 1 || totalSec > 5);
     const allDays = [...loggedDays];
     if (hasActiveDay) {
-      allDays.push(snapshotCurrentDay());
+      allDays.push(snapshotCurrentDay(false));
     }
     if (allDays.length === 0) {
       // Nothing to save → just reset back to idle
@@ -1347,7 +1418,10 @@ export default function Track() {
 
   // Live avg speed (over moving time only — AllTrails-style)
   const liveAvgMph = useMemo(
-    () => (movingSec > 0 ? distMiles / (movingSec / 3600) : 0),
+    // Live trip-total average speed (distance / total elapsed time).
+    // Total-elapsed denominator — not moving-time — keeps brief ghost-
+    // drift "moving" intervals from inflating the displayed value.
+    () => (totalSec > 0 ? distMiles / (totalSec / 3600) : 0),
     [distMiles, movingSec]
   );
 

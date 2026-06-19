@@ -23,6 +23,11 @@ export type TripDay = {
   totalSec: number; // seconds the timer ran (excludes paused time)
   maxMph: number;
   avgMph: number; // distance / moving time (mph) — AllTrails-style
+  // True if this day was created because the user tapped the "Log Day"
+  // button. False (or undefined for legacy trips) means it was the
+  // auto-finalized active day created by "End Trip" with no logging.
+  // Used to decide whether to render the "By day" breakdown.
+  wasLogged?: boolean;
 };
 
 export type SavedTrip = {

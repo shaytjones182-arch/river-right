@@ -136,11 +136,29 @@ export default function TripDetail() {
           </Text>
         </View>
 
-        {/* Per-day */}
-        <Text style={styles.sectionH}>By day</Text>
-        {trip.days.map((d) => (
-          <DayCard key={d.dayNumber} day={d} />
-        ))}
+        {/* Per-day breakdown — only shown when the user actually used
+            the "Log Day" button at least once during the trip. For
+            single-leg trips, the overall stats + route map above
+            already tell the full story. */}
+        {(() => {
+          // New trips set `wasLogged` explicitly per-day. Legacy trips
+          // (saved before this field existed) have no `wasLogged`
+          // anywhere — fall back to the heuristic that a trip with
+          // more than one day necessarily had at least one log tap.
+          const hasNewFlag = trip.days.some((d) => typeof d.wasLogged === "boolean");
+          const anyLogged = hasNewFlag
+            ? trip.days.some((d) => d.wasLogged === true)
+            : trip.days.length > 1;
+          if (!anyLogged) return null;
+          return (
+            <>
+              <Text style={styles.sectionH}>By day</Text>
+              {trip.days.map((d) => (
+                <DayCard key={d.dayNumber} day={d} />
+              ))}
+            </>
+          );
+        })()}
       </ScrollView>
     </SafeAreaView>
   );
@@ -183,6 +201,11 @@ function BigStat({
 }
 
 function DayCard({ day }: { day: TripDay }) {
+  // Build a points list for this single day's mini-map. We deliberately
+  // re-shape from the storage TripPoint -> { lat, lon } so we don't
+  // pull TripPoint.t/speed all the way down into the Leaflet HTML
+  // builder (which doesn't need it).
+  const dayPoints = (day.points || []).map((p) => ({ lat: p.lat, lon: p.lon }));
   return (
     <View style={styles.dayCard} testID={`trip-day-${day.dayNumber}`}>
       <View style={styles.dayHeader}>
@@ -191,6 +214,9 @@ function DayCard({ day }: { day: TripDay }) {
         </View>
         <Text style={styles.daySub}>{fmtDate(day.startedAt)}</Text>
       </View>
+      {dayPoints.length >= 2 && (
+        <TripMapView points={dayPoints} style={styles.dayMap} />
+      )}
       <View style={styles.dayStatRow}>
         <DayStat label="Distance" value={`${day.distMiles.toFixed(2)} mi`} />
         <DayStat label="Avg" value={`${day.avgMph.toFixed(1)} mph`} />
@@ -315,6 +341,13 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   dayHeader: { flexDirection: "row", alignItems: "center", marginBottom: 12 },
+  dayMap: {
+    // Per-day mini-map sits between the header and stat rows. Shorter
+    // than the trip-wide route map (which is 220px) to keep the list
+    // compact when the user has many logged days.
+    height: 160,
+    marginBottom: 12,
+  },
   dayBadge: {
     backgroundColor: COLORS.primary,
     paddingHorizontal: 10,

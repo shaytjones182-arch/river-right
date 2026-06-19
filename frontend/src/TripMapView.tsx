@@ -23,6 +23,15 @@ type LatLon = { lat: number; lon: number };
 type Props = {
   points: LatLon[];
   style?: any;
+  /**
+   * When true, the map's wrapper View ignores all touch events so the
+   * parent ScrollView can receive pan/scroll gestures even when the
+   * user's finger first lands on the map. The internal Leaflet
+   * instance is already locked (no pan/zoom), so disabling pointer
+   * events at the React Native layer has no downside — it just makes
+   * the past-trips list scroll smoothly. Defaults to true.
+   */
+  passThroughTouches?: boolean;
 };
 
 function buildHtml(points: LatLon[], tileToUrl: Record<string, string>): string {
@@ -128,7 +137,7 @@ function buildHtml(points: LatLon[], tileToUrl: Record<string, string>): string 
 </body></html>`;
 }
 
-export default function TripMapView({ points, style }: Props) {
+export default function TripMapView({ points, style, passThroughTouches = true }: Props) {
   const [tileToUrl, setTileToUrl] = useState<Record<string, string> | null>(null);
   useEffect(() => {
     let cancelled = false;
@@ -144,11 +153,22 @@ export default function TripMapView({ points, style }: Props) {
     () => (tileToUrl == null ? null : buildHtml(points, tileToUrl)),
     [points, tileToUrl]
   );
+  // `pointerEvents: 'none'` on the outer frame makes the entire map area
+  // transparent to touches, so the user's finger lands on the parent
+  // ScrollView (or whatever ancestor scroller) right away. Without this,
+  // the WebView intercepts the initial pan and prevents the list from
+  // scrolling unless the user starts the gesture outside the map.
+  const interactionStyle = passThroughTouches
+    ? { pointerEvents: "none" as const }
+    : undefined;
   if (!html) {
-    return <View style={[styles.frame, style, styles.loading]} />;
+    return <View style={[styles.frame, style, styles.loading, interactionStyle]} />;
   }
   return (
-    <View style={[styles.frame, style]} testID="trip-mini-map">
+    <View
+      style={[styles.frame, style, interactionStyle]}
+      testID="trip-mini-map"
+    >
       <MapView html={html} />
     </View>
   );
