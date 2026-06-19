@@ -21,7 +21,7 @@ import {
   UIManager,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "../../src/theme";
 import TermsOfServiceContent from "../../src/TermsOfServiceContent";
@@ -37,9 +37,20 @@ if (
 
 export default function TermsOfService() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ from?: string }>();
   // Each document collapsed by default — user picks which one to expand.
   const [tosOpen, setTosOpen] = useState(false);
   const [privOpen, setPrivOpen] = useState(false);
+
+  // Mirror the behavior used by `/trips` — return the user to whichever
+  // tab they opened this screen from (passed in via `?from=…` by
+  // ProfileMenu). Without this, router.back() always pops out to the
+  // Home tab regardless of where the menu was tapped.
+  const handleBack = () => {
+    const raw = (typeof params.from === "string" && params.from) || "/";
+    const target = ["/", "/map", "/track"].includes(raw) ? raw : "/";
+    router.replace(target as any);
+  };
 
   const toggleTos = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -55,7 +66,7 @@ export default function TermsOfService() {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backBtn}
-          onPress={() => router.back()}
+          onPress={handleBack}
           activeOpacity={0.7}
           hitSlop={10}
           testID="terms-back"

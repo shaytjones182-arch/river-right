@@ -674,7 +674,14 @@ export default function MapScreen() {
       const exists = rivers.some((r) => r.id === params.river);
       if (exists) setSelectedRiverId(params.river as string);
     }
-  }, [params.river, rivers]);
+    // ALSO depend on `reset` so that re-tapping "View on Map" for the
+    // same river (after the user has manually backed out via the map's
+    // BACK button, which clears `selectedRiverId` but leaves the URL
+    // params unchanged) re-applies the selection. Without `reset` in
+    // the deps, the same `params.river` value short-circuits this
+    // effect and the map stays on the USA overview.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.river, params.reset, rivers]);
 
   // Force-refit handler: every time the river-detail card sends us a new
   // `reset` nonce, wipe the saved viewport and prime `prevModeRef` so the

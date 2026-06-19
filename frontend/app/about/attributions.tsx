@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { COLORS } from "../../src/theme";
 
 type Credit = {
@@ -106,12 +106,22 @@ const SOFTWARE: Credit[] = [
 
 export default function Attributions() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ from?: string }>();
+  // Mirror /trips and /about/terms: return the user to whichever tab
+  // they opened this screen from. Without this, router.back() always
+  // pops to the Home tab regardless of where the profile menu was
+  // tapped.
+  const handleBack = () => {
+    const raw = (typeof params.from === "string" && params.from) || "/";
+    const target = ["/", "/map", "/track"].includes(raw) ? raw : "/";
+    router.replace(target as any);
+  };
   return (
     <SafeAreaView style={styles.safe} edges={["top"]} testID="attributions-screen">
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backBtn}
-          onPress={() => router.back()}
+          onPress={handleBack}
           activeOpacity={0.7}
           hitSlop={10}
           testID="attributions-back"
