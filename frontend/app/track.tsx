@@ -691,15 +691,22 @@ export default function Track() {
   // incorrectly skipped background pings with missing Doppler data.
   const justUnlockedRef = useRef(false);
   // ── Max-speed glitch filter ────────────────────────────────────────────
-  // GPS multipath inside canyons can produce single-frame Doppler spikes
-  // (e.g. "8 mph" reading while hiking). To accept a new record we now
-  // require: (a) iOS-reported speedAccuracy is within tolerance, (b) the
-  // speed is sustained or exceeded on the IMMEDIATELY-NEXT accepted ping,
-  // and (c) the implied speed from position-delta corroborates it.
-  const MAX_SPEED_ACCURACY_MPS = 2.0;       // ≤ 2 m/s uncertainty (≈ 4.5 mph)
-  const MAX_SPEED_OVERSHOOT_RATIO = 1.6;    // reported ≤ 1.6× implied
-  // Pending candidate: { speed, t } — the speed-record claim still
-  // needs a second confirming ping before it can write to setMaxMph.
+  // GPS multipath inside canyons / under wet drybags can produce single-
+  // frame Doppler spikes (e.g. an "8 mph" reading while hiking). To
+  // accept a new max we now require TWO independent quality signals to
+  // both look healthy on the SAME ping:
+  //   (a) iOS-reported speedAccuracy is within tolerance, AND
+  //   (b) the implied speed from position-delta corroborates the
+  //       reported Doppler speed.
+  // A real multipath spike typically fails one or both of these (the
+  // position barely moved, or the speedAccuracy is huge), so the dual
+  // check alone is enough — we no longer require a confirming follow-up
+  // ping. That extra requirement was suppressing legitimate momentary
+  // peaks during walking, where pace naturally varies ping-to-ping.
+  const MAX_SPEED_ACCURACY_MPS = 3.0;       // ≤ 3 m/s uncertainty (≈ 6.7 mph)
+  const MAX_SPEED_OVERSHOOT_RATIO = 2.0;    // reported ≤ 2.0× implied
+  // Retained for compatibility with existing reset / snapshot paths.
+  // No longer participates in the admission decision.
   const maxCandidateRef = useRef<{ speed: number; t: number } | null>(null);
   // Single-shot guard so we only nag about missing "Always Allow"
   // location permission once per app session.
@@ -928,20 +935,28 @@ export default function Track() {
       setSpeedMph(effectiveSpeed);
       // ── Max-speed acceptance ──────────────────────────────────────────
       // Block obvious GPS multipath / canyon-wall reflection glitches.
-      // A new max only sticks if ALL of these are true:
+      // A new max only sticks if BOTH of these are true:
       //   1. The motion gate is open (speed makes sense at all).
-      //   2. iOS speedAccuracy is reasonable (≤ 2 m/s uncertainty).
+      //   2. iOS speedAccuracy is reasonable (≤ MAX_SPEED_ACCURACY_MPS).
       //      A value of -1 / null means iOS couldn't compute it; we
-      //      treat that as "unknown" and reject the candidate.
+      //      treat that as "unknown" and require the implied check to
+      //      pass before admitting the record. This keeps Android (no
+      //      speedAccuracy) and older iOS from being permanently locked
+      //      out of the max-speed history while still rejecting wild
+      //      Doppler glitches.
       //   3. Implied speed (from position delta vs. time delta) is
       //      close to the reported speed — kills 8 mph readings while
       //      we only moved 1 m in the last 2 s.
-      //   4. A PREVIOUS ping in the same session at ≥ this speed
-      //      exists — i.e. the same record was claimed twice in a
-      //      row. Single-frame spikes never make it through.
+      // We no longer require a confirming follow-up ping. That extra
+      // gate was filtering legitimate walking peaks where pace
+      // naturally varies ping-to-ping (e.g. 3.3 mph one fix, 2.7 the
+      // next). The dual quality filter above is enough to catch the
+      // multipath spikes the confirmation step was added to defend
+      // against.
       if (!locked && effectiveSpeed > 0) {
         const sa = p.speedAccuracy;
-        const goodAccuracy = sa != null && sa >= 0 && sa <= MAX_SPEED_ACCURACY_MPS;
+        const accuracyKnown = sa != null && sa >= 0;
+        const goodAccuracy = !accuracyKnown || sa <= MAX_SPEED_ACCURACY_MPS;
         let goodImplied = true;
         if (last) {
           const dtSec = Math.max(0.5, (p.t - last.t) / 1000);
@@ -952,21 +967,12 @@ export default function Track() {
             goodImplied = false;
           }
         }
-        const candidate = maxCandidateRef.current;
         if (goodAccuracy && goodImplied) {
-          if (candidate && effectiveSpeed >= candidate.speed * 0.9) {
-            // Confirmed across two consecutive accepted pings → admit.
-            setMaxMph((m) => (effectiveSpeed > m ? effectiveSpeed : m));
-            maxCandidateRef.current = { speed: effectiveSpeed, t: p.t };
-          } else {
-            // Park it as a candidate; needs the next ping to confirm.
-            maxCandidateRef.current = { speed: effectiveSpeed, t: p.t };
-          }
-        } else {
-          // Bad-quality ping — drop the running candidate so a spike
-          // doesn't get retroactively confirmed by a clean follow-up.
-          maxCandidateRef.current = null;
+          setMaxMph((m) => (effectiveSpeed > m ? effectiveSpeed : m));
         }
+        // Clear the legacy candidate ref so it doesn't carry stale
+        // state across the new admission rule.
+        maxCandidateRef.current = null;
       }
       if (last && !locked && delta >= MIN_MOVE_MILES) {
         // Distance only accrues while the motion gate is OPEN — kills the
