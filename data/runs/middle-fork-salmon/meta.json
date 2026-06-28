@@ -1,0 +1,38 @@
+{
+  "id": "middle-fork-salmon",
+  "name": "Middle Fork Salmon \u2014 Boundary Creek to Cache Bar",
+  "state": "ID",
+  "class_rating": "III\u2013IV",
+  "type": "whitewater",
+  "osm_names": [
+    "Middle Fork Salmon River",
+    "Salmon River"
+  ],
+  "description": "",
+  "hazards": [
+    "Permit required \u2014 Four Rivers Lottery (recreation.gov)",
+    "Remote wilderness, no cell service, no road access between put-in and take-out",
+    "Continuous Class III\u2013IV at standard flows; rated higher at high water"
+  ],
+  "points_of_interest": [
+    "Velvet Falls (II\u2013IV): first major drop, ~5 mi in",
+    "Pistol Creek (III\u2013IV): tight S-turn between cliff walls",
+    "Tappan Falls (III\u2013IV): boulder-garden mid-river drop",
+    "Redside Rapids (III\u2013IV): big-water finale",
+    "Loon Creek Hot Spring + Sunflower Hot Springs along the run"
+  ],
+  "put_in": {
+    "name": "Boundary Creek Put-in",
+    "lat": 44.531894,
+    "lon": -115.294245
+  },
+  "take_out": {
+    "name": "Cache Bar Boat Ramp",
+    "lat": 45.31856,
+    "lon": -114.636713
+  },
+  "usgs_site_id": "13310199",
+  "usgs_site_name": "Middle Fork Salmon River at Middle Fork Lodge near Yellow Pine, ID (Station 13310199)",
+  "image": "https://images.unsplash.com/photo-1626594995085-36b551227b9a?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85",
+  "has_curated_data": true
+}

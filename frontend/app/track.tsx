@@ -385,12 +385,15 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
       iconSize:[28,28], iconAnchor:[14,14], popupAnchor:[0,-14]
     });
   }
-  // Per-class rapid colors (green→red spectrum, one color per integer
-  // class). Compound grades like "III-IV" use the HIGHEST class found.
-  // Unknown grade → blue.
+  // Per-class rapid colors (deep green→red spectrum, one color per
+  // integer class). Compound grades like "III-IV" use the HIGHEST
+  // class found. Unknown grade → deep blue.
+  //
+  // KEEP IN SYNC with `/app/frontend/src/rapidColors.ts` (canonical)
+  // and the matching copy inlined into `app/map.tsx`.
   var RAPID_CLASS_COLORS = [
-    '#1D6FB8', // 0 unknown
-    '#2E8B57', '#88B04B', '#D4B106', '#E08020', '#C0392B', '#6B1D1D'
+    '#1F5B9F', // 0 unknown
+    '#1E7A3C', '#5F8B30', '#B0860D', '#C9651E', '#A82E21', '#5A1818'
   ];
   function rapidClassNum(grade){
     if (!grade) return 0;
@@ -404,7 +407,7 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
     return max;
   }
   function rapidColor(grade){
-    return RAPID_CLASS_COLORS[rapidClassNum(grade)] || '#1D6FB8';
+    return RAPID_CLASS_COLORS[rapidClassNum(grade)] || '#1F5B9F';
   }
   function tri(){
     return L.divIcon({

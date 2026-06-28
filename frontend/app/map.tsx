@@ -347,14 +347,20 @@ const buildMapHtml = (
   // class (no separate sub-grade shades). For compound grades like
   // "III-IV" we use the HIGHEST class present so the user errs cautious.
   // Returns BLUE for rapids whose grade is unknown.
+  // Per-class rapid colors (deep green→red spectrum, one color per
+  // integer class). Compound grades like "III-IV" use the HIGHEST
+  // class found. Unknown grade → deep blue.
+  //
+  // KEEP IN SYNC with `/app/frontend/src/rapidColors.ts` (canonical)
+  // and the matching copy inlined into `app/track.tsx`.
   var RAPID_CLASS_COLORS = [
-    '#1D6FB8', // 0 — unknown grade → blue
-    '#2E8B57', // I   true green
-    '#88B04B', // II  yellow-green
-    '#D4B106', // III yellow
-    '#E08020', // IV  orange
-    '#C0392B', // V   red
-    '#6B1D1D'  // VI  deep red
+    '#1F5B9F', // 0 — unknown grade → deep blue
+    '#1E7A3C', // I   forest green
+    '#5F8B30', // II  deep olive
+    '#B0860D', // III dark amber
+    '#C9651E', // IV  burnt orange
+    '#A82E21', // V   brick red
+    '#5A1818'  // VI  very dark crimson
   ];
   function rapidClassNum(grade){
     if (!grade) return 0;
@@ -369,7 +375,7 @@ const buildMapHtml = (
     return max;
   }
   function rapidColor(grade){
-    return RAPID_CLASS_COLORS[rapidClassNum(grade)] || '#1D6FB8';
+    return RAPID_CLASS_COLORS[rapidClassNum(grade)] || '#1F5B9F';
   }
 
   function pin(cls, svg){
@@ -1036,7 +1042,7 @@ export default function MapScreen() {
               </View>
               {hasRapid && (
                 <LegendIcon
-                  kind="rapid" rapidColor="#1D6FB8" label="Rapid"
+                  kind="rapid" rapidColor="#1F5B9F" label="Rapid"
                   active={legendFilter === "rapid"}
                   dimmed={!!legendFilter && legendFilter !== "rapid"}
                   onPress={() => toggleLegendFilter("rapid")}

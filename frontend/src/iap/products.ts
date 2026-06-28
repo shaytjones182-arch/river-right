@@ -25,6 +25,11 @@ export const DEFAULT_RUN_PRICE_DISPLAY = "$5.00";
 // IDs MUST exactly match what's configured in App Store Connect.
 const RIVER_TO_PRODUCT_ID: Record<string, string> = {
   "green-river-desolation": "com.riverrightwhitewater.deso_map",
+  // Middle Fork Salmon — Boundary Creek → Cache Bar. Configure the
+  // matching non-consumable in App Store Connect before launch; until
+  // then the synthetic SKU from `productIdFor()` keeps the paywall UI
+  // functional but real purchases will fail.
+  "middle-fork-salmon": "com.riverrightwhitewater.mfs_map",
 };
 
 // In-memory cache of live App Store prices (populated by storekit.ts after

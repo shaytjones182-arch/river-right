@@ -1,16 +1,21 @@
-// Shared rapid-class → color mapping (green→red spectrum, one color per
+// Shared rapid-class → color mapping (deep green→red spectrum, one color per
 // integer class). Compound grades like "III-IV" or "III+" map to the
 // HIGHEST class present so we err on the side of caution. Unknown grade
-// (null/empty) → blue, matching the "no class" legend swatch.
+// (null/empty) → deep blue, matching the "no class" legend swatch.
+//
+// CANONICAL PALETTE — when changing, ALSO update the duplicated copies
+// inlined into the Leaflet HTML inside `app/map.tsx` and `app/track.tsx`
+// so all three surfaces (river card, map screen, trip tracker) render
+// the same class color for any given river run.
 
 const RAPID_CLASS_COLORS = [
-  "#1D6FB8", // 0 — unknown grade → blue
-  "#2E8B57", // I   true green
-  "#88B04B", // II  yellow-green
-  "#D4B106", // III yellow
-  "#E08020", // IV  orange
-  "#C0392B", // V   red
-  "#6B1D1D", // VI  deep red
+  "#1F5B9F", // 0 — unknown grade → deep blue
+  "#1E7A3C", // I   forest green
+  "#5F8B30", // II  deep olive
+  "#B0860D", // III dark amber
+  "#C9651E", // IV  burnt orange
+  "#A82E21", // V   brick red
+  "#5A1818", // VI  very dark crimson
 ];
 
 export function rapidClassNum(grade: string | null | undefined): number {
