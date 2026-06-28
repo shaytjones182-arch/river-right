@@ -1623,7 +1623,7 @@ export default function Track() {
         >
           <View style={styles.metricsRow}>
             <Metric testID="track-metric-speed" label="SPEED" value={speedMph.toFixed(1)} unit="MPH" />
-            <Metric testID="track-metric-distance" label="DIST" value={distMiles.toFixed(2)} unit="MI" />
+            <Metric testID="track-metric-distance" label="DISTANCE" value={distMiles.toFixed(2)} unit="MI" />
           </View>
           <View style={styles.metricsRow}>
             <Metric testID="track-metric-avg" label="AVG" value={liveAvgMph.toFixed(1)} unit="MPH" small />
