@@ -94,15 +94,32 @@ export type FetchOpts = {
 // same {status, label} shape the rest of the UI already expects.
 function classifyFlow(
   cfs: number | null,
-  thresholds?: { low_threshold?: number; normal_threshold?: number; high_threshold?: number } | null
+  thresholds?: {
+    low_threshold?: number;
+    normal_threshold?: number;
+    high_threshold?: number;
+    // Optional 5th-bucket boundary. If present, flows above this value
+    // are reported as "Very high" (danger color) instead of just "High".
+    // Rivers without it fall back to the original 4-bucket classifier.
+    very_high_threshold?: number;
+  } | null
 ): { status: string; label: string } {
   if (cfs === null || cfs === undefined) return { status: "unknown", label: "No data" };
   if (thresholds) {
-    const { low_threshold: lo, normal_threshold: nm, high_threshold: hi } = thresholds;
+    const {
+      low_threshold: lo,
+      normal_threshold: nm,
+      high_threshold: hi,
+      very_high_threshold: vh,
+    } = thresholds;
     if (typeof lo === "number" && typeof nm === "number" && typeof hi === "number") {
       if (cfs < lo) return { status: "low", label: "Very low" };
       if (cfs < nm) return { status: "info", label: "Low" };
       if (cfs < hi) return { status: "safe", label: "Normal" };
+      if (typeof vh === "number") {
+        if (cfs < vh) return { status: "warning", label: "High" };
+        return { status: "danger", label: "Very high" };
+      }
       return { status: "warning", label: "High" };
     }
   }
@@ -193,6 +210,9 @@ export async function fetchRiverWithCache(
       low_threshold: thresholds.low_threshold,
       normal_threshold: thresholds.normal_threshold,
       high_threshold: thresholds.high_threshold,
+      // Optional 5th-bucket boundary — only set on rivers whose curated
+      // thresholds file declares one (Middle Fork Salmon as of now).
+      very_high_threshold: thresholds.very_high_threshold,
     };
     if (thresholds.datasource_attribution) {
       flow.datasource_attribution = thresholds.datasource_attribution;

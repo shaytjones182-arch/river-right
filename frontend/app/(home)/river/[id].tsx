@@ -67,6 +67,10 @@ type RiverDetail = {
       low_threshold?: number;
       normal_threshold?: number;
       high_threshold?: number;
+      // Optional 5th-bucket boundary. When present, the flow-info modal
+      // renders five rows (Very low / Low / Normal / High / Very high)
+      // instead of the default four.
+      very_high_threshold?: number;
     };
     // Free-text source citation surfaced when the user taps the status
     // pill ("LOW" / "NORMAL" / etc.).
@@ -526,13 +530,38 @@ export default function RiverDetail() {
                       flow.thresholds.high_threshold
                     ).toLocaleString()} CFS`}
                   />
-                  <FlowRangeRow
-                    color={COLORS.warning}
-                    label="High"
-                    range={`Above ${Math.round(
-                      flow.thresholds.high_threshold
-                    ).toLocaleString()} CFS`}
-                  />
+                  {typeof flow.thresholds.very_high_threshold === "number" ? (
+                    <>
+                      {/* 5-bucket scheme — bound the "High" row by the
+                          very_high_threshold and add a separate "Very high"
+                          tail row. Only rivers that opt in to the 5th
+                          bucket (e.g. Middle Fork Salmon) hit this path. */}
+                      <FlowRangeRow
+                        color={COLORS.warning}
+                        label="High"
+                        range={`${Math.round(
+                          flow.thresholds.high_threshold
+                        ).toLocaleString()} – ${Math.round(
+                          flow.thresholds.very_high_threshold
+                        ).toLocaleString()} CFS`}
+                      />
+                      <FlowRangeRow
+                        color={COLORS.danger}
+                        label="Very high"
+                        range={`Above ${Math.round(
+                          flow.thresholds.very_high_threshold
+                        ).toLocaleString()} CFS`}
+                      />
+                    </>
+                  ) : (
+                    <FlowRangeRow
+                      color={COLORS.warning}
+                      label="High"
+                      range={`Above ${Math.round(
+                        flow.thresholds.high_threshold
+                      ).toLocaleString()} CFS`}
+                    />
+                  )}
                 </View>
               )}
 
