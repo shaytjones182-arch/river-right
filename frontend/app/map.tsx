@@ -1023,7 +1023,7 @@ export default function MapScreen() {
           return (
             <View style={styles.legend} testID="map-legend-focused">
               <View style={styles.legendHeader}>
-                <Text style={styles.legendTitle}>ON THIS RUN</Text>
+                <Text style={[styles.legendTitle, styles.legendHeaderTitle]}>ON THIS RUN</Text>
                 {legendFilter && (
                   <TouchableOpacity
                     onPress={() => setLegendFilter(null)}
@@ -1408,7 +1408,18 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 4,
+    // Absorbs the marginBottom that legendTitle normally provides on
+    // its own (8) so the spacing between the header strip and the
+    // first legend row stays unchanged.
+    marginBottom: 8,
+  },
+  // When the legend title sits inside the flex header row alongside
+  // the CLEAR button, we strip its built-in marginBottom. Otherwise
+  // the title's bottom margin makes its bounding box taller than the
+  // CLEAR button's, which pushes its baseline visually below CLEAR
+  // even though `alignItems: "center"` is set on the row.
+  legendHeaderTitle: {
+    marginBottom: 0,
   },
   legendClear: {
     fontSize: 10,
