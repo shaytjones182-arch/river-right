@@ -1,0 +1,6 @@
+{
+  "low_threshold": 1000,
+  "normal_threshold": 1800,
+  "high_threshold": 4500,
+  "datasource_attribution": "Thresholds provided by the river operator. Gauge: USGS 13309220 — MF Salmon River at MF Lodge nr Yellow Pine, ID."
+}

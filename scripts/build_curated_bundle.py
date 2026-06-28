@@ -17,10 +17,13 @@ RIVER_IMAGES = {
     "green-river-desolation": "https://images.unsplash.com/photo-1626594995085-36b551227b9a?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85",
     "middle-fork-salmon":     "https://images.unsplash.com/photo-1626594995085-36b551227b9a?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85",
 }
-# Rivers that are gated behind an IAP. Free users see them in the carousel
-# with a lock badge; tapping opens the paywall instead of the river detail
-# screen.
-LOCKED_RIVERS = {"middle-fork-salmon"}
+# Rivers that are gated behind an IAP for OFFLINE-MAP DOWNLOAD only. The
+# river detail card and curated maps remain free to view for everyone
+# (you only pay to download tiles for offline use, per the established
+# "pay to download" → "download" → "downloaded" button sequence). The
+# home-screen carousel does NOT show a lock badge for any river — locking
+# is enforced inside the river detail screen's download button.
+LOCKED_RIVERS: set[str] = set()
 
 
 def load_existing_bundle() -> dict:
@@ -80,20 +83,31 @@ def build_river_entry(run_dir: Path, existing_run: dict | None = None) -> dict:
     cfs = json.loads(cfs_path.read_text()) if cfs_path.exists() else None
 
     img = RIVER_IMAGES.get(river_id, meta.get("image"))
+    # If meta.json doesn't carry put_in / take_out / class_rating / usgs
+    # info (Desolation is the legacy case — that data lives only inside
+    # the existing bundle's runs[id].river block), fall back to the
+    # existing bundle so the featured carousel + map overview keep
+    # working.
+    legacy_river = (existing_run or {}).get("river") or {}
+    def _pick(key):
+        v = meta.get(key)
+        if v is None or v == "" or v == []:
+            return legacy_river.get(key) if legacy_river.get(key) not in (None, "", []) else v
+        return v
     summary = {
         "id": river_id,
-        "name": meta.get("name"),
-        "state": meta.get("state"),
-        "class_rating": meta.get("class_rating"),
-        "type": meta.get("type"),
-        "osm_names": meta.get("osm_names") or [],
-        "description": meta.get("description") or "",
-        "hazards": meta.get("hazards") or [],
-        "points_of_interest": meta.get("points_of_interest") or [],
-        "put_in": meta.get("put_in"),
-        "take_out": meta.get("take_out"),
-        "usgs_site_id": meta.get("usgs_site_id"),
-        "usgs_site_name": meta.get("usgs_site_name"),
+        "name": meta.get("name") or legacy_river.get("name"),
+        "state": _pick("state"),
+        "class_rating": _pick("class_rating"),
+        "type": _pick("type"),
+        "osm_names": _pick("osm_names") or [],
+        "description": _pick("description") or "",
+        "hazards": _pick("hazards") or [],
+        "points_of_interest": _pick("points_of_interest") or [],
+        "put_in": _pick("put_in"),
+        "take_out": _pick("take_out"),
+        "usgs_site_id": _pick("usgs_site_id"),
+        "usgs_site_name": _pick("usgs_site_name"),
         "image": img,
         "has_curated_data": True,
     }

@@ -793,16 +793,21 @@ export default function MapScreen() {
     }
     return {
       cmd: "overview",
-      rivers: filteredRivers.map((r) => ({
-        id: r.id,
-        // Precomputed difficulty bucket → drives the dot color in the
-        // WebView. We send the bucket (not the raw class string) so the
-        // WebView script stays dumb and doesn't need its own Roman-numeral
-        // parser.
-        diff: difficultyOf(r.class_rating),
-        plat: r.put_in.lat,
-        plon: r.put_in.lon,
-      })),
+      // Defensive: any river missing put_in (legacy bundle entries, in-flight
+      // data fixes) is silently skipped from the USA overview rather than
+      // crashing the WebView payload builder.
+      rivers: filteredRivers
+        .filter((r) => r.put_in && typeof r.put_in.lat === "number")
+        .map((r) => ({
+          id: r.id,
+          // Precomputed difficulty bucket → drives the dot color in the
+          // WebView. We send the bucket (not the raw class string) so the
+          // WebView script stays dumb and doesn't need its own Roman-numeral
+          // parser.
+          diff: difficultyOf(r.class_rating),
+          plat: r.put_in.lat,
+          plon: r.put_in.lon,
+        })),
     };
   }, [selectedRiver, displayedPois, focusedPolyline, filteredRivers]);
 
