@@ -128,11 +128,20 @@ export default function TripDetail() {
               small
             />
           </View>
+          <View style={styles.bigRow}>
+            <BigStat
+              value={fmtClockDuration(trip.totalSec)}
+              unit=""
+              label="Total elapsed"
+              small
+            />
+            {/* Spacer so the lone BigStat doesn't stretch full-width and
+                visually misalign with the 2-up rows above. */}
+            <View style={styles.bigStatSpacer} />
+          </View>
           <Text style={styles.totalsFoot}>
             {trip.days.length}
             {trip.days.length === 1 ? " day" : " days"}
-            {" · "}
-            Total elapsed {fmtClockDuration(trip.totalSec)}
           </Text>
         </View>
 
@@ -307,6 +316,12 @@ const styles = StyleSheet.create({
     padding: 12,
     borderWidth: 1,
     borderColor: COLORS.border,
+  },
+  // Invisible placeholder card that occupies the right column of the
+  // 3rd stat row so "Total elapsed" doesn't stretch full-width and
+  // visually unbalance the 2-up grid above it.
+  bigStatSpacer: {
+    flex: 1,
   },
   bigLabel: {
     fontSize: 10,
