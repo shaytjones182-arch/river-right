@@ -389,8 +389,8 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
   // integer class). Compound grades like "III-IV" use the HIGHEST
   // class found. Unknown grade → deep blue.
   //
-  // KEEP IN SYNC with `/app/frontend/src/rapidColors.ts` (canonical)
-  // and the matching copy inlined into `app/map.tsx`.
+  // KEEP IN SYNC with "/app/frontend/src/rapidColors.ts" (canonical)
+  // and the matching copy inlined into "app/map.tsx".
   var RAPID_CLASS_COLORS = [
     '#1F5B9F', // 0 unknown
     '#1E7A3C', '#5F8B30', '#B0860D', '#C9651E', '#A82E21', '#5A1818'

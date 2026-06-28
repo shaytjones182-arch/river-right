@@ -351,8 +351,8 @@ const buildMapHtml = (
   // integer class). Compound grades like "III-IV" use the HIGHEST
   // class found. Unknown grade → deep blue.
   //
-  // KEEP IN SYNC with `/app/frontend/src/rapidColors.ts` (canonical)
-  // and the matching copy inlined into `app/track.tsx`.
+  // KEEP IN SYNC with "/app/frontend/src/rapidColors.ts" (canonical)
+  // and the matching copy inlined into "app/track.tsx".
   var RAPID_CLASS_COLORS = [
     '#1F5B9F', // 0 — unknown grade → deep blue
     '#1E7A3C', // I   forest green
