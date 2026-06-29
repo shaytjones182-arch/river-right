@@ -13,6 +13,17 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const STORAGE_KEY = "@riverright:unlocked_runs_v1";
 
+// ─── TEMPORARY PAYWALL BYPASS ──────────────────────────────────────────────
+// Set to `true` to treat every river as already unlocked for ALL users.
+// Used to ship TestFlight builds for field testing the curated maps
+// (offline tile downloads, polylines, POIs) while the In-App Purchase
+// products are still pending review in App Store Connect.
+//
+// REVERT BEFORE PUBLIC LAUNCH — flip this back to `false` and the
+// normal paywall flow ("pay to download" → "download" → "downloaded")
+// resumes for any river the user hasn't actually purchased.
+const BYPASS_PAYWALL_FOR_TESTFLIGHT = true;
+
 type Listener = (set: Set<string>) => void;
 let memoryCache: Set<string> | null = null;
 const listeners = new Set<Listener>();
@@ -93,7 +104,8 @@ export function useUnlocks() {
   }, []);
 
   const isUnlocked = useCallback(
-    (riverId: string) => unlocked.has(riverId),
+    (riverId: string) =>
+      BYPASS_PAYWALL_FOR_TESTFLIGHT ? true : unlocked.has(riverId),
     [unlocked]
   );
 
