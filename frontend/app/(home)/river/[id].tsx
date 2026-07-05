@@ -284,12 +284,12 @@ export default function RiverDetail() {
           <OfflineMapCard riverId={r.id} riverName={r.name} />
 
           {/* ── About this run ────────────────────────────────────────────
-              Intentionally hidden behind a `false` guard rather than deleted
-              so the layout & data wiring is ready the moment we have new
-              copy to inject. Flip the guard back to `true` (or replace with
-              a real condition) to restore the section.
+              Rendered whenever the river's curated metadata carries a
+              non-empty `description`. New rivers added to the bundle
+              automatically get this section for free by populating
+              meta.json's `description` field.
           ─────────────────────────────────────────────────────────────── */}
-          {false && (
+          {r.description && r.description.trim().length > 0 && (
             <>
               <Text style={styles.h3}>About this run</Text>
               <Text style={styles.body1}>{r.description}</Text>
