@@ -19,6 +19,7 @@ import { useRouter, useFocusEffect } from "expo-router";
 import ProfileMenu from "../../src/ProfileMenu";
 import { COLORS, API } from "../../src/theme";
 import PaywallSheet from "../../src/iap/PaywallSheet";
+import { riverImageSource } from "../../src/riverImages";
 import { useUnlocks } from "../../src/iap/useUnlocks";
 import { productForRiver } from "../../src/iap/products";
 import { getHomeScrollY, setHomeScrollY } from "../../src/tabState";
@@ -187,7 +188,7 @@ export default function Home() {
                   }}
                   activeOpacity={0.9}
                 >
-                  <Image source={{ uri: r.image }} style={styles.riverImg} />
+                  <Image source={riverImageSource(r.id, r.image)} style={styles.riverImg} />
                   <View style={styles.riverOverlay} />
                   {locked ? (
                     <View style={styles.lockBadgeRow}>

@@ -21,6 +21,7 @@ import {
 } from "../../../src/offlineCache";
 import OfflineMapCard from "../../../src/tiles/OfflineMapCard";
 import { rapidColor } from "../../../src/rapidColors";
+import { riverImageSource } from "../../../src/riverImages";
 
 // One bullet in the "Helpful information" section. `text` is required
 // and renders as plain copy. `url` is optional — when present the entire
@@ -179,7 +180,7 @@ export default function RiverDetail() {
     <SafeAreaView style={styles.safe} edges={["top"]} testID="river-detail-screen">
       <ScrollView contentContainerStyle={{ paddingBottom: 32 }}>
         <View style={styles.heroWrap}>
-          <Image source={{ uri: r.image }} style={styles.hero} />
+          <Image source={riverImageSource(r.id, r.image)} style={styles.hero} />
           <View style={styles.heroOverlay} />
           <TouchableOpacity
             testID="river-detail-back"
