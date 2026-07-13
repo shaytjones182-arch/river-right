@@ -13,8 +13,8 @@
 //   2. Add a matching entry to LOCAL_COVERS below.
 
 const LOCAL_COVERS: Record<string, number> = {
-  "green-river-desolation": require("../../assets/river-covers/deso.jpeg"),
-  "middle-fork-salmon":     require("../../assets/river-covers/mfs.jpeg"),
+  "green-river-desolation": require("../assets/river-covers/deso.jpeg"),
+  "middle-fork-salmon":     require("../assets/river-covers/mfs.jpeg"),
 };
 
 /**
