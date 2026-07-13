@@ -17,7 +17,7 @@ import { COLORS } from "./theme";
 export default function PrivacyPolicyContent() {
   return (
     <View>
-      <Text style={styles.updated}>Last updated: June 17, 2026</Text>
+      <Text style={styles.updated}>Last updated: July 17, 2026</Text>
 
       <Section title="Overview">
         RiverRight LLC (&ldquo;RiverRight,&rdquo; &ldquo;we,&rdquo; &ldquo;our,&rdquo; or &ldquo;us&rdquo;) does
@@ -93,6 +93,17 @@ export default function PrivacyPolicyContent() {
         developer. This is controlled entirely by Apple and your iOS
         settings, not by RiverRight, and is governed by Apple&apos;s
         Privacy Policy.
+      </Section>
+
+      <Section title="Other Purchases">
+        We partner with third-party platforms, including{" "}
+        <Text style={styles.bold}>Fourthwall</Text>, to facilitate our
+        branded merchandise store and fulfill product orders. When you
+        purchase merchandise, your payment data, shipping information,
+        and transaction details are collected and processed directly by
+        our fulfillment partners subject to their own respective privacy
+        policies and terms of service. We do not store or retain your
+        financial payment data.
       </Section>
 
       <Section title="Children">
