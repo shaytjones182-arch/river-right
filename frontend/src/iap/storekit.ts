@@ -8,6 +8,7 @@ import { Platform } from "react-native";
 import {
   allKnownProductIds,
   productIdFor,
+  riverIdForProductId,
   setLivePrice,
 } from "./products";
 
@@ -52,17 +53,12 @@ function loadLib(): any | null {
 /** Map riverId → App Store product ID for the reverse lookup we need
  *  when Apple hands us back a productId on restore / purchase. */
 function riverIdForProduct(productId: string): string | null {
-  // Iterate known mappings — for the foreseeable future this is a
-  // single-digit number of products so a linear scan is fine.
-  // We import lazily to avoid a circular reference at module-eval time.
-  const knownIds = allKnownProductIds();
-  if (!knownIds.includes(productId)) return null;
-  // Inverse of RIVER_TO_PRODUCT_ID from products.ts. Hardcoded here
-  // because exposing the full map would tempt callers to bypass
-  // `productForRiver()`.
-  if (productId === "com.riverrightwhitewater.deso_map")
-    return "green-river-desolation";
-  return null;
+  // Delegates to the authoritative reverse map in products.ts so every
+  // river added to RIVER_TO_PRODUCT_ID (MFS, future runs, etc.) unlocks
+  // automatically. Previously this was hardcoded to Desolation only,
+  // which caused successful MFS purchases to be rejected with
+  // "Purchase didn't complete" even though Apple had charged the user.
+  return riverIdForProductId(productId);
 }
 
 /** Connects to StoreKit and primes product prices. Safe to call many

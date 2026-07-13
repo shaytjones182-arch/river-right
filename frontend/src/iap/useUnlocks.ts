@@ -22,7 +22,7 @@ const STORAGE_KEY = "@riverright:unlocked_runs_v1";
 // REVERT BEFORE PUBLIC LAUNCH — flip this back to `false` and the
 // normal paywall flow ("pay to download" → "download" → "downloaded")
 // resumes for any river the user hasn't actually purchased.
-const BYPASS_PAYWALL_FOR_TESTFLIGHT = true;
+const BYPASS_PAYWALL_FOR_TESTFLIGHT = false;
 
 type Listener = (set: Set<string>) => void;
 let memoryCache: Set<string> | null = null;

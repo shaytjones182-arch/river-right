@@ -53,6 +53,16 @@ export function allKnownProductIds(): string[] {
   return Object.values(RIVER_TO_PRODUCT_ID);
 }
 
+/** Reverse of `productIdFor()`: given a product ID Apple hands us back on
+ *  restore or purchase, return the river ID it unlocks. Returns null for
+ *  unknown product IDs (e.g. legacy or unrelated purchases on the account). */
+export function riverIdForProductId(productId: string): string | null {
+  for (const [rid, pid] of Object.entries(RIVER_TO_PRODUCT_ID)) {
+    if (pid === productId) return rid;
+  }
+  return null;
+}
+
 export function productForRiver(
   riverId: string,
   overridePriceUSD?: number
