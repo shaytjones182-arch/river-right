@@ -70,6 +70,12 @@ def build_river_entry(run_dir: Path, existing_run: dict | None = None) -> dict:
     river_id = run_dir.name
     meta = json.loads((run_dir / "meta.json").read_text())
     poly = json.loads((run_dir / "polyline.geojson").read_text())
+    # Optional overlay layer: translucent-red private-land polygons that
+    # the map draws underneath markers and above the base tiles, with a
+    # user-facing legend toggle. Not every river carries one — bundle-
+    # size stays flat until a run actually has data on disk.
+    private_land_path = run_dir / "private_land.geojson"
+    private_land = json.loads(private_land_path.read_text()) if private_land_path.exists() else None
     disk_pois = poi_geojson_to_app_pois(run_dir / "poi.geojson")
     if not disk_pois and existing_run and existing_run.get("pois"):
         pois = list(existing_run["pois"])
@@ -130,6 +136,8 @@ def build_river_entry(run_dir: Path, existing_run: dict | None = None) -> dict:
         "poi_count": len(pois),
         "has_curated_data": True,
     }
+    if private_land is not None:
+        run_full["private_land"] = private_land
     if cfs is not None:
         run_full["cfs_thresholds"] = cfs
     elif existing_run and existing_run.get("cfs_thresholds"):

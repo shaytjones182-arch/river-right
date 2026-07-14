@@ -21,6 +21,7 @@ import {
   fetchPolylineWithCache,
   fetchPoisWithCache,
   fetchFeaturedWithCache,
+  getPrivateLandForRiver,
 } from "../src/offlineCache";
 import {
   getMergedOfflineManifest,
@@ -330,6 +331,7 @@ const buildMapHtml = (
 
   var overviewLayer = L.layerGroup().addTo(map);
   var focusedLayer = L.layerGroup().addTo(map);
+  var privateLandLayer = L.layerGroup().addTo(map);
   var polylineLayer = L.layerGroup().addTo(map);
   var currentMode = null;
 
@@ -430,10 +432,32 @@ const buildMapHtml = (
     }
   }
 
-  function renderFocused(river, pois, polyline){
+  function renderFocused(river, pois, polyline, privateLand){
     overviewLayer.clearLayers();
     focusedLayer.clearLayers();
     polylineLayer.clearLayers();
+    privateLandLayer.clearLayers();
+
+    // Translucent-red private-land polygons — drawn UNDER the river
+    // line so the polyline still reads clearly on top. Only added when
+    // the payload carries a FeatureCollection AND the user hasn't
+    // toggled the "Private land" legend row off (the payload builder
+    // omits the privateLand field entirely in that case, so the layer
+    // stays clear here).
+    if (privateLand && privateLand.type === 'FeatureCollection'){
+      L.geoJSON(privateLand, {
+        style: {
+          color:       '#B91C1C',   // dark red border
+          weight:      1,
+          opacity:     0.9,
+          fillColor:   '#DC2626',   // translucent red fill
+          fillOpacity: 0.25,
+        },
+        // No interactive popups — this is a legibility overlay, not a
+        // clickable data layer.
+        interactive: false,
+      }).addTo(privateLandLayer);
+    }
 
     // Draw the river polyline (curated GeoJSON MultiLineString) — under markers
     if (polyline && polyline.coordinates && polyline.coordinates.length){
@@ -558,7 +582,7 @@ const buildMapHtml = (
       }
       currentMode = 'overview';
     } else if (state.cmd === 'focus'){
-      renderFocused(state.river, state.pois || [], state.polyline || null);
+      renderFocused(state.river, state.pois || [], state.polyline || null, state.privateLand || null);
       if (state.move !== 'none'){
         var animate2 = currentMode === 'overview' || currentMode === null;
         flyToFocused(state.river, state.pois || [], state.polyline || null, animate2);
@@ -610,6 +634,10 @@ export default function MapScreen() {
   }, []);
   const [focusedPois, setFocusedPois] = useState<OsmPoi[] | null>(null);
   const [focusedPolyline, setFocusedPolyline] = useState<Polyline | null>(null);
+  // Toggle for the translucent-red "Private land" overlay. Default ON —
+  // reset every time the user switches rivers (the effect below), so
+  // rivers without a private-land layer never confuse the state.
+  const [showPrivateLand, setShowPrivateLand] = useState<boolean>(true);
   const [poiSource, setPoiSource] = useState<string | null>(null);
   const [focusLoading, setFocusLoading] = useState(false);
   // Legend category filter — when non-null, only POIs whose kind falls
@@ -648,6 +676,20 @@ export default function MapScreen() {
     () => rivers.find((r) => r.id === selectedRiverId) || null,
     [rivers, selectedRiverId]
   );
+  // Private-land GeoJSON for the currently-focused river, if any. Kept
+  // memoized so `buildPayload` sees a stable reference across renders.
+  const privateLand = useMemo(
+    () => (selectedRiverId ? getPrivateLandForRiver(selectedRiverId) : null),
+    [selectedRiverId]
+  );
+  const hasPrivateLand = !!privateLand;
+  // Reset the visibility toggle to ON every time the river changes, so
+  // switching to a river that has a private-land layer starts with the
+  // overlay drawn, and switching to one without doesn't leak a stale
+  // "off" state that would then apply to the next river that does.
+  useEffect(() => {
+    setShowPrivateLand(true);
+  }, [selectedRiverId]);
 
   const filteredRivers = useMemo(() => {
     if (filter === "all") return rivers;
@@ -789,6 +831,11 @@ export default function MapScreen() {
         },
         pois: displayedPois || [],
         polyline: focusedPolyline,
+        // Private-land overlay is included only when the layer exists
+        // AND the user has the legend toggle turned on. When toggled
+        // off, the payload omits the field entirely and the WebView's
+        // `renderFocused()` clears the layer.
+        privateLand: showPrivateLand ? privateLand : null,
       };
     }
     return {
@@ -809,7 +856,7 @@ export default function MapScreen() {
           plon: r.put_in.lon,
         })),
     };
-  }, [selectedRiver, displayedPois, focusedPolyline, filteredRivers]);
+  }, [selectedRiver, displayedPois, focusedPolyline, filteredRivers, privateLand, showPrivateLand]);
 
   // Seed `prevModeRef` so we DON'T trigger a fitBounds on first mount when
   // we've restored a saved view (otherwise the saved view would be clobbered
@@ -1029,7 +1076,7 @@ export default function MapScreen() {
           const hasParking = kinds.has("parking");
           const hasNote = kinds.has("note");
           const anyVisible =
-            hasRapid || hasHazard || hasPortage || hasCamp || hasBoat || hasParking || hasNote;
+            hasRapid || hasHazard || hasPortage || hasCamp || hasBoat || hasParking || hasNote || hasPrivateLand;
           if (!anyVisible) return null;
           return (
             <View style={styles.legend} testID="map-legend-focused">
@@ -1094,6 +1141,26 @@ export default function MapScreen() {
                   dimmed={!!legendFilter && legendFilter !== "note"}
                   onPress={() => toggleLegendFilter("note")}
                 />
+              )}
+              {hasPrivateLand && (
+                // Private-land overlay toggle. Semantically distinct from the
+                // POI kind filters above (which dim/highlight markers) —
+                // this one shows/hides the translucent-red polygon layer
+                // rendered underneath the river polyline. `active` reflects
+                // the visibility state (ON = red swatch, OFF = dimmed).
+                <TouchableOpacity
+                  onPress={() => setShowPrivateLand((v) => !v)}
+                  activeOpacity={0.7}
+                  style={[
+                    styles.legendRow,
+                    styles.legendRowTappable,
+                    !showPrivateLand && styles.legendRowDimmed,
+                  ]}
+                  testID="map-legend-private-land"
+                >
+                  <View style={styles.legendSwatchPrivate} />
+                  <Text style={styles.legendText}>Private land</Text>
+                </TouchableOpacity>
               )}
             </View>
           );
@@ -1451,6 +1518,17 @@ const styles = StyleSheet.create({
   },
   legendRowDimmed: {
     opacity: 0.45,
+  },
+  // Solid translucent-red swatch that matches the Leaflet polygon
+  // rendering (fillColor #DC2626 at 0.25 fill-opacity, #B91C1C border).
+  // Used exclusively for the "Private land" legend row.
+  legendSwatchPrivate: {
+    width: 18,
+    height: 18,
+    borderRadius: 3,
+    backgroundColor: "rgba(220, 38, 38, 0.35)",
+    borderWidth: 1,
+    borderColor: "#B91C1C",
   },
   dot: { width: 10, height: 10, borderRadius: 5 },
   legendPin: {

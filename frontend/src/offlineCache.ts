@@ -280,6 +280,12 @@ export async function fetchPoisWithCache(
   };
 }
 
+/** Curated private-land overlay GeoJSON, or null when the river doesn't
+ *  carry one. Reads from the in-bundle data — no network. */
+export function getPrivateLandForRiver(id: string): any | null {
+  return CURATED_BUNDLE?.runs?.[id]?.private_land ?? null;
+}
+
 /** Featured-rivers list — always from the in-bundle data. */
 export async function fetchFeaturedWithCache(): Promise<{ rivers: any[] }> {
   return { rivers: CURATED_BUNDLE?.featured || [] };
