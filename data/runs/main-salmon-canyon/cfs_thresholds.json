@@ -1,0 +1,7 @@
+{
+  "low_threshold": 2000,
+  "normal_threshold": 7000,
+  "high_threshold": 12000,
+  "very_high_threshold": 23000,
+  "datasource_attribution": "Thresholds provided by the river operator. Gauges (summed): USGS 13307000 (Salmon River near Shoup, ID) + USGS 13310199 (Middle Fork Salmon at Mouth, near Shoup, ID)."
+}

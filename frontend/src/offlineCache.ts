@@ -63,6 +63,14 @@ export type RiverMeta = {
   put_in: { name: string; lat: number; lon: number };
   take_out: { name: string; lat: number; lon: number };
   usgs_site_id: string;
+  // Optional list of USGS gauge site IDs whose CFS values should be
+  // SUMMED into the live flow reading — used by rivers below a
+  // confluence where a single gauge isn't representative (e.g. the
+  // Main Salmon below the MFS mouth). When present, this takes
+  // precedence over `usgs_site_id`. All IDs must publish parameterCd
+  // 00060 (streamflow in ft^3/s). Gauge height is not shown when
+  // summing because it can't be added meaningfully across gauges.
+  usgs_site_ids?: string[];
   image: string;
   points_of_interest?: string[];
 };
@@ -131,39 +139,64 @@ function classifyFlow(
 
 /** Fetch live CFS + gauge height directly from USGS public IV API. No
  *  backend dependency. Returns null if the network call fails. */
-async function fetchUsgsLiveFlow(siteId: string): Promise<{
+/** Fetch live streamflow from USGS's public Instantaneous Values (IV)
+ *  service. Accepts a single site ID (string) OR an array of IDs whose
+ *  CFS readings should be SUMMED — used for rivers whose live reading is
+ *  a below-confluence total (see RiverMeta.usgs_site_ids). When summing,
+ *  we only report CFS; gauge height is nulled since two gauges have
+ *  different datum references and can't be summed meaningfully. */
+async function fetchUsgsLiveFlow(siteIds: string | string[] | null | undefined): Promise<{
   cfs: number | null;
   gauge_height_ft: number | null;
   updated_at?: string;
 } | null> {
-  if (!siteId) return null;
+  if (!siteIds) return null;
+  const ids = Array.isArray(siteIds) ? siteIds : [siteIds];
+  if (ids.length === 0) return null;
+  const summing = ids.length > 1;
   try {
+    // USGS IV supports multiple sites as a comma-separated list in a
+    // SINGLE HTTP request. This keeps the summed reading atomic and
+    // halves round-trips vs. calling once per gauge.
     const url =
       "https://waterservices.usgs.gov/nwis/iv/?format=json" +
-      `&sites=${encodeURIComponent(siteId)}` +
+      `&sites=${encodeURIComponent(ids.join(","))}` +
       "&parameterCd=00060,00065&siteStatus=active";
     const r = await fetch(url);
     if (!r.ok) return null;
     const j = await r.json();
     const series: any[] = j?.value?.timeSeries || [];
-    let cfs: number | null = null;
+    // Per-site accumulators keyed by USGS site code.
+    const cfsBySite: Record<string, number> = {};
     let gaugeFt: number | null = null;
     let updatedAt: string | undefined;
     for (const ts of series) {
       const varCode = ts?.variable?.variableCode?.[0]?.value;
+      const siteCode = ts?.sourceInfo?.siteCode?.[0]?.value;
       const values = ts?.values?.[0]?.value || [];
       if (!values.length) continue;
       const last = values[values.length - 1];
       const raw = parseFloat(last?.value);
       const v = Number.isFinite(raw) && raw > -999998 ? raw : null;
       const t = last?.dateTime;
-      if (varCode === "00060") {
-        cfs = v;
+      if (varCode === "00060" && siteCode && v !== null) {
+        cfsBySite[siteCode] = v;
         if (t) updatedAt = t;
-      } else if (varCode === "00065") {
+      } else if (varCode === "00065" && !summing) {
+        // Only surface gauge height for single-gauge rivers.
         gaugeFt = v;
         if (t && !updatedAt) updatedAt = t;
       }
+    }
+    // Combine CFS: if we're summing, ALL requested gauges must have
+    // reported a value; a partial reading (one gauge offline) is
+    // reported as null so we don't display a misleading low number.
+    let cfs: number | null;
+    if (summing) {
+      const readings = ids.map((id) => cfsBySite[id]);
+      cfs = readings.every((v) => typeof v === "number") ? readings.reduce((a, b) => a + b, 0) : null;
+    } else {
+      cfs = cfsBySite[ids[0]] ?? null;
     }
     return { cfs, gauge_height_ft: gaugeFt, updated_at: updatedAt };
   } catch {
@@ -190,8 +223,12 @@ export async function fetchRiverWithCache(
     throw new Error(`No bundled or cached data for river ${id}`);
   }
 
-  // Hit USGS directly for the live reading.
-  const live = await fetchUsgsLiveFlow(bundledRiver.usgs_site_id);
+  // Hit USGS directly for the live reading. Multi-station rivers pass
+  // an array of gauge IDs whose CFS values are summed; single-station
+  // rivers fall through to the legacy scalar id.
+  const live = await fetchUsgsLiveFlow(
+    (bundledRiver as any).usgs_site_ids || bundledRiver.usgs_site_id
+  );
   if (!live) {
     return { river: bundledRiver, flow: null };
   }

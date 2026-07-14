@@ -107,6 +107,7 @@ def build_river_entry(run_dir: Path, existing_run: dict | None = None) -> dict:
         "put_in": _pick("put_in"),
         "take_out": _pick("take_out"),
         "usgs_site_id": _pick("usgs_site_id"),
+        "usgs_site_ids": _pick("usgs_site_ids"),
         "usgs_site_name": _pick("usgs_site_name"),
         "image": img,
         "has_curated_data": True,

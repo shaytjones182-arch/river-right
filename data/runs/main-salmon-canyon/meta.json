@@ -1,0 +1,40 @@
+{
+  "id": "main-salmon-canyon",
+  "name": "Main Salmon \u2014 Corn Creek to Carey Creek",
+  "state": "ID",
+  "class_rating": "III\u2013IV",
+  "type": "whitewater",
+  "osm_names": [
+    "Salmon River"
+  ],
+  "description": "The Main Salmon River run from Corn Creek to Vinegar Creek covers approximately 79 miles through the Salmon River Canyon in central Idaho, one of the deepest river gorges in North America. The canyon passes through a mix of wilderness and ranch land, with evidence of the region's mining and homesteading history visible at several points along the route. The run typically takes four to six days to complete. Like the Middle Fork, private launches during peak season require a permit obtained through a lottery system, and the remote nature of the put-in at Corn Creek makes shuttle logistics a significant part of trip planning.",
+  "hazards": [
+    "Permit required for private launches during peak season (Four Rivers Lottery, recreation.gov)",
+    "Deep canyon with limited road access \u2014 long shuttle Corn Creek \u2192 Carey Creek",
+    "Big-water Class III\u2013IV rapids at high flows"
+  ],
+  "points_of_interest": [
+    "Devil's Teeth Rapid \u2014 big waves at high water",
+    "Salmon Falls Rapid \u2014 one of the sportiest drops on the run",
+    "Bailey Creek and Chittam Rapids \u2014 big-water finales in Carey Falls Canyon",
+    "Multiple hot springs and historic homesteads along the canyon"
+  ],
+  "put_in": {
+    "name": "Corn Creek Boat Ramp",
+    "lat": 45.369952,
+    "lon": -114.687746
+  },
+  "take_out": {
+    "name": "Carey Creek Boat Ramp",
+    "lat": 45.453403,
+    "lon": -115.945542
+  },
+  "usgs_site_ids": [
+    "13307000",
+    "13310199"
+  ],
+  "usgs_site_id": "13307000",
+  "usgs_site_name": "Salmon River near Shoup (13307000) + Middle Fork Salmon at Mouth (13310199), combined",
+  "image": "https://images.unsplash.com/photo-1626594995085-36b551227b9a?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85",
+  "has_curated_data": true
+}
