@@ -161,8 +161,8 @@ export default function Attributions() {
         <Text style={styles.footerNote}>
           If you believe a source is missing or misattributed, please contact
           us at{" "}
-          <Text style={styles.bold}>[support@riverright.app]</Text>{" "}
-          (placeholder) and we&apos;ll correct it promptly.
+          <Text style={styles.bold}>contact@riverrightwhitewater.com</Text>{" "}
+          and we&apos;ll correct it promptly.
         </Text>
       </ScrollView>
     </SafeAreaView>
