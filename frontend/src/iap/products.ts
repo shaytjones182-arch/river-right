@@ -30,6 +30,8 @@ const RIVER_TO_PRODUCT_ID: Record<string, string> = {
   // then the synthetic SKU from `productIdFor()` keeps the paywall UI
   // functional but real purchases will fail.
   "middle-fork-salmon": "com.riverrightwhitewater.mfs_map",
+  // Main Salmon — Corn Creek → Carey Creek. App Store Connect apple id 6791678603.
+  "main-salmon-canyon": "com.riverrightwhitewater.main_salmon",
 };
 
 // In-memory cache of live App Store prices (populated by storekit.ts after
