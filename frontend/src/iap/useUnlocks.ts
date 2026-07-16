@@ -47,7 +47,7 @@ const BYPASS_PAYWALL_FOR_TESTFLIGHT = false;
 // REVERT BEFORE PUBLIC LAUNCH — flip this back to `false` so real
 // users' unlocks survive app restarts / reinstalls without them
 // having to tap "Restore Purchases" each time.
-const DISABLE_UNLOCK_PERSISTENCE = true;
+const DISABLE_UNLOCK_PERSISTENCE = false;
 
 type Listener = (set: Set<string>) => void;
 let memoryCache: Set<string> | null = null;

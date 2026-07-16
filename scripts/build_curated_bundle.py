@@ -25,6 +25,18 @@ RIVER_IMAGES = {
 # is enforced inside the river detail screen's download button.
 LOCKED_RIVERS: set[str] = set()
 
+# ─── TEMPORARY: HIDDEN RIVERS ──────────────────────────────────────────
+# River IDs listed here are SKIPPED entirely during bundle generation —
+# they don't appear on the home carousel, in the map's USA overview, or
+# anywhere else in the app. The on-disk source data at
+# /app/data/runs/<id>/ is left intact so restoring them is a one-line
+# change: remove the ID from this set and re-run this script.
+#
+# Used to ship an initial 1-river launch (Green River — Desolation and
+# Gray Canyons) while the Middle Fork Salmon and Main Salmon runs stay
+# ready-but-parked. Clear this set once those runs are ready to go live.
+HIDDEN_RIVERS: set[str] = {"middle-fork-salmon", "main-salmon-canyon"}
+
 
 def load_existing_bundle() -> dict:
     raw = TS_PATH.read_text()
@@ -161,12 +173,22 @@ def main() -> None:
 
     # 2. Rebuild every river that has on-disk source data.
     disk_river_ids = []
+    hidden_ids: list[str] = []
     existing_runs = bundle.get("runs") or {}
     for run_dir in sorted(RUNS_DIR.iterdir()):
         if not run_dir.is_dir():
             continue
         # Skip the README + any underscore-prefixed dirs (e.g. backup copies).
         if run_dir.name.startswith("_") or not (run_dir / "meta.json").exists():
+            continue
+        # Skip explicitly-hidden rivers (see HIDDEN_RIVERS above). Also
+        # remove them from featured_by_id + runs so they can't leak into
+        # the bundle through the "preserve prior in-bundle entries"
+        # branch either.
+        if run_dir.name in HIDDEN_RIVERS:
+            featured_by_id.pop(run_dir.name, None)
+            runs.pop(run_dir.name, None)
+            hidden_ids.append(run_dir.name)
             continue
         out = build_river_entry(run_dir, existing_run=existing_runs.get(run_dir.name))
         rid = run_dir.name
@@ -208,6 +230,8 @@ def main() -> None:
         if rid in disk_river_ids:
             flags.append("on-disk")
         print(f"  - {rid}  [{', '.join(flags) or 'in-bundle-only'}]")
+    if hidden_ids:
+        print(f"Hidden (on-disk but skipped): {', '.join(hidden_ids)}")
 
 
 if __name__ == "__main__":
