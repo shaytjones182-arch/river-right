@@ -22,13 +22,50 @@ const STORAGE_KEY = "@riverright:unlocked_runs_v1";
 // REVERT BEFORE PUBLIC LAUNCH — flip this back to `false` and the
 // normal paywall flow ("pay to download" → "download" → "downloaded")
 // resumes for any river the user hasn't actually purchased.
-const BYPASS_PAYWALL_FOR_TESTFLIGHT = true;
+const BYPASS_PAYWALL_FOR_TESTFLIGHT = false;
+
+// ─── TEMPORARY: DISABLE LOCAL UNLOCK PERSISTENCE ───────────────────────────
+// Set to `true` to prevent the app from remembering purchases in
+// AsyncStorage across launches. When enabled:
+//   • The stored unlock set is CLEARED on every app launch, so testers
+//     always start with zero unlocked rivers regardless of what they
+//     bought last session.
+//   • Successful purchases still unlock the river IN-MEMORY for the
+//     current session (so testers can verify the "downloaded" state),
+//     but the unlock is NOT written back to disk.
+// Used specifically for TestFlight campaigns where multiple sandbox
+// accounts need to make purchases on the same device to verify
+// Apple-side transaction recording. Apple's own record (per sandbox
+// Apple ID) is untouched by this flag — that's what testers are
+// verifying. To force a "fresh" purchase attempt with a sandbox ID
+// that has already bought a run, testers must either sign in with a
+// different sandbox account (Settings → App Store → Sandbox Account)
+// or clear purchase history for the existing sandbox tester in App
+// Store Connect (Users and Access → Sandbox Testers → Edit → Clear
+// Purchase and Subscription History).
+//
+// REVERT BEFORE PUBLIC LAUNCH — flip this back to `false` so real
+// users' unlocks survive app restarts / reinstalls without them
+// having to tap "Restore Purchases" each time.
+const DISABLE_UNLOCK_PERSISTENCE = true;
 
 type Listener = (set: Set<string>) => void;
 let memoryCache: Set<string> | null = null;
 const listeners = new Set<Listener>();
 
 async function readFromStorage(): Promise<Set<string>> {
+  // When persistence is disabled (multi-sandbox-tester campaigns), we
+  // wipe any previously-stored unlocks on read and return an empty set,
+  // so every launch of the app starts with zero owned rivers regardless
+  // of what a prior test purchase saved.
+  if (DISABLE_UNLOCK_PERSISTENCE) {
+    try {
+      await AsyncStorage.removeItem(STORAGE_KEY);
+    } catch {
+      /* ignore — worst case is stale data lingers until next launch */
+    }
+    return new Set();
+  }
   try {
     const raw = await AsyncStorage.getItem(STORAGE_KEY);
     if (!raw) return new Set();
@@ -41,6 +78,11 @@ async function readFromStorage(): Promise<Set<string>> {
 }
 
 async function writeToStorage(set: Set<string>) {
+  // Bail out silently when persistence is off. The in-memory Set that
+  // consumers see is still updated by the caller, so within a single
+  // session the UI reflects the unlock — it just doesn't survive a
+  // relaunch.
+  if (DISABLE_UNLOCK_PERSISTENCE) return;
   try {
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(set)));
   } catch {
