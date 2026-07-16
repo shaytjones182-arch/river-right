@@ -2,7 +2,7 @@
 //
 // Production purchase flow:
 //   1. Tap "Unlock this Run" → calls storekit.purchaseRun(riverId).
-//   2. react-native-iap presents the App Store sheet; user confirms.
+//   2. expo-iap presents the App Store sheet; user confirms.
 //   3. On success the transaction is finished + AsyncStorage flag set.
 //   4. On cancel we silently dismiss; on real error we surface an Alert.
 //

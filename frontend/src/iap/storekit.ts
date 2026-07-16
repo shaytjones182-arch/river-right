@@ -1,10 +1,13 @@
-// Native StoreKit (iOS) wrapper around react-native-iap.
+// Native StoreKit (iOS) wrapper around expo-iap.
 //
 // Exposes a tiny imperative surface the rest of the app can consume
-// without dragging the heavy `useIAP` hook into screens that don't
-// actually present the paywall.
+// without dragging any hook into screens that don't actually present
+// the paywall. Formerly built on react-native-iap; migrated to expo-iap
+// because the RN-IAP native pod fights the current Nitro-Modules setup
+// during EAS iOS builds.
 
 import { Platform } from "react-native";
+import * as ExpoIap from "expo-iap";
 import {
   allKnownProductIds,
   productIdFor,
@@ -32,31 +35,13 @@ export function getStoreKitTrace(): string {
   return TRACE.length ? TRACE.join("\n") : "(no events)";
 }
 
-function loadLib(): any | null {
-  if (!IS_IOS) {
-    trace("loadLib: not iOS, skipping");
-    return null;
-  }
-  try {
-    // require() instead of import so platforms without the native module
-    // never try to resolve it during bundling.
-    const m = require("react-native-iap");
-    const keys = Object.keys(m || {}).slice(0, 6).join(",");
-    trace(`loadLib: OK, exports include [${keys}…]`);
-    return m;
-  } catch (e: any) {
-    trace(`loadLib: FAILED ${e?.message || e}`);
-    return null;
-  }
-}
-
 /** Map riverId → App Store product ID for the reverse lookup we need
  *  when Apple hands us back a productId on restore / purchase. */
 function riverIdForProduct(productId: string): string | null {
   // Delegates to the authoritative reverse map in products.ts so every
-  // river added to RIVER_TO_PRODUCT_ID (MFS, future runs, etc.) unlocks
-  // automatically. Previously this was hardcoded to Desolation only,
-  // which caused successful MFS purchases to be rejected with
+  // river added to RIVER_TO_PRODUCT_ID (MFS, Main Salmon, future runs)
+  // unlocks automatically. Previously this was hardcoded to Desolation
+  // only, which caused successful MFS purchases to be rejected with
   // "Purchase didn't complete" even though Apple had charged the user.
   return riverIdForProductId(productId);
 }
@@ -67,12 +52,10 @@ export async function initStoreKit(): Promise<void> {
   if (!IS_IOS) return;
   if (_initialized) return;
   if (_initInflight) return _initInflight;
-  const lib = loadLib();
-  if (!lib) return;
   _initInflight = (async () => {
     try {
       trace("initConnection: calling");
-      await lib.initConnection();
+      await ExpoIap.initConnection();
       _initialized = true;
       trace("initConnection: OK");
       await primeProductPrices();
@@ -89,8 +72,6 @@ export async function initStoreKit(): Promise<void> {
  *  live prices into products.ts so the rest of the UI picks them up. */
 export async function primeProductPrices(): Promise<void> {
   if (!IS_IOS) return;
-  const lib = loadLib();
-  if (!lib) return;
   try {
     const skus = allKnownProductIds();
     if (!skus.length) {
@@ -98,23 +79,19 @@ export async function primeProductPrices(): Promise<void> {
       return;
     }
     trace(`fetchProducts: requesting [${skus.join(",")}]`);
-    let products: any[] = [];
-    if (typeof lib.fetchProducts === "function") {
-      products = await lib.fetchProducts({ skus, type: "in-app" });
-    } else if (typeof lib.requestProducts === "function") {
-      products = await lib.requestProducts({ skus });
-    } else if (typeof lib.getProducts === "function") {
-      products = await lib.getProducts({ skus });
-    } else {
-      trace("fetchProducts: NO API FOUND on react-native-iap");
-      return;
-    }
+    // expo-iap's canonical product-fetch. `type: "in-app"` (with dash)
+    // is the modern arg per the OpenIAP spec — the legacy `"inapp"`
+    // string is still accepted but deprecated.
+    const products: any[] = await ExpoIap.fetchProducts({
+      skus,
+      type: "in-app",
+    } as any);
     trace(`fetchProducts: returned ${products?.length || 0} products`);
     for (const p of products || []) {
       const id = p?.productId || p?.id;
       const price =
-        p?.localizedPrice ||
         p?.displayPrice ||
+        p?.localizedPrice ||
         p?.priceString ||
         (typeof p?.price === "string" ? p.price : null);
       trace(`  product: id=${id} price=${price}`);
@@ -130,8 +107,6 @@ export async function primeProductPrices(): Promise<void> {
  *  or rejects on cancel / error. */
 export async function purchaseRun(riverId: string): Promise<void> {
   if (!IS_IOS) throw new Error("In-app purchases are iOS-only.");
-  const lib = loadLib();
-  if (!lib) throw new Error("StoreKit not available (react-native-iap didn't load).");
   await initStoreKit();
   const sku = productIdFor(riverId);
   trace(`purchaseRun: sku=${sku}`);
@@ -142,22 +117,17 @@ export async function purchaseRun(riverId: string): Promise<void> {
   // signed into Settings → App Store → Sandbox Account.)
   await primeProductPrices();
   try {
-    if (typeof lib.requestPurchase === "function") {
-      trace("requestPurchase: calling (newer API)");
-      try {
-        await lib.requestPurchase({
-          request: { ios: { sku }, sku },
-          type: "in-app",
-        });
-      } catch (firstErr: any) {
-        trace(`requestPurchase newer-API threw, falling back: ${firstErr?.message || firstErr}`);
-        await lib.requestPurchase(sku);
-      }
-      trace("requestPurchase: resolved");
-    } else {
-      trace("requestPurchase: FUNCTION MISSING on lib");
-      throw new Error("requestPurchase not exposed by react-native-iap.");
-    }
+    trace("requestPurchase: calling");
+    // expo-iap uses `request.apple` / `request.google` keys under the
+    // OpenIAP spec (not `request.ios` like the old RN-IAP shape).
+    await ExpoIap.requestPurchase({
+      request: {
+        apple: { sku },
+        google: { skus: [sku] },
+      },
+      type: "in-app",
+    } as any);
+    trace("requestPurchase: resolved");
   } catch (e: any) {
     const code = e?.code || e?.errorCode;
     trace(`requestPurchase: threw code=${code} msg=${e?.message || e}`);
@@ -170,6 +140,9 @@ export async function purchaseRun(riverId: string): Promise<void> {
     }
     throw e;
   }
+  // StoreKit hands the completed transaction to purchaseUpdatedListener
+  // asynchronously. Give the platform a beat, then verify via the
+  // authoritative Apple-provided owned-products list.
   await new Promise((r) => setTimeout(r, 800));
   const owned = await restoreRuns();
   trace(`post-purchase owned: ${owned.join(",") || "(none)"}`);
@@ -183,16 +156,9 @@ export async function purchaseRun(riverId: string): Promise<void> {
 /** Returns the list of river IDs the current Apple ID owns. */
 export async function restoreRuns(): Promise<string[]> {
   if (!IS_IOS) return [];
-  const lib = loadLib();
-  if (!lib) return [];
   await initStoreKit();
   try {
-    let purchases: any[] = [];
-    if (typeof lib.getAvailablePurchases === "function") {
-      purchases = await lib.getAvailablePurchases();
-    } else if (typeof lib.getPurchaseHistory === "function") {
-      purchases = await lib.getPurchaseHistory();
-    }
+    const purchases: any[] = await ExpoIap.getAvailablePurchases();
     const riverIds = new Set<string>();
     for (const p of purchases || []) {
       const pid = p?.productId || p?.id;
@@ -201,15 +167,14 @@ export async function restoreRuns(): Promise<string[]> {
       // Best-effort: finish any lingering non-consumable transactions so
       // they don't keep getting redelivered to listeners.
       try {
-        if (typeof lib.finishTransaction === "function") {
-          await lib.finishTransaction({ purchase: p, isConsumable: false });
-        }
+        await ExpoIap.finishTransaction({ purchase: p, isConsumable: false } as any);
       } catch {
         /* ignore */
       }
     }
     return Array.from(riverIds);
   } catch (e) {
+    // eslint-disable-next-line no-console
     console.warn("[storekit] restoreRuns failed", e);
     return [];
   }
