@@ -15,6 +15,7 @@
 const LOCAL_COVERS: Record<string, number> = {
   "green-river-desolation": require("../assets/river-covers/deso.jpeg"),
   "middle-fork-salmon":     require("../assets/river-covers/mfs.jpeg"),
+  "main-salmon-canyon":     require("../assets/river-covers/main-salmon.jpeg"),
 };
 
 /**
