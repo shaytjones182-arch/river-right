@@ -19,5 +19,6 @@
   "usgs_site_id": "09315000",
   "usgs_site_name": "Green River at Green River, Utah (Station 09315000)",
   "image": "https://images.unsplash.com/photo-1626594995085-36b551227b9a?crop=entropy&cs=srgb&fm=jpg&w=1000&q=85",
-  "has_curated_data": true
+  "has_curated_data": true,
+  "private_land_label": "Reservation land"
 }

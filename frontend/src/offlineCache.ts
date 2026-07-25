@@ -286,6 +286,16 @@ export function getPrivateLandForRiver(id: string): any | null {
   return CURATED_BUNDLE?.runs?.[id]?.private_land ?? null;
 }
 
+/** Legend label for the private-land overlay on a given river. Defaults
+ *  to "Private land" (used for ranch/BLM inholdings on Main Salmon), but
+ *  a curated run can override it — Desolation/Gray uses "Reservation
+ *  land" for the Uintah and Ouray Indian Reservation, for example. */
+export function getPrivateLandLabelForRiver(id: string): string {
+  return (
+    CURATED_BUNDLE?.runs?.[id]?.private_land_label || "Private land"
+  );
+}
+
 /** Featured-rivers list — always from the in-bundle data. */
 export async function fetchFeaturedWithCache(): Promise<{ rivers: any[] }> {
   return { rivers: CURATED_BUNDLE?.featured || [] };

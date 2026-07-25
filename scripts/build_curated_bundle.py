@@ -88,6 +88,13 @@ def build_river_entry(run_dir: Path, existing_run: dict | None = None) -> dict:
     # size stays flat until a run actually has data on disk.
     private_land_path = run_dir / "private_land.geojson"
     private_land = json.loads(private_land_path.read_text()) if private_land_path.exists() else None
+    # Optional per-run legend override: the default label for the overlay is
+    # "Private land" (e.g. Main Salmon's ranch inholdings), but a run can
+    # opt in to a different label — for instance Desolation/Gray labels the
+    # Uintah and Ouray Indian Reservation as "Reservation land". Read this
+    # from meta.json rather than hard-coding it in the frontend so future
+    # runs (BLM/USFS/wilderness overlays) can just declare their own label.
+    private_land_label = meta.get("private_land_label")
     disk_pois = poi_geojson_to_app_pois(run_dir / "poi.geojson")
     if not disk_pois and existing_run and existing_run.get("pois"):
         pois = list(existing_run["pois"])
@@ -150,6 +157,8 @@ def build_river_entry(run_dir: Path, existing_run: dict | None = None) -> dict:
     }
     if private_land is not None:
         run_full["private_land"] = private_land
+        if private_land_label:
+            run_full["private_land_label"] = private_land_label
     if cfs is not None:
         run_full["cfs_thresholds"] = cfs
     elif existing_run and existing_run.get("cfs_thresholds"):

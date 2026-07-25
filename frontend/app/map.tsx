@@ -22,6 +22,7 @@ import {
   fetchPoisWithCache,
   fetchFeaturedWithCache,
   getPrivateLandForRiver,
+  getPrivateLandLabelForRiver,
 } from "../src/offlineCache";
 import {
   getMergedOfflineManifest,
@@ -683,6 +684,13 @@ export default function MapScreen() {
     [selectedRiverId]
   );
   const hasPrivateLand = !!privateLand;
+  // Per-river label for the overlay legend row. Defaults to "Private
+  // land" but Desolation/Gray Canyons overrides it to "Reservation land"
+  // (see meta.json → private_land_label). Read once per river.
+  const privateLandLabel = useMemo(
+    () => (selectedRiverId ? getPrivateLandLabelForRiver(selectedRiverId) : "Private land"),
+    [selectedRiverId]
+  );
   // Reset the visibility toggle to ON every time the river changes, so
   // switching to a river that has a private-land layer starts with the
   // overlay drawn, and switching to one without doesn't leak a stale
@@ -1159,7 +1167,7 @@ export default function MapScreen() {
                   testID="map-legend-private-land"
                 >
                   <View style={styles.legendSwatchPrivate} />
-                  <Text style={styles.legendText}>Private land</Text>
+                  <Text style={styles.legendText}>{privateLandLabel}</Text>
                 </TouchableOpacity>
               )}
             </View>
