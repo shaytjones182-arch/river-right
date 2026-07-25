@@ -2,7 +2,7 @@
   "expo": {
     "name": "RiverRight",
     "slug": "riverright",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "runtimeVersion": {
       "policy": "appVersion"
     },
@@ -14,7 +14,7 @@
     "jsEngine": "hermes",
     "ios": {
       "bundleIdentifier": "com.riverrightwhitewater.riverright",
-      "buildNumber": "2",
+      "buildNumber": "3",
       "supportsTablet": true,
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Track your river trip with GPS",
@@ -27,7 +27,7 @@
     },
     "android": {
       "package": "com.riverrightwhitewater.riverright",
-      "versionCode": 2,
+      "versionCode": 3,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#1a2440"
