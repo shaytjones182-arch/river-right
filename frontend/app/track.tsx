@@ -71,7 +71,12 @@ type OsmPoi = {
   grade?: string | null;
 };
 
-const haversineMiles = (a: Pt, b: Pt) => {
+// Distance between two points in miles. Accepts anything with { lat, lon } —
+// timestamp is not required (this used to be typed `Pt` which caused TS
+// warnings at every call site that only had a bare {lat, lon} in hand, e.g.
+// anchorRef.current or the derived-speed fallback in flushBackground).
+type LatLon = { lat: number; lon: number };
+const haversineMiles = (a: LatLon, b: LatLon) => {
   const R = 3958.8;
   const p1 = (a.lat * Math.PI) / 180;
   const p2 = (b.lat * Math.PI) / 180;
@@ -288,8 +293,6 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
   var path = L.polyline([], { color:'#0A1128', weight:7, opacity:0.55, lineCap:'round', lineJoin:'round', renderer: lineRenderer }).addTo(map);
   var pathInner = L.polyline([], { color:'#ffffff', weight:4, opacity:1, lineCap:'round', lineJoin:'round', renderer: lineRenderer }).addTo(map);
 
-  var path = L.polyline([], { color:'#0A1128', weight:7, opacity:0.55, lineCap:'round', lineJoin:'round' }).addTo(map);
-  var pathInner = L.polyline([], { color:'#ffffff', weight:4, opacity:1, lineCap:'round', lineJoin:'round' }).addTo(map);
   var meIcon = L.divIcon({ className:'me', iconSize:[18,18] });
   var meMarker = L.marker([${lat}, ${lon}], { icon: meIcon, zIndexOffset: 2000 }).addTo(map);
   var poiLayer = L.layerGroup().addTo(map);
