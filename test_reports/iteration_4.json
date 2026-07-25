@@ -1,0 +1,71 @@
+{
+  "summary": "Frontend-only static + runtime verification of the POI distance-calculator fix in /app/frontend/app/track.tsx (WebView template literal). Confirmed DIST_GATE_M is 500m, computePoiDistanceLabel never returns empty string, the along-river label ticks down live as the user moves, and the /track route mounts cleanly with no red screen / TDZ error. Metro bundles successfully. All 5 review-request checks passed. No deprecated Expo packages found in the changed area.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [],
+    "react_native_issues": []
+  },
+  "verification_results": {
+    "1_static_logic": {
+      "DIST_GATE_M_is_500": "PASS (track.tsx:316 — var DIST_GATE_M = 500;)",
+      "returns_along_river_when_both_within_gate": "PASS (track.tsx:379-381 — u.dist<=500 && p.dist<=500 → 'X.XX mi along river')",
+      "returns_distance_unavailable_otherwise": "PASS (track.tsx:384 — explicit 'Distance unavailable' fallback, no empty-string branch)",
+      "no_haversine_fallback_in_webview": "PASS (grep for 'haversineMi' in template: not found)",
+      "haversineMi_helper_removed": "PASS (only outer TS helper haversineMiles at line 74 exists; nothing inside the template literal)"
+    },
+    "2_live_update_wiring": {
+      "refreshOpenPoiPopups_defined": "PASS (track.tsx:391-404)",
+      "iterates_poiLayer_eachLayer_and_isPopupOpen": "PASS (track.tsx:393-394)",
+      "calls_setPopupContent_with_baseTitle_and_composed_meta": "PASS (track.tsx:397-401)",
+      "invoked_from_updatePos_every_ping": "PASS (track.tsx:482 inside window.updatePos)"
+    },
+    "3_reselect_yields_fresh_distance": {
+      "baseTitle_baseMeta_captured_once_at_marker_creation": "PASS (track.tsx:563-564 inside setRunPois)",
+      "popupopen_re_renders_from_bases_with_current_userLat_userLon": "PASS (track.tsx:565-571 — reads currentUserLat/Lon at open time, no cached label)",
+      "no_stale_cache_path": "PASS — only __baseTitle/__baseMeta are stored; the distance suffix is computed fresh on every popupopen AND every ping"
+    },
+    "4_track_mounts_clean": {
+      "no_red_screen_or_TDZ": "PASS (body renders 'Trip Tracker' + disclaimer modal, no ReferenceError / 'before initialization' text)",
+      "iframe_webview_functions_attached": "PASS (updatePos, setRunPois, setRunPolyline, __rrDebug all present)"
+    },
+    "5_metro_bundles_cleanly": {
+      "no_bundling_failed_or_syntaxerror_in_expo_out_log": "PASS (multiple successful 'Web Bundled ...ms entry.js' entries, no error rows)",
+      "no_backticks_in_line_comments_inside_webview_template": "PASS (awk 114-670 | grep for '//.*`' returned no matches)"
+    },
+    "6_runtime_end_to_end_via_iframe_hooks": {
+      "polyLen_after_setRunPolyline": 101,
+      "user_at_start_of_line_label": "2.77 mi along river",
+      "user_closer_label": "1.11 mi along river",
+      "user_at_POI_label": "0.00 mi along river",
+      "user_far_off_polyline_label": "Distance unavailable",
+      "POI_far_off_polyline_label": "Distance unavailable",
+      "label_after_clearRunPolyline": "Distance unavailable",
+      "label_is_never_empty_string": true,
+      "live_popup_refresh_on_updatePos": "PASS — popup meta ticked '2.77 mi' → '1.11 mi' → '0.28 mi' as user's updatePos() was called with progressively closer coords, without closing/reopening the popup"
+    },
+    "credentials_used": "none (no auth in scope)"
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_4.json",
+    "/app/test_reports/iteration_3.json (prior TDZ regression context)"
+  ],
+  "action_items": [
+    "Minor (out of scope of this ticket, but worth flagging): track.tsx lines 288-289 declare var path/pathInner with the canvas renderer, then lines 291-292 redeclare the SAME two vars with the default SVG renderer immediately below. Not a bug (JS var permits redeclaration and the second wins), but it makes the canvas-renderer branch dead code — the whole reason the canvas renderer was added (comment at 281-283, 'drift bug with leaflet-rotate') is silently defeated. Recommend removing lines 291-292."
+  ],
+  "critical_code_review_comments": [
+    "computePoiDistanceLabel behaves correctly under all six scenarios exercised (near/mid/at POI, user off-line, POI off-line, no polyline).",
+    "refreshOpenPoiPopups + updatePos wiring cleanly closes the user's reported 'distance didn't update as I moved closer' bug — verified in-browser.",
+    "__baseTitle/__baseMeta pattern correctly avoids compounding the '· X.XX mi' suffix across successive popupopen/refresh cycles.",
+    "The escaped regex \\\\s / \\\\S / \\\\/ at track.tsx:561-562 is CORRECT for a template literal and matches what would render as \\s/\\S/\\/ at runtime — confirmed by the successful runtime title/meta extraction ('Test Rapid' / 'Class III').",
+    "Duplicate var path/pathInner declarations at track.tsx:288-292 — see action_items."
+  ],
+  "updated_files": [],
+  "success_rate": { "backend": "N/A (not in scope)", "frontend": "100%" },
+  "seed_data_creation": "None. Tests injected a synthetic 100-vertex polyline + one rapid POI directly into the WebView via window.setRunPolyline / setRunPois; no persisted data.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "The WebView exposes a __rrDebug hook (track.tsx:605-621) that is invaluable for testing the distance logic without needing a real river run selected. Use document.querySelector('iframe').contentWindow.__rrDebug.{polyLen,user,distLabel,poiCount,openFirstPopup} from Playwright's page.evaluate. Runtime verification of the fix already ran and passed; no further iteration on the distance calculator needed unless the label format changes.",
+  "rca_of_issue": "Original user report had three root causes, all fixed in this iteration:\n1. DIST_GATE_M was 30.48m (100ft) — the popup silently returned '' for users off the mapped centerline. Raised to 500m and emptiness replaced with 'Distance unavailable'. Verified via distLabel test at (36.855, -111.55) which is ≈1100m off-line → returns 'Distance unavailable' as expected.\n2. Popup content was frozen at popupopen time — refreshOpenPoiPopups now runs every ping; verified live: meta ticked 2.77 → 1.11 → 0.28 mi across three updatePos calls without closing the popup.\n3. Reselecting same POI after moving gave stale distance — __baseTitle/__baseMeta captured once at marker creation and popupopen re-renders from bases with a fresh distLabel call using current currentUserLat/Lon, so reselect after move always computes fresh."
+}

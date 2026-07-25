@@ -306,7 +306,14 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
   var polyRefLat = null;  // reference latitude for the local plane
   var currentUserLat = ${lat};
   var currentUserLon = ${lon};
-  var DIST_GATE_M = 30.48;   // 100 ft — user must be this close to the line
+  // Gate for "along the river" mode. When the user is farther than this
+  // (perpendicular) from the mapped polyline we assume they're not on
+  // the water any more (camp on shore, scouting a rapid, jet-boating a
+  // side canyon, etc.) and fall back to straight-line distance so the
+  // popup always shows *some* number instead of silently blanking.
+  // 500 m ≈ 1,640 ft — comfortably covers wide flood-stage channels
+  // and shore camps while still rejecting obviously off-river taps.
+  var DIST_GATE_M = 500;
   var MI_PER_M = 1 / 1609.344;
 
   function llToXYRef(lat, lon, refLat){
@@ -358,16 +365,42 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
     }
     return { cum: bestCum, dist: bestDist };
   }
-  // Returns '' if no polyline OR user is farther than DIST_GATE_M from it.
-  // Otherwise returns a label like "0.34 mi along river".
+  // Returns a distance label when the user is close enough to the mapped
+  // river polyline to compute a meaningful "along the river" figure. If
+  // either the user OR the POI is too far off the mapped centerline
+  // (camped on shore, hiking a side canyon, no polyline loaded yet), we
+  // return an explicit unavailable label so users don't confuse a
+  // stale/blank popup for the real distance.
   function computePoiDistanceLabel(poiLat, poiLon){
-    if (polyXY.length < 2) return '';
-    var u = projectOnPoly(currentUserLat, currentUserLon);
-    if (!u || u.dist > DIST_GATE_M) return '';
-    var p = projectOnPoly(poiLat, poiLon);
-    if (!p) return '';
-    var miles = Math.abs(u.cum - p.cum) * MI_PER_M;
-    return miles.toFixed(2) + ' mi along river';
+    var haveIdx = polyXY.length >= 2;
+    if (haveIdx){
+      var u = projectOnPoly(currentUserLat, currentUserLon);
+      var p = projectOnPoly(poiLat, poiLon);
+      if (u && p && u.dist <= DIST_GATE_M && p.dist <= DIST_GATE_M){
+        var miAlong = Math.abs(u.cum - p.cum) * MI_PER_M;
+        return miAlong.toFixed(2) + ' mi along river';
+      }
+    }
+    return 'Distance unavailable';
+  }
+
+  // Refresh the popup content for every currently-open POI marker. Called
+  // from window.updatePos() on every GPS ping so the "X.XX mi ..."
+  // label ticks down in real time while the user paddles/hikes toward
+  // the point — no need to close and reopen the popup to see it move.
+  function refreshOpenPoiPopups(){
+    if (!poiLayer) return;
+    poiLayer.eachLayer(function(m){
+      if (m && m.isPopupOpen && m.isPopupOpen()){
+        var ll = m.getLatLng();
+        var extra = computePoiDistanceLabel(ll.lat, ll.lng);
+        var baseMeta = m.__baseMeta || '';
+        var meta2 = extra
+          ? (baseMeta ? (baseMeta + ' · ' + extra) : extra)
+          : baseMeta;
+        m.setPopupContent(popupHtml(m.__baseTitle || '', meta2));
+      }
+    });
   }
 
   function pin(cls, svg){
@@ -440,6 +473,13 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
     if (follow && !userInteracted) {
       map.panTo([lat, lon], { animate:true });
     }
+    // Live-refresh the "X.XX mi ..." label on any POI popup the user
+    // currently has open, so the distance ticks down as they move
+    // toward a rapid / camp / take-out. Without this, popup content
+    // was frozen at whatever the label read at popupopen time — which
+    // let users see stale distances after moving 200+ ft, and made
+    // reselecting a marker feel like "the calculator is broken."
+    refreshOpenPoiPopups();
   };
   window.setPath = function(arr) {
     path.setLatLngs(arr);
