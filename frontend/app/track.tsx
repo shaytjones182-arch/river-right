@@ -865,7 +865,24 @@ export default function Track() {
     return () => {
       cancelled = true;
     };
-  }, [selectedRiver, sendJs]);
+    // `htmlBuildCounter` is included so that if the WebView remounts
+    // (fresh HTML string with newly-arrived offline tiles), the POIs
+    // and polyline get pushed into the fresh in-WebView JS state — the
+    // WebView's `window.setRunPois` / `setRunPolyline` are attached to
+    // the WEBVIEW's window object, which resets on every remount.
+  }, [selectedRiver, sendJs, htmlBuildCounter]);
+
+  // Companion re-inject: push the accumulated GPS breadcrumb path back
+  // into the freshly-mounted WebView so the user's live trail doesn't
+  // vanish when the map remounts to pick up newly-arrived offline
+  // tiles. Skipped on the very first build (`htmlBuildCounter === 1`)
+  // — that's the initial mount, where the WebView is empty and the
+  // regular GPS pipeline is about to push its first point anyway.
+  useEffect(() => {
+    if (htmlBuildCounter <= 1) return;
+    const arr = pointsRef.current.map((p) => [p.lat, p.lon]);
+    if (arr.length) sendJs(`window.setPath(${JSON.stringify(arr)})`);
+  }, [htmlBuildCounter, sendJs]);
 
   // Shared insertion path used by both the foreground watcher and the
   // background-queue drainer. Keeps distance + max-speed bookkeeping
@@ -1448,26 +1465,16 @@ export default function Track() {
     };
   }, []);
   // Refresh the offline-tile manifest whenever this tab regains focus,
-  // so freshly-downloaded tiles show up without an app restart. If the
-  // tile count changed since last render, we ALSO null out the
-  // initialHtmlRef so the next render rebuilds the HTML and the WebView
-  // remounts with the new file:// URLs baked in.
+  // so freshly-downloaded tiles show up without an app restart. The
+  // `useMemo` below owns the decision of when to rebuild the HTML — we
+  // just push the freshest manifest into state and let the memo see
+  // whether it needs to re-bake.
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
       (async () => {
         const m = await getMergedOfflineManifest();
-        if (cancelled) return;
-        setTrackOfflineTiles((prev) => {
-          const a = prev?.tileToUrl ? Object.keys(prev.tileToUrl).length : 0;
-          const b = m?.tileToUrl ? Object.keys(m.tileToUrl).length : 0;
-          if (a !== b) {
-            // Force a fresh HTML build on the next render.
-            initialHtmlRef.current = null;
-            return m;
-          }
-          return prev;
-        });
+        if (!cancelled && m) setTrackOfflineTiles(m);
       })();
       return () => {
         cancelled = true;
@@ -1479,11 +1486,41 @@ export default function Track() {
   // the in-WebView `window.updatePos()` call instead of rebuilding the
   // HTML — otherwise every GPS ping would rewrite the temp file, remount
   // the WebView, and reset the user's pan/zoom/rotation back to default.
+  //
+  // BUT: the offline-tile manifest is fetched ASYNC after mount. If GPS
+  // fires before the manifest resolves (very common — GPS has an
+  // ~immediate lock, manifest fetch takes 500 ms – several seconds),
+  // the HTML gets baked with `OFFLINE_TILES = null`. Without the check
+  // below, that null-tile HTML stayed cached for the entire session and
+  // the map would render blank until the app was force-quit. We now
+  // track the tile-key count that was actually baked, and if a later
+  // manifest snapshot has a DIFFERENT count we invalidate the cache
+  // and rebuild — WebView remounts with the fresh file:// URLs.
   const initialHtmlRef = useRef<string | null>(null);
+  const bakedTileCountRef = useRef<number>(-1); // -1 = sentinel: never baked
+  // Bumped every time the HTML is (re)baked. Consumed by the effect
+  // below that re-injects POIs + polyline + trip path into the freshly-
+  // mounted WebView after a rebuild.
+  const [htmlBuildCounter, setHtmlBuildCounter] = useState(0);
   const html = useMemo(() => {
-    if (initialHtmlRef.current) return initialHtmlRef.current;
     if (!coord) return null;
+    const currentTileCount = trackOfflineTiles?.tileToUrl
+      ? Object.keys(trackOfflineTiles.tileToUrl).length
+      : 0;
+    // Reuse cached HTML only if the baked tile set matches the current
+    // manifest — otherwise force a fresh build so the offline tiles
+    // that came in after mount actually make it into the WebView.
+    if (
+      initialHtmlRef.current &&
+      bakedTileCountRef.current === currentTileCount
+    ) {
+      return initialHtmlRef.current;
+    }
+    bakedTileCountRef.current = currentTileCount;
     initialHtmlRef.current = buildHtml(coord.lat, coord.lon, trackOfflineTiles);
+    // Bump on the next tick so the re-inject effect runs AFTER React
+    // commits the new html string to the WebView.
+    setTimeout(() => setHtmlBuildCounter((n) => n + 1), 0);
     return initialHtmlRef.current;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [coord, trackOfflineTiles]);

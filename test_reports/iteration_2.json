@@ -1,0 +1,51 @@
+{
+  "summary": "CRITICAL REGRESSION: The applied fix to /app/frontend/app/track.tsx breaks the Track screen entirely. The `htmlBuildCounter` state (declared via useState at line 1504) is referenced in two useEffect dependency arrays at lines 873 and 885 — but those effects are declared ABOVE the useState. Because `const` bindings are in the Temporal Dead Zone until their declaration executes, and React hooks run sequentially top-to-bottom during render, every navigation to /track throws `ReferenceError: Cannot access 'htmlBuildCounter' before initialization` and shows the Expo/RN red error screen. The original offline-tile loading-order bug is technically addressed by the useMemo logic (which itself looks correct), but the accompanying re-inject effects cannot even run because the component crashes before render completes. Verified via `yarn tsc --noEmit` (TS2448 errors on lines 873 and 885) AND live browser smoke test of http://localhost:3000/track (red screen with call-stack pointing at track.tsx:873:30). Map tab is unaffected. No backend testing performed (per request).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "Track screen (app/track.tsx)",
+        "issue": "Track screen crashes on mount with `ReferenceError: Cannot access 'htmlBuildCounter' before initialization`. useState is declared at line 1504 but referenced in useEffect deps at lines 873 and 885. Because hooks execute top-to-bottom in a single render, the earlier effects hit the const binding while it's still in TDZ. The red screen appears immediately when navigating to /track; the WebView never mounts.",
+        "testID": "n/a (component never renders)",
+        "priority": "CRITICAL"
+      }
+    ],
+    "integration_issues": [
+      {
+        "flow": "Offline tile manifest -> HTML rebuild -> POI/polyline/path re-inject",
+        "issue": "Cannot be exercised because the component crashes before render completes. The useMemo logic that owns the rebuild decision (lines 1505-1526) is well-formed — `bakedTileCountRef` correctly tracks the last baked tile count, and the null->populated manifest transition WILL invalidate the cache once the TDZ crash is fixed. But until the crash is fixed, none of the re-inject effects (selected-river POI/polyline at line 808 or the new setPath re-inject at line 881) can fire.",
+        "affected_testIDs": []
+      }
+    ],
+    "design_issues": [],
+    "react_native_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_2.json",
+    "/tmp/track_screen.png (screenshot of red screen error on /track)"
+  ],
+  "action_items": [
+    "MOVE the following declarations to ABOVE the two useEffects that depend on them (i.e., above line 808 in track.tsx, ideally right after `const selectedRiver = useMemo(...)` at line 785): (1) `const initialHtmlRef = useRef<string | null>(null);` currently at line 1499; (2) `const bakedTileCountRef = useRef<number>(-1);` currently at line 1500; (3) `const [htmlBuildCounter, setHtmlBuildCounter] = useState(0);` currently at line 1504. Leave the `html = useMemo(...)` and the `trackOfflineTiles` state where they are (near the JSX). Only the three lines above need to be hoisted — everything else stays put. After the move, re-run `yarn tsc --noEmit` and confirm no `TS2448 used before its declaration` errors remain.",
+    "After hoisting, re-verify by loading http://localhost:3000/track in a browser at 375x667 — the Track screen should mount without a red error overlay (permission prompt for location is expected and fine).",
+    "Optional cleanup: consider colocating the html useMemo with its refs/state so the ordering constraint is more obvious to future readers. Right now the refs+state and the useMemo are separated by ~700 lines, which is exactly what let this ordering bug slip in."
+  ],
+  "critical_code_review_comments": [
+    "track.tsx is 2149 lines — well above the 700-line threshold. Splitting this into logically-grouped modules (WebView HTML builder, GPS/motion gate, trip state machine, snapshot persistence, UI sheet) would prevent exactly this kind of long-distance-ordering hazard.",
+    "The `setTimeout(() => setHtmlBuildCounter((n) => n + 1), 0)` inside the `useMemo` body (line 1523) is a code smell — setState-inside-useMemo violates React's purity model and can cause double-invocation warnings in Strict Mode. Consider moving the counter bump into a `useEffect` that watches `initialHtmlRef.current` via a ref-tracking pattern, or convert the whole thing to `useEffect` that writes html to state.",
+    "Lines 288-289 and 291-292 of the Leaflet HTML template declare `path` and `pathInner` polylines TWICE (lines 288-289 with the canvas renderer, then again at 291-292 without). The second pair shadows the first inside the closure — the canvas-renderer versions are lost. Not a regression from this fix, but worth fixing while you're in there.",
+    "The pre-existing TS errors on lines 911 and 1070 (haversineMiles receiving `{lat, lon}` without `t`) are unrelated to this fix but should be tightened — either widen haversineMiles' param type or supply `t: 0` at the call sites."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "n/a (backend testing skipped per request)",
+    "frontend": "0% - Track screen crashes on mount; verification of the offline-tile fix logic is blocked by the TDZ crash"
+  },
+  "seed_data_creation": "None",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "After the main agent hoists the three declarations (initialHtmlRef, bakedTileCountRef, htmlBuildCounter useState) above line 808, re-run this iteration's checks: (1) `yarn tsc --noEmit` should have no TS2448 errors; (2) `http://localhost:3000/track` should render the map container with no red screen; (3) confirm in the browser console (via window.__rrDebug or a small injected script) that when `trackOfflineTiles` transitions from null to populated, `htmlBuildCounter` increments from 1 to 2 exactly once, and the WebView remounts. Verify the counter does NOT increment further on subsequent renders when the tile count is stable. The rest of the useMemo logic looks correct and does not need to change.",
+  "rca_of_issue": "ROOT CAUSE: JavaScript Temporal Dead Zone (TDZ) violation on `const htmlBuildCounter`. React function components run all hooks sequentially in a single top-to-bottom render pass. `htmlBuildCounter` is declared via `useState` at line 1504, but is read inside the dependency arrays of `useEffect` at lines 873 (`}, [selectedRiver, sendJs, htmlBuildCounter]`) and 885 (`}, [htmlBuildCounter, sendJs]`) — both of which execute BEFORE line 1504 during the render. `const` bindings throw `ReferenceError` when read before their declaration statement runs. REPRODUCTION: Any navigation to /track (or cold-mount of the Track screen). MITIGATION (for main agent): Hoist the useState + the two useRefs (`initialHtmlRef`, `bakedTileCountRef`) above line 808 so they exist before the effects that reference them. No other logic changes needed — the useMemo rebuild-decision itself is correct and will function as designed once the ordering is fixed."
+}
