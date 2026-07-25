@@ -1,0 +1,32 @@
+{
+  "summary": "TDZ regression from iteration_2 is RESOLVED. Verified via `yarn tsc --noEmit`: no TS2448 errors remain on `htmlBuildCounter`, `initialHtmlRef`, or `bakedTileCountRef` in /app/frontend/app/track.tsx. The three declarations are now correctly hoisted to lines 796-798 (right after the `selectedRiver` useMemo at 785), well above the two consumer useEffects at lines 883 and 895. Verified via Playwright at 375x667 that http://localhost:3000/track mounts cleanly — no Expo/RN red-error screen, no `ReferenceError: Cannot access 'htmlBuildCounter' before initialization` in DOM, no red-box element (`[data-testid=\"redbox-root\"]`). The tracker container renders with all expected UI (Trip Tracker header, SPEED/DISTANCE/AVG/TIME tiles, START TRIP button, location-permission-denied message). The disclaimer modal on first-launch is expected behavior and is unrelated to the fix. Metro bundler shows successful bundles (no `Bundling failed` / `SyntaxError` entries in expo.out.log). The offline-tile useMemo logic from iteration_2 is intact: line 1514 `html = useMemo(..., [coord, trackOfflineTiles])` still checks `bakedTileCountRef.current === currentTileCount`, still calls `setTimeout(0, () => setHtmlBuildCounter(n => n + 1))`, and the two re-inject useEffects still include `htmlBuildCounter` in their dep arrays. Only the three declarations moved — no other logic changed. No new issues introduced. Per request, purchase flows and Trip Tracker recording were NOT exercised.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [],
+    "react_native_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_3.json",
+    "/tmp/track_after_fix.png (screenshot of /track — disclaimer modal on first launch, no red screen; Trip Tracker UI renders behind it as confirmed by DOM inspection)"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Pre-existing (not touched per request): the useMemo `liveAvgMph` at line 1456 declares `movingSec` in its dep array but computes off `distMiles / (totalSec / 3600)` — `movingSec` is unused inside the body (comment says total-elapsed denominator is intentional). Either remove `movingSec` from deps or use it. Cosmetic — no behavioral impact.",
+    "Pre-existing (not touched per request): `setTimeout(() => setHtmlBuildCounter((n) => n + 1), 0)` inside the useMemo body at line 1532 still violates React purity. In Strict Mode dev, the useMemo can be invoked twice, causing two counter bumps for one logical rebuild. Consider moving to a useEffect keyed on `initialHtmlRef.current`-via-state. Not a blocker for this iteration."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "n/a (backend testing skipped per request)",
+    "frontend": "100% - TDZ regression resolved; /track mounts without red screen; tsc clean on the three names; Metro bundles clean; iteration_2 useMemo logic intact"
+  },
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "The offline-tile-loading-order fix in track.tsx is now compile-clean AND mounts cleanly. If a future iteration touches this area, verify that (1) `htmlBuildCounter`, `initialHtmlRef`, `bakedTileCountRef` remain declared BEFORE the two useEffects that read them (currently at lines 883 and 895); (2) the `html` useMemo at line 1514 still tracks `bakedTileCountRef.current` against `Object.keys(trackOfflineTiles.tileToUrl).length`; (3) `yarn tsc --noEmit` produces no TS2448 on those three names. Actual offline-tile behavior (manifest null→populated transition triggering a WebView remount) was not exercised in this iteration and would need a runtime test with a populated `getMergedOfflineManifest()` — window.__rrDebug is exposed on the WebView for this purpose.",
+  "rca_of_issue": "Not applicable — this iteration verified a fix, not reproduced a bug. Iteration_2's TDZ root cause (const bindings read before declaration in a top-to-bottom hook render) is resolved by the hoist. No new issues found."
+}

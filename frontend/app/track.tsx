@@ -787,6 +787,16 @@ export default function Track() {
     [rivers, selectedRiverId]
   );
 
+  // ─── HTML build state (hoisted above consumers) ────────────────────
+  // These are declared here (rather than next to the `html` useMemo far
+  // below) so the two re-inject useEffects — which live between here
+  // and the useMemo — can reference `htmlBuildCounter` without hitting
+  // the TDZ. All three power the same offline-tile-loading-order fix
+  // described where the `html` useMemo is defined.
+  const initialHtmlRef = useRef<string | null>(null);
+  const bakedTileCountRef = useRef<number>(-1); // -1 = sentinel: never baked
+  const [htmlBuildCounter, setHtmlBuildCounter] = useState(0);
+
   // Helper to inject JS into the map (works on both native WebView and web iframe)
   const sendJs = useCallback((js: string) => {
     if (Platform.OS === "web") {
@@ -1496,12 +1506,11 @@ export default function Track() {
   // track the tile-key count that was actually baked, and if a later
   // manifest snapshot has a DIFFERENT count we invalidate the cache
   // and rebuild — WebView remounts with the fresh file:// URLs.
-  const initialHtmlRef = useRef<string | null>(null);
-  const bakedTileCountRef = useRef<number>(-1); // -1 = sentinel: never baked
-  // Bumped every time the HTML is (re)baked. Consumed by the effect
-  // below that re-injects POIs + polyline + trip path into the freshly-
-  // mounted WebView after a rebuild.
-  const [htmlBuildCounter, setHtmlBuildCounter] = useState(0);
+  //
+  // Note: `initialHtmlRef`, `bakedTileCountRef`, and `htmlBuildCounter`
+  // are all declared much earlier in the component so the re-inject
+  // useEffects between here and there can reference them without
+  // hitting the temporal-dead-zone.
   const html = useMemo(() => {
     if (!coord) return null;
     const currentTileCount = trackOfflineTiles?.tileToUrl
