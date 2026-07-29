@@ -888,20 +888,47 @@ export default function MapScreen() {
   );
 
   // Push state to map whenever map is ready or relevant state changes.
-  // `params.reset` is in the deps so the explicit refit triggered by the
-  // river card's "View on Map" button re-runs this effect even when the
-  // selected river hasn't changed (e.g. user is already viewing that run).
+  // `params.reset` and `params.river` are in the deps so the explicit
+  // refit triggered by the river card's "View on Map" button re-runs
+  // this effect even when the selected river hasn't changed (e.g. user
+  // is already viewing that run) — and, critically, so the transient
+  // render where the URL has already switched to river B but React
+  // state still reads river A can be detected and skipped.
+  const lastAppliedResetRef = useRef<string | null>(null);
   useEffect(() => {
     if (!mapReady) return;
     // Only push focused state once POIs are loaded so the bounds include them
     if (selectedRiver && focusedPois === null) return;
+    // Guard against transient render: if the URL asks for a specific
+    // river but React state hasn't caught up yet (state batching from
+    // setSelectedRiverId in a prior effect leaves `selectedRiver` on
+    // the OLD river for one render), skip the push. The next render
+    // — where selectedRiver has been updated — will emit the correct
+    // payload. Without this guard we'd push the OLD river's focus
+    // payload with move='fit', flipping `prevModeRef.current` back to
+    // 'focused' and starving the real (new) river of its own fit.
+    if (params.river && selectedRiver && selectedRiver.id !== params.river) return;
+
     const newMode: "overview" | "focused" = selectedRiver ? "focused" : "overview";
-    // Only animate the camera on a real mode change. Filter changes within
-    // the same mode (overview→overview) should leave the camera alone.
-    const move = newMode !== prevModeRef.current ? "fit" : "none";
+    // Force a fit whenever a fresh `reset` nonce is pending, even if
+    // we were already in "focused" mode. Without this, tapping "View
+    // on Map" for river B while the map was already focused on river
+    // A silently no-ops the camera (markers switch but the viewport
+    // doesn't move). We only mark the nonce as "applied" once we've
+    // actually pushed a payload that matches the requested river, so
+    // the intermediate transient renders don't consume the fit.
+    const freshReset = !!params.reset && lastAppliedResetRef.current !== params.reset;
+    const move: "fit" | "none" = freshReset
+      ? "fit"
+      : newMode !== prevModeRef.current
+      ? "fit"
+      : "none";
     postCommand({ ...buildPayload(), move });
     prevModeRef.current = newMode;
-  }, [mapReady, selectedRiver, focusedPois, displayedPois, filteredRivers, buildPayload, postCommand, params.reset]);
+    if (freshReset && (!params.river || (selectedRiver && selectedRiver.id === params.river))) {
+      lastAppliedResetRef.current = params.reset || null;
+    }
+  }, [mapReady, selectedRiver, focusedPois, displayedPois, filteredRivers, buildPayload, postCommand, params.reset, params.river]);
 
   // Handle messages from the map
   const handleMessage = useCallback((msg: string) => {
