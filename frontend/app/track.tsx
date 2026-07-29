@@ -368,12 +368,12 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
     }
     return { cum: bestCum, dist: bestDist };
   }
-  // Returns a distance label when the user is close enough to the mapped
-  // river polyline to compute a meaningful "along the river" figure. If
-  // either the user OR the POI is too far off the mapped centerline
-  // (camped on shore, hiking a side canyon, no polyline loaded yet), we
-  // return an explicit unavailable label so users don't confuse a
-  // stale/blank popup for the real distance.
+  // Returns the live "X.XX mi along river" label when both the user AND
+  // the POI project onto the run's polyline within DIST_GATE_M. When
+  // the user is outside that buffer (or no polyline is loaded yet) we
+  // return an empty string so the popup simply omits the label — no
+  // "Distance unavailable" noise for a paddler standing on a bank
+  // near-but-not-quite-on the mapped centerline.
   function computePoiDistanceLabel(poiLat, poiLon){
     var haveIdx = polyXY.length >= 2;
     if (haveIdx){
@@ -384,7 +384,7 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
         return miAlong.toFixed(2) + ' mi along river';
       }
     }
-    return 'Distance unavailable';
+    return '';
   }
 
   // Refresh the popup content for every currently-open POI marker. Called
@@ -512,47 +512,64 @@ html,body,#m{margin:0;padding:0;height:100%;width:100%;background:#E0E1DD;}
 
     pois.forEach(function(p){
       pts.push([p.lat, p.lon]);
-      var marker;
-      if (p.kind === 'waterfall'){
-        marker = L.marker([p.lat, p.lon], { icon: tri() })
-          .bindPopup(popupHtml(p.name, 'Waterfall' + (p.grade ? ' · Class ' + p.grade : '')));
-      } else if (p.kind === 'hazard'){
-        marker = L.marker([p.lat, p.lon], { icon: tri() })
-          .bindPopup(popupHtml(p.name, p.cat));
-      } else if (p.kind === 'portage'){
-        marker = L.marker([p.lat, p.lon], { icon: pin('portage', SVG.steps) })
-          .bindPopup(popupHtml(p.name, 'Portage'));
-      } else if (p.kind === 'play'){
-        marker = L.marker([p.lat, p.lon], { icon: pinColored(rapidColor(p.grade), SVG.wave) })
-          .bindPopup(popupHtml(p.name, 'Play spot'));
-      } else if (p.kind === 'camp'){
-        marker = L.marker([p.lat, p.lon], { icon: pin('camp', SVG.tent) })
-          .bindPopup(popupHtml(p.name || 'Campground', 'Campground'));
-      } else if (p.kind === 'boat_ramp'){
-        marker = L.marker([p.lat, p.lon], { icon: pin('boat', SVG.boat) })
-          .bindPopup(popupHtml(p.name || 'Boat Ramp', 'Boat Ramp'));
-      } else if (p.kind === 'access'){
-        marker = L.marker([p.lat, p.lon], { icon: pin('access', SVG.boat) })
-          .bindPopup(popupHtml(p.name || 'Access Point', 'Access Point'));
-      } else if (p.kind === 'parking'){
-        marker = L.marker([p.lat, p.lon], { icon: pin('parking', SVG.parking) })
-          .bindPopup(popupHtml(p.name || 'Parking', 'Parking'));
-      } else if (p.kind === 'note'){
-        marker = L.marker([p.lat, p.lon], { icon: pin('note', SVG.info) })
-          .bindPopup(popupHtml(p.name || 'Note', p.description || ''));
-      } else if (p.kind === 'putin' || p.kind === 'takeout'){
-        // Legacy data may still set these — render as boat-ramp markers so
-        // every POI on the map comes from the data file, never hardcoded.
-        marker = L.marker([p.lat, p.lon], { icon: pin('boat', SVG.boat) })
-          .bindPopup(popupHtml(p.name || (p.kind === 'putin' ? 'Put-in' : 'Take-out'), 'Boat Ramp'));
-      } else {
-        var name = p.name;
-        if (!name || /^rapids?$/i.test(name)) name = 'Unnamed rapid';
-        var classLabel = p.grade || '';
-        // Per-class color (green→red); unknown grade → blue.
-        marker = L.marker([p.lat, p.lon], { icon: pinColored(rapidColor(p.grade), SVG.wave) })
-          .bindPopup(popupHtml(name, classLabel ? 'Class ' + classLabel : ''));
+
+      // ── Popup title + meta (data-driven, no redundant kind labels) ──
+      // Title: use the curated name when present, otherwise fall back to
+      // the kind label (Campground / Parking / Boat Ramp / …) so the
+      // popup still reads sensibly for anonymous POIs. When the curated
+      // name IS present we do NOT repeat the kind as a subtitle — the
+      // icon already tells the user this is a campground / parking spot.
+      // The subtitle is now assembled purely from data attributes:
+      //   · Class rating (rapids, waterfalls, play spots)
+      //   · Waterfall marker (to disambiguate the triangle icon)
+      //   · Hazard category
+      //   · Description (free-form text from the curated GeoJSON)
+      //   · River-mile from the put-in
+      var kind = p.kind || 'rapid';
+      var title = p.name;
+      if (!title || /^rapids?$/i.test(title)) {
+        title = ({
+          'camp':      'Campground',
+          'boat_ramp': 'Boat Ramp',
+          'access':    'Access Point',
+          'parking':   'Parking',
+          'note':      'Note',
+          'putin':     'Put-in',
+          'takeout':   'Take-out',
+          'waterfall': 'Waterfall',
+          'portage':   'Portage',
+          'play':      'Play spot',
+          'hazard':    'Hazard'
+        })[kind] || 'Unnamed rapid';
       }
+      var metaParts = [];
+      if (kind === 'waterfall'){
+        metaParts.push('Waterfall' + (p.grade ? ' · Class ' + p.grade : ''));
+      } else if (kind === 'hazard'){
+        if (p.cat) metaParts.push(p.cat);
+      } else if (p.grade && (kind === 'rapid' || kind === 'play' || !kind)){
+        metaParts.push('Class ' + p.grade);
+      }
+      if (p.description) metaParts.push(p.description);
+      if (typeof p.distance_from_putin_mi === 'number' && p.distance_from_putin_mi > 0){
+        metaParts.push('Mile ' + p.distance_from_putin_mi.toFixed(1));
+      }
+      var meta = metaParts.join(' · ');
+
+      // ── Icon (unchanged icon-selection rules) ──
+      var icon;
+      if (kind === 'waterfall' || kind === 'hazard') icon = tri();
+      else if (kind === 'portage') icon = pin('portage', SVG.steps);
+      else if (kind === 'play')    icon = pinColored(rapidColor(p.grade), SVG.wave);
+      else if (kind === 'camp')    icon = pin('camp', SVG.tent);
+      else if (kind === 'boat_ramp' || kind === 'putin' || kind === 'takeout') icon = pin('boat', SVG.boat);
+      else if (kind === 'access')  icon = pin('access', SVG.boat);
+      else if (kind === 'parking') icon = pin('parking', SVG.parking);
+      else if (kind === 'note')    icon = pin('note', SVG.info);
+      else                         icon = pinColored(rapidColor(p.grade), SVG.wave); // rapid
+
+      var marker = L.marker([p.lat, p.lon], { icon: icon })
+        .bindPopup(popupHtml(title, meta));
       if (marker) {
         // Parse the original title/meta from the static popup HTML so we can
         // re-render it with a live "X.XX mi along river" suffix every time
