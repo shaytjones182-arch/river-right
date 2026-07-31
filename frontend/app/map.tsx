@@ -899,15 +899,26 @@ export default function MapScreen() {
     if (!mapReady) return;
     // Only push focused state once POIs are loaded so the bounds include them
     if (selectedRiver && focusedPois === null) return;
-    // Guard against transient render: if the URL asks for a specific
-    // river but React state hasn't caught up yet (state batching from
-    // setSelectedRiverId in a prior effect leaves `selectedRiver` on
-    // the OLD river for one render), skip the push. The next render
-    // — where selectedRiver has been updated — will emit the correct
-    // payload. Without this guard we'd push the OLD river's focus
-    // payload with move='fit', flipping `prevModeRef.current` back to
-    // 'focused' and starving the real (new) river of its own fit.
-    if (params.river && selectedRiver && selectedRiver.id !== params.river) return;
+    // Guard against transient render (deep-link only): if a FRESH `reset`
+    // nonce is pending AND the URL asks for a specific river but React
+    // state hasn't caught up yet, skip this push. State batching from
+    // setSelectedRiverId in a prior effect leaves `selectedRiver` on the
+    // OLD river for one render, and without this guard we'd push the
+    // OLD river's focus payload with move='fit', flipping
+    // `prevModeRef.current` back to 'focused' and starving the real
+    // (new) river of its own fit.
+    //
+    // CRITICAL: this guard MUST be gated on `freshReset`. Otherwise it
+    // blocks every subsequent in-app navigation once the deep-link has
+    // been consumed — because `params.river` is a stale URL fragment
+    // (the map's Back button and dot-tap handlers only touch React
+    // state, they don't clear the URL). A user who deep-linked into
+    // River A, tapped Back, then tapped River B's dot in overview would
+    // create the mismatch `params.river='A' !== selectedRiver.id='B'`
+    // and the state push would be silently dropped — the legend would
+    // update but the map wouldn't zoom in.
+    const freshReset = !!params.reset && lastAppliedResetRef.current !== params.reset;
+    if (freshReset && params.river && selectedRiver && selectedRiver.id !== params.river) return;
 
     const newMode: "overview" | "focused" = selectedRiver ? "focused" : "overview";
     // Force a fit whenever a fresh `reset` nonce is pending, even if
@@ -917,7 +928,6 @@ export default function MapScreen() {
     // doesn't move). We only mark the nonce as "applied" once we've
     // actually pushed a payload that matches the requested river, so
     // the intermediate transient renders don't consume the fit.
-    const freshReset = !!params.reset && lastAppliedResetRef.current !== params.reset;
     const move: "fit" | "none" = freshReset
       ? "fit"
       : newMode !== prevModeRef.current
