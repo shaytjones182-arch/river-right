@@ -48,24 +48,87 @@ def load_existing_bundle() -> dict:
 
 def poi_geojson_to_app_pois(poi_path: Path) -> list[dict]:
     """Convert the on-disk POI GeoJSON FeatureCollection back into the flat
-    POI dict shape that the app's existing `pois: [...]` array uses."""
+    POI dict shape that the app's existing `pois: [...]` array uses.
+
+    Tolerates two property-key conventions:
+      (a) plain keys — `name`, `waterway`, `rapids_class`, `description`
+      (b) QGIS-mangled keys — `properties.name`, `properties.waterway`,
+          `properties.rapids_class`, `properties.description`
+    Some field exports (e.g. QGIS `qgis:reprojectlayer` when the source
+    already had a nested `properties` dict) literally prefix every
+    attribute with the string `"properties."`. Reading both variants
+    keeps ingestion working regardless of how the GeoJSON was authored.
+
+    Also normalizes OSM-ish `waterway`/`amenity` category strings into
+    the internal kind taxonomy the app renderers understand (see the
+    icon-selection code in map.tsx / track.tsx). Without this mapping a
+    file that uses `waterway=rapids/campsite/…` produces 152 blank
+    "Unnamed rapid" entries at Mile 0.00.
+    """
+    # OSM/QGIS category → internal kind (mirrors the switch statements
+    # in map.tsx and track.tsx).
+    CATEGORY_TO_KIND = {
+        "rapids":      "rapid",
+        "rapid":       "rapid",
+        "waterfall":   "waterfall",
+        "hazard":      "hazard",
+        "portage":     "portage",
+        "play":        "play",
+        "campsite":    "camp",
+        "camp":        "camp",
+        "campground":  "camp",
+        "parking":     "parking",
+        "slipway":     "boat_ramp",
+        "boat_ramp":   "boat_ramp",
+        "access":      "access",
+        "note":        "note",
+        "putin":       "putin",
+        "put_in":      "putin",
+        "put-in":      "putin",
+        "takeout":     "takeout",
+        "take_out":    "takeout",
+        "take-out":    "takeout",
+    }
+
+    def pget(p: dict, *keys, default=None):
+        """Return the first non-null value among the given keys, trying both
+        the plain and `properties.`-prefixed variants."""
+        for k in keys:
+            for variant in (k, "properties." + k):
+                if variant in p and p[variant] not in (None, ""):
+                    return p[variant]
+        return default
+
     raw = json.loads(poi_path.read_text())
     out = []
     for feat in raw.get("features", []):
         p = feat.get("properties") or {}
         g = feat.get("geometry") or {}
         coords = g.get("coordinates") or [None, None]
+
+        category = pget(p, "category", "waterway", "amenity")
+        kind = pget(p, "kind")
+        if not kind and isinstance(category, str):
+            kind = CATEGORY_TO_KIND.get(category.strip().lower())
+        # Fall back to 'rapid' only when the feature actually looks like
+        # a rapid (has a class rating). Otherwise leave kind None so the
+        # renderer can pick a sensible default rather than dropping an
+        # unnamed pin.
+        grade = pget(p, "grade", "rapids_class", "class")
+        if not kind and grade:
+            kind = "rapid"
+
         out.append({
-            "name": p.get("name"),
-            "category": p.get("category"),
-            "kind": p.get("kind"),
-            "lat": coords[1],
-            "lon": coords[0],
-            "distance_from_putin_mi": p.get("distance_from_putin_mi") or 0.0,
-            "river_mi": p.get("river_mi") or 0.0,
-            "grade": p.get("grade"),
-            "description": p.get("description"),
-            "source": p.get("source") or "curated",
+            "name":                   pget(p, "name"),
+            "category":               category,
+            "kind":                   kind,
+            "lat":                    coords[1],
+            "lon":                    coords[0],
+            "distance_from_putin_mi": pget(p, "distance_from_putin_mi", default=0.0),
+            "river_mi":               pget(p, "river_mi", default=0.0),
+            "grade":                  grade,
+            "description":            pget(p, "description"),
+            "source":                 pget(p, "source", default="curated"),
         })
     return out
 

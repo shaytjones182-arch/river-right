@@ -1,159 +1,2748 @@
 {
-"type": "FeatureCollection",
-"name": "poi",
-"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
-"features": [
-{ "type": "Feature", "properties": { "properties.name": "Sabe Creek Rapid", "properties.waterway": "rapids", "properties.rapids_class": "II", "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.024851358898815, 45.507310452873504 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Oakie Grogg's Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.279223052054363, 45.532719713398457 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Ludwig Rapid", "properties.waterway": "rapids", "properties.rapids_class": "III", "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.491693929175156, 45.393891477387172 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Rainier Rapid", "properties.waterway": "rapids", "properties.rapids_class": "III-", "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -114.820752, 45.3966256 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Bull Creek Rapid", "properties.waterway": "rapids", "properties.rapids_class": "II", "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.729599203284963, 45.442569592281053 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Little Growler Rapid", "properties.waterway": "rapids", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.7716401, 45.4544886 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Otter Beach Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -114.851434901948039, 45.414525042788021 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Devil's Teeth Rapid", "properties.waterway": "rapids", "properties.rapids_class": "III", "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -114.8931925, 45.4359022 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Little Devils Teeth Rapid", "properties.waterway": "rapids", "properties.rapids_class": "II", "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -114.9446286, 45.4635194 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Bailey Rapid", "properties.waterway": "rapids", "properties.rapids_class": "III", "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.2009437, 45.5673749 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Fivemile Rapid", "properties.waterway": "rapids", "properties.rapids_class": "III", "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.2287291, 45.5576713 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Upper Allison Ranch Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.217625268131656, 45.569103936222909 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Big Mallard Rapid", "properties.waterway": "rapids", "properties.rapids_class": "+III-IV", "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.2684713, 45.5383284 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Elkhorn Rapid Stage 1", "properties.waterway": "rapids", "properties.rapids_class": "III-IV", "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.3221282, 45.5166512 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Whiplash Rapid", "properties.waterway": "rapids", "properties.rapids_class": "III", "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.3527156, 45.4769763 ] } },
-{ "type": "Feature", "properties": { "properties.name": "T-Bone Creek Rapid", "properties.waterway": "rapids", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.7680301, 45.452209 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Cottontail Rapid", "properties.waterway": "rapids", "properties.rapids_class": "II", "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.739667296633016, 45.44489715855503 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Can Opener Rapid", "properties.waterway": "rapids", "properties.rapids_class": "II", "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.764269871517968, 45.450911308933712 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Chittam Rapid", "properties.waterway": "rapids", "properties.rapids_class": "III-IV", "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.8885797, 45.4590109 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Vinegar Creek Rapid", "properties.waterway": "rapids", "properties.rapids_class": "III", "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.9028399, 45.4592659 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Carey Falls Rapid", "properties.waterway": "rapids", "properties.rapids_class": "II-III", "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.9376661, 45.457661 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Alder Creek Rapid", "properties.waterway": "rapids", "properties.rapids_class": "II-III", "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -114.8340282, 45.4042712 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Horse Creek Rapid", "properties.waterway": "rapids", "properties.rapids_class": "II", "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -114.7344757, 45.3953782 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Gunbarrel Rapid", "properties.waterway": "rapids", "properties.rapids_class": "II", "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -114.7101066, 45.387727 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Growler Rapid", "properties.waterway": "rapids", "properties.rapids_class": "II-III-", "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.3274467, 45.4981034 ] } },
-{ "type": "Feature", "properties": { "properties.name": null, "properties.waterway": "parking", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.8929831, 45.4596266 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Corn Creek Boat Ramp", "properties.waterway": "slipway", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -114.6877464, 45.3699522 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Carey Creek Boat Ramp", "properties.waterway": "slipway", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.945542, 45.4534033 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Bargamin Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.1931569, 45.5674321 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Vinegar Creek Boat Ramp", "properties.waterway": "slipway", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.8937453, 45.4597443 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Vinegar Creek Boat Ramp", "properties.waterway": "slipway", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.8916202, 45.4594212 ] } },
-{ "type": "Feature", "properties": { "properties.name": "James Ranch Rapid", "properties.waterway": "rapids", "properties.rapids_class": "II", "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.621798751483439, 45.403907239733257 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Pete's Rock Rapid", "properties.waterway": "rapids", "properties.rapids_class": "II", "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.627899001990286, 45.407372169734657 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Five Mile Creek Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.469956297962824, 45.41166622619896 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Pebble Beach Campsite 2", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.4762864, 45.410073 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Haynie Bar Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": "Reservable" }, "geometry": { "type": "Point", "coordinates": [ -115.4777777, 45.405708 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Bluebird Hole Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.4776114, 45.4006083 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Deadman's Hole Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.50475, 45.3834865 ] } },
-{ "type": "Feature", "properties": { "properties.name": "South Fork Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.5131024, 45.3750047 ] } },
-{ "type": "Feature", "properties": { "properties.name": "South Fork Island Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.5130139, 45.3777442 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Cove Creek Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.5336535, 45.3850011 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Red Harland Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.5438995, 45.3854306 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Upper Pine Tree Hole Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.5573535, 45.3847223 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Lower Pine Tree Hole Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.5678463, 45.3891717 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Hungry Bar Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": "Reservable" }, "geometry": { "type": "Point", "coordinates": [ -115.5820432, 45.3940201 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Mann Creek Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": "Reservable" }, "geometry": { "type": "Point", "coordinates": [ -115.5875123, 45.3946906 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Warren Creek Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": "Reservable" }, "geometry": { "type": "Point", "coordinates": [ -115.5968195, 45.3970073 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Swimming Hole Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": "Reservable" }, "geometry": { "type": "Point", "coordinates": [ -115.6014758, 45.3958471 ] } },
-{ "type": "Feature", "properties": { "properties.name": "James Creek Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.6163728, 45.3983445 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Mann Creek Rapid", "properties.waterway": "rapids", "properties.rapids_class": "II", "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.585862821664605, 45.395040525780992 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Rabbit Creek Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": "Reservable" }, "geometry": { "type": "Point", "coordinates": [ -115.6536448, 45.4256469 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Alex Meadows Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.6866521, 45.438465 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Basin Creek Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.6994999, 45.4434334 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Campbell's Rock Rapid", "properties.waterway": "rapids", "properties.rapids_class": "II", "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.644725242101742, 45.420120768389438 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Upper Bull Creek Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": "Reservable" }, "geometry": { "type": "Point", "coordinates": [ -115.72519, 45.4445173 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Lower Bull Creek Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.7270891, 45.4433506 ] } },
-{ "type": "Feature", "properties": { "properties.name": "California Creek Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": "Reservable" }, "geometry": { "type": "Point", "coordinates": [ -115.7612872, 45.4491916 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Maxwell Bar Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": "Reservable" }, "geometry": { "type": "Point", "coordinates": [ -115.7874709, 45.4631444 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Upper Sheep Creek Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.8068097, 45.4681558 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Middle Sheep Creek Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.8100712, 45.4687013 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Lower Sheep Creek Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.813086, 45.4676178 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Slide Beach Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.8387521, 45.4648206 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Johnson Creek Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": "Reservable" }, "geometry": { "type": "Point", "coordinates": [ -115.845589, 45.4632949 ] } },
-{ "type": "Feature", "properties": { "properties.name": "T-Bone Creek Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": "Reservable" }, "geometry": { "type": "Point", "coordinates": [ -115.767829774953839, 45.452543193256886 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Dried Meat Rapid", "properties.waterway": "rapids", "properties.rapids_class": "III", "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.832259703777183, 45.466590955290549 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Boulders Rapid", "properties.waterway": "rapids", "properties.rapids_class": "II", "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.910075288223268, 45.458567819596681 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Elkhorn Creek Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -114.9223137, 45.4484803 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Chamberlain Creek Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": "Only available at low water" }, "geometry": { "type": "Point", "coordinates": [ -114.9328065, 45.4542682 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Chukar Beach Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -114.9339438, 45.4593781 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Blackadar Hole Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": "Reservable" }, "geometry": { "type": "Point", "coordinates": [ -114.95435, 45.4670685 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Motor Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": "Reservable" }, "geometry": { "type": "Point", "coordinates": [ -114.9593711, 45.4673394 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Pia Natesu’u Naokwaide Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": "Reservable" }, "geometry": { "type": "Point", "coordinates": [ -114.9669725, 45.475623 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Upper Corey Bar Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -114.9859786, 45.4941496 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Pebble Beach Campsite 1", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -114.992137, 45.4945445 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Black Canyon Beach Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.0163359, 45.5080124 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Sunny Bar Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.040178, 45.5105499 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Barth Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": "Reservable" }, "geometry": { "type": "Point", "coordinates": [ -115.0485545, 45.5114521 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Sandy Hole Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.0564456, 45.5089485 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Poor Bar Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.0661552, 45.5111288 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Bruin Bar Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": "Reservable" }, "geometry": { "type": "Point", "coordinates": [ -115.0732899, 45.5171658 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Hancock Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": "Reservable" }, "geometry": { "type": "Point", "coordinates": [ -115.0937176, 45.5227211 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Magpie Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": "Reservable" }, "geometry": { "type": "Point", "coordinates": [ -115.1540297, 45.5486222 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Hida Creek Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": "Reservable" }, "geometry": { "type": "Point", "coordinates": [ -115.1715982, 45.5603419 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Bailey Bar Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": "Reservable" }, "geometry": { "type": "Point", "coordinates": [ -115.2109301, 45.5697648 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Upper Yellow Pine Bar Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.2629167, 45.5398946 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Lower Yellow Pine Bar Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": "Reservable" }, "geometry": { "type": "Point", "coordinates": [ -115.2650142, 45.5400712 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Big Mallard Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": "Reservable" }, "geometry": { "type": "Point", "coordinates": [ -115.2708292, 45.5366369 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Boiler Hole Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.2892774, 45.5352015 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Little Trout Creek Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.3250313, 45.4998914 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Groundhog Bar Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": "Reservable" }, "geometry": { "type": "Point", "coordinates": [ -115.3525293, 45.4776129 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Reed Creek Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": "Reservable" }, "geometry": { "type": "Point", "coordinates": [ -115.3747541, 45.4718312 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Gaines Bar Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.3904933, 45.4754312 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Rhett Creek Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.3942859, 45.4724557 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Paine Creek Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.4330063, 45.4541477 ] } },
-{ "type": "Feature", "properties": { "properties.name": "No Man Beach Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.45843462239587, 45.432969324252412 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Teepee Creek Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": "Reservable" }, "geometry": { "type": "Point", "coordinates": [ -115.461345045651072, 45.428612690678669 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Horse Creek Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -114.732187158648415, 45.395992581268843 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Bridge Pilings Camp", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -114.7352484, 45.3948489 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Pictographs", "properties.waterway": "note", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -114.749882152036037, 45.396180399318965 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Legend Creek Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -114.7571003, 45.3937187 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Spindle Creek Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -114.7843355, 45.3911157 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Phantom Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -114.8177826, 45.3962125 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Alder Creek Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": "Reservable" }, "geometry": { "type": "Point", "coordinates": [ -114.833151024188382, 45.402518329968466 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Fawn Creek Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -114.8567417, 45.415829 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Upper Lantz Bar Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": "Reservable" }, "geometry": { "type": "Point", "coordinates": [ -114.8636726, 45.4196019 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Lower Lantz Bar Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -114.8708501, 45.4182464 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Tag Creek Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -114.8743504, 45.4183123 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Upper Devil's Teeth Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": "Reservable" }, "geometry": { "type": "Point", "coordinates": [ -114.8913986, 45.4357021 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Lower Devil's Teeth Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": "Reservable" }, "geometry": { "type": "Point", "coordinates": [ -114.8953682, 45.4358564 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Killum Rapid", "properties.waterway": "rapids", "properties.rapids_class": "II-III", "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -114.707205570815361, 45.380253827110153 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Stub Creek Rapid", "properties.waterway": "rapids", "properties.rapids_class": "II", "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -114.744331699236412, 45.394533807565409 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Sohoagaiteka'a Naokwaide Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -114.865936329339405, 45.42031364945602 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Lantz Rapid", "properties.waterway": "rapids", "properties.rapids_class": "II-III", "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -114.872932846997784, 45.418085730249764 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Disappointment Creek Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -114.88009521080383, 45.422132277918031 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Pictographs", "properties.waterway": "note", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -114.897003490256068, 45.436338751802559 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Overhang Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -114.915493599229677, 45.448946756629546 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Lower Corey Bar Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -114.989240985289754, 45.494731538657575 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Black Creek Rapid", "properties.waterway": "rapids", "properties.rapids_class": "III-IV", "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.007751315345871, 45.50249387426625 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Hot Springs Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.044009612761229, 45.512365034544629 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Barth Rapid", "properties.waterway": "rapids", "properties.rapids_class": "II-III", "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.04720268247317, 45.512908223124207 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Hancock Rapid", "properties.waterway": "rapids", "properties.rapids_class": "II", "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.091536555503396, 45.520717636944042 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Masies Rapid", "properties.waterway": "rapids", "properties.rapids_class": "II", "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.098309826981662, 45.525585088484284 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Allison Ranch Rapid", "properties.waterway": "rapids", "properties.rapids_class": "II", "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.216531543230175, 45.569068350816345 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Allison Ranch Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.219354461652671, 45.568491273146314 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Sapp Creek Rapid", "properties.waterway": "rapids", "properties.rapids_class": "III", "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.224484621504303, 45.560446933075752 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Stinker Rapid", "properties.waterway": "rapids", "properties.rapids_class": "II", "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.238355636766855, 45.55601574869705 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Split Rock Rapid", "properties.waterway": "rapids", "properties.rapids_class": "III", "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.23385807177732, 45.558164045732383 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Little Mallard Rapid", "properties.waterway": "rapids", "properties.rapids_class": "II-III-", "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.300253631129436, 45.531404058433743 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Elkhorn Rapid Stage 2/Big Rock Rapid", "properties.waterway": "rapids", "properties.rapids_class": "II-IV", "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.322459823168472, 45.511280698906916 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Easter Egg Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.33782463325835, 45.484510801463649 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Jim Moore Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": "Reservable" }, "geometry": { "type": "Point", "coordinates": [ -115.342587265968035, 45.484887486631429 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Ruff Creek Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": "Reservable" }, "geometry": { "type": "Point", "coordinates": [ -115.346733451767292, 45.483603819347522 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Reed Creek Rapid", "properties.waterway": "rapids", "properties.rapids_class": "II", "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.373539017815304, 45.471755218994751 ] } },
-{ "type": "Feature", "properties": { "properties.name": "China Bar Rapid", "properties.waterway": "rapids", "properties.rapids_class": "II", "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.386667445307651, 45.476799012898688 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Big Blowout Creek Rapid", "properties.waterway": "rapids", "properties.rapids_class": "II", "properties.description": "Reservable" }, "geometry": { "type": "Point", "coordinates": [ -115.425937516988029, 45.458658268795709 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Boise Bar Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.441616119543568, 45.445393677031959 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Boise Bar Rapid", "properties.waterway": "rapids", "properties.rapids_class": "II", "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.444582833648795, 45.439574471023896 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Jackson Bar Rapid", "properties.waterway": "rapids", "properties.rapids_class": "II", "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.481791324518028, 45.396750621318056 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Warren Creek Rapid", "properties.waterway": "rapids", "properties.rapids_class": "II", "properties.description": "Reservable" }, "geometry": { "type": "Point", "coordinates": [ -115.59455029628603, 45.397716454931199 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Indian Creek Bar", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.612373269852029, 45.397454409638868 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Whiskey Bob Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.716505173781911, 45.444976068893403 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Wind River", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.943689316672078, 45.454512874159313 ] } },
-{ "type": "Feature", "properties": { "properties.name": null, "properties.waterway": "parking", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -114.687321393699719, 45.370193941294524 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Corn Creek Campground", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -114.685185336758394, 45.369385066790997 ] } },
-{ "type": "Feature", "properties": { "properties.name": null, "properties.waterway": "parking", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -114.685185336758394, 45.3702253538966 ] } },
-{ "type": "Feature", "properties": { "properties.name": null, "properties.waterway": "parking", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -114.687800435881428, 45.370390270057513 ] } },
-{ "type": "Feature", "properties": { "properties.name": null, "properties.waterway": "parking", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.946524604036966, 45.453006238168079 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Mackay Bar Bridge Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": "Reservable" }, "geometry": { "type": "Point", "coordinates": [ -115.501268851665102, 45.384518278144348 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Jim Moore Historical Site", "properties.waterway": "note", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.338393165082721, 45.486689136583287 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Buckskin Bill Museum", "properties.waterway": "note", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.468480083280767, 45.412014276815029 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Painter Mine", "properties.waterway": "note", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -115.461921738508721, 45.423162131694255 ] } },
-{ "type": "Feature", "properties": { "properties.name": "Lunch Bar Campsite", "properties.waterway": "campsite", "properties.rapids_class": null, "properties.description": null }, "geometry": { "type": "Point", "coordinates": [ -114.716441088406768, 45.395135108097826 ] } }
-]
+  "type": "FeatureCollection",
+  "name": "poi",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Corn Creek Boat Ramp",
+        "properties.waterway": "slipway",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 0.0,
+        "river_mi": 0.0
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.6877464,
+          45.3699522
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": null,
+        "properties.waterway": "parking",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 0.0,
+        "river_mi": 0.0
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.68732139369972,
+          45.370193941294524
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Corn Creek Campground",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 0.0,
+        "river_mi": 0.0
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.6851853367584,
+          45.369385066791
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": null,
+        "properties.waterway": "parking",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 0.0,
+        "river_mi": 0.0
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.6851853367584,
+          45.3702253538966
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": null,
+        "properties.waterway": "parking",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 0.0,
+        "river_mi": 0.0
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.68780043588143,
+          45.37039027005751
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Killum Rapid",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": "II-III",
+        "properties.description": null,
+        "distance_from_putin_mi": 1.47,
+        "river_mi": 1.47
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.70720557081536,
+          45.38025382711015
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Gunbarrel Rapid",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": "II",
+        "properties.description": null,
+        "distance_from_putin_mi": 2.02,
+        "river_mi": 2.02
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.7101066,
+          45.387727
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Lunch Bar Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 2.63,
+        "river_mi": 2.63
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.71644108840677,
+          45.395135108097826
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Horse Creek Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 3.44,
+        "river_mi": 3.44
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.73218715864841,
+          45.39599258126884
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Horse Creek Rapid",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": "II",
+        "properties.description": null,
+        "distance_from_putin_mi": 3.59,
+        "river_mi": 3.59
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.7344757,
+          45.3953782
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Bridge Pilings Camp",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 3.63,
+        "river_mi": 3.63
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.7352484,
+          45.3948489
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Stub Creek Rapid",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": "II",
+        "properties.description": null,
+        "distance_from_putin_mi": 4.07,
+        "river_mi": 4.07
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.74433169923641,
+          45.39453380756541
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Pictographs",
+        "properties.waterway": "note",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 4.35,
+        "river_mi": 4.35
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.74988215203604,
+          45.396180399318965
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Legend Creek Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 4.73,
+        "river_mi": 4.73
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.7571003,
+          45.3937187
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Spindle Creek Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 6.09,
+        "river_mi": 6.09
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.7843355,
+          45.3911157
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Phantom Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 7.92,
+        "river_mi": 7.92
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.8177826,
+          45.3962125
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Rainier Rapid",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": "III-",
+        "properties.description": null,
+        "distance_from_putin_mi": 8.06,
+        "river_mi": 8.06
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.820752,
+          45.3966256
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Alder Creek Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": "Reservable",
+        "distance_from_putin_mi": 8.79,
+        "river_mi": 8.79
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.83315102418838,
+          45.402518329968466
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Alder Creek Rapid",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": "II-III",
+        "properties.description": null,
+        "distance_from_putin_mi": 8.91,
+        "river_mi": 8.91
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.8340282,
+          45.4042712
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Otter Beach Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 10.03,
+        "river_mi": 10.03
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.85143490194804,
+          45.41452504278802
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Fawn Creek Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 10.31,
+        "river_mi": 10.31
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.8567417,
+          45.415829
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Upper Lantz Bar Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": "Reservable",
+        "distance_from_putin_mi": 10.77,
+        "river_mi": 10.77
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.8636726,
+          45.4196019
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Sohoagaiteka'a Naokwaide Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 10.84,
+        "river_mi": 10.84
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.8659363293394,
+          45.42031364945602
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Lower Lantz Bar Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 11.12,
+        "river_mi": 11.12
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.8708501,
+          45.4182464
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Lantz Rapid",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": "II-III",
+        "properties.description": null,
+        "distance_from_putin_mi": 11.23,
+        "river_mi": 11.23
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.87293284699778,
+          45.418085730249764
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Tag Creek Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 11.31,
+        "river_mi": 11.31
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.8743504,
+          45.4183123
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Disappointment Creek Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 11.68,
+        "river_mi": 11.68
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.88009521080383,
+          45.42213227791803
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Upper Devil's Teeth Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": "Reservable",
+        "distance_from_putin_mi": 12.81,
+        "river_mi": 12.81
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.8913986,
+          45.4357021
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Devil's Teeth Rapid",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": "III",
+        "properties.description": null,
+        "distance_from_putin_mi": 12.91,
+        "river_mi": 12.91
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.8931925,
+          45.4359022
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Lower Devil's Teeth Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": "Reservable",
+        "distance_from_putin_mi": 13.01,
+        "river_mi": 13.01
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.8953682,
+          45.4358564
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Pictographs",
+        "properties.waterway": "note",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 13.09,
+        "river_mi": 13.09
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.89700349025607,
+          45.43633875180256
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Overhang Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 14.35,
+        "river_mi": 14.35
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.91549359922968,
+          45.448946756629546
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Elkhorn Creek Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 14.68,
+        "river_mi": 14.68
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.9223137,
+          45.4484803
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Chamberlain Creek Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": "Only available at low water",
+        "distance_from_putin_mi": 15.36,
+        "river_mi": 15.36
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.9328065,
+          45.4542682
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Chukar Beach Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 15.73,
+        "river_mi": 15.73
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.9339438,
+          45.4593781
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Little Devils Teeth Rapid",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": "II",
+        "properties.description": null,
+        "distance_from_putin_mi": 16.38,
+        "river_mi": 16.38
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.9446286,
+          45.4635194
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Blackadar Hole Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": "Reservable",
+        "distance_from_putin_mi": 16.94,
+        "river_mi": 16.94
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.95435,
+          45.4670685
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Motor Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": "Reservable",
+        "distance_from_putin_mi": 17.18,
+        "river_mi": 17.18
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.9593711,
+          45.4673394
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Pia Natesu\u2019u Naokwaide Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": "Reservable",
+        "distance_from_putin_mi": 17.87,
+        "river_mi": 17.87
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.9669725,
+          45.475623
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Upper Corey Bar Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 19.51,
+        "river_mi": 19.51
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.9859786,
+          45.4941496
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Lower Corey Bar Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 19.7,
+        "river_mi": 19.7
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.98924098528975,
+          45.494731538657575
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Pebble Beach Campsite 1",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 19.82,
+        "river_mi": 19.82
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.992137,
+          45.4945445
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Black Creek Rapid",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": "III-IV",
+        "properties.description": null,
+        "distance_from_putin_mi": 20.76,
+        "river_mi": 20.76
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.00775131534587,
+          45.50249387426625
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Black Canyon Beach Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 21.32,
+        "river_mi": 21.32
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.0163359,
+          45.5080124
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Sabe Creek Rapid",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": "II",
+        "properties.description": null,
+        "distance_from_putin_mi": 21.73,
+        "river_mi": 21.73
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.02485135889881,
+          45.507310452873504
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Sunny Bar Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 22.57,
+        "river_mi": 22.57
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.040178,
+          45.5105499
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Hot Springs Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 22.8,
+        "river_mi": 22.8
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.04400961276123,
+          45.51236503454463
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Barth Rapid",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": "II-III",
+        "properties.description": null,
+        "distance_from_putin_mi": 22.99,
+        "river_mi": 22.99
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.04720268247317,
+          45.51290822312421
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Barth Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": "Reservable",
+        "distance_from_putin_mi": 23.11,
+        "river_mi": 23.11
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.0485545,
+          45.5114521
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Sandy Hole Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 23.55,
+        "river_mi": 23.55
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.0564456,
+          45.5089485
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Poor Bar Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 24.07,
+        "river_mi": 24.07
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.0661552,
+          45.5111288
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Bruin Bar Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": "Reservable",
+        "distance_from_putin_mi": 24.79,
+        "river_mi": 24.79
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.0732899,
+          45.5171658
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Hancock Rapid",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": "II",
+        "properties.description": null,
+        "distance_from_putin_mi": 25.77,
+        "river_mi": 25.77
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.0915365555034,
+          45.52071763694404
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Hancock Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": "Reservable",
+        "distance_from_putin_mi": 25.94,
+        "river_mi": 25.94
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.0937176,
+          45.5227211
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Masies Rapid",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": "II",
+        "properties.description": null,
+        "distance_from_putin_mi": 26.26,
+        "river_mi": 26.26
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.09830982698166,
+          45.525585088484284
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Magpie Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": "Reservable",
+        "distance_from_putin_mi": 29.44,
+        "river_mi": 29.44
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.1540297,
+          45.5486222
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Hida Creek Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": "Reservable",
+        "distance_from_putin_mi": 30.72,
+        "river_mi": 30.72
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.1715982,
+          45.5603419
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Bargamin Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 31.94,
+        "river_mi": 31.94
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.1931569,
+          45.5674321
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Bailey Rapid",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": "III",
+        "properties.description": null,
+        "distance_from_putin_mi": 32.33,
+        "river_mi": 32.33
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.2009437,
+          45.5673749
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Bailey Bar Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": "Reservable",
+        "distance_from_putin_mi": 32.84,
+        "river_mi": 32.84
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.2109301,
+          45.5697648
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Allison Ranch Rapid",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": "II",
+        "properties.description": null,
+        "distance_from_putin_mi": 33.12,
+        "river_mi": 33.12
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.21653154323018,
+          45.569068350816345
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Upper Allison Ranch Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 33.16,
+        "river_mi": 33.16
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.21762526813166,
+          45.56910393622291
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Allison Ranch Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 33.25,
+        "river_mi": 33.25
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.21935446165267,
+          45.568491273146314
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Sapp Creek Rapid",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": "III",
+        "properties.description": null,
+        "distance_from_putin_mi": 33.86,
+        "river_mi": 33.86
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.2244846215043,
+          45.56044693307575
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Fivemile Rapid",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": "III",
+        "properties.description": null,
+        "distance_from_putin_mi": 34.15,
+        "river_mi": 34.15
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.2287291,
+          45.5576713
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Split Rock Rapid",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": "III",
+        "properties.description": null,
+        "distance_from_putin_mi": 34.41,
+        "river_mi": 34.41
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.23385807177732,
+          45.55816404573238
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Stinker Rapid",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": "II",
+        "properties.description": null,
+        "distance_from_putin_mi": 34.68,
+        "river_mi": 34.68
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.23835563676685,
+          45.55601574869705
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Upper Yellow Pine Bar Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 36.53,
+        "river_mi": 36.53
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.2629167,
+          45.5398946
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Lower Yellow Pine Bar Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": "Reservable",
+        "distance_from_putin_mi": 36.63,
+        "river_mi": 36.63
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.2650142,
+          45.5400712
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Big Mallard Rapid",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": "+III-IV",
+        "properties.description": null,
+        "distance_from_putin_mi": 36.84,
+        "river_mi": 36.84
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.2684713,
+          45.5383284
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Big Mallard Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": "Reservable",
+        "distance_from_putin_mi": 37.0,
+        "river_mi": 37.0
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.2708292,
+          45.5366369
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Oakie Grogg's Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 37.51,
+        "river_mi": 37.51
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.27922305205436,
+          45.53271971339846
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Boiler Hole Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 38.05,
+        "river_mi": 38.05
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.2892774,
+          45.5352015
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Little Mallard Rapid",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": "II-III-",
+        "properties.description": null,
+        "distance_from_putin_mi": 38.71,
+        "river_mi": 38.71
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.30025363112944,
+          45.53140405843374
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Elkhorn Rapid Stage 1",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": "III-IV",
+        "properties.description": null,
+        "distance_from_putin_mi": 40.22,
+        "river_mi": 40.22
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.3221282,
+          45.5166512
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Elkhorn Rapid Stage 2/Big Rock Rapid",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": "II-IV",
+        "properties.description": null,
+        "distance_from_putin_mi": 40.59,
+        "river_mi": 40.59
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.32245982316847,
+          45.511280698906916
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Little Trout Creek Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 41.39,
+        "river_mi": 41.39
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.3250313,
+          45.4998914
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Growler Rapid",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": "II-III-",
+        "properties.description": null,
+        "distance_from_putin_mi": 41.55,
+        "river_mi": 41.55
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.3274467,
+          45.4981034
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Easter Egg Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 42.71,
+        "river_mi": 42.71
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.33782463325835,
+          45.48451080146365
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Jim Moore Historical Site",
+        "properties.waterway": "note",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 42.75,
+        "river_mi": 42.75
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.33839316508272,
+          45.48668913658329
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Jim Moore Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": "Reservable",
+        "distance_from_putin_mi": 42.95,
+        "river_mi": 42.95
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.34258726596804,
+          45.48488748663143
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Ruff Creek Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": "Reservable",
+        "distance_from_putin_mi": 43.16,
+        "river_mi": 43.16
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.34673345176729,
+          45.48360381934752
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Groundhog Bar Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": "Reservable",
+        "distance_from_putin_mi": 43.87,
+        "river_mi": 43.87
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.3525293,
+          45.4776129
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Whiplash Rapid",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": "III",
+        "properties.description": null,
+        "distance_from_putin_mi": 43.89,
+        "river_mi": 43.89
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.3527156,
+          45.4769763
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Reed Creek Rapid",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": "II",
+        "properties.description": null,
+        "distance_from_putin_mi": 45.01,
+        "river_mi": 45.01
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.3735390178153,
+          45.47175521899475
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Reed Creek Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": "Reservable",
+        "distance_from_putin_mi": 45.06,
+        "river_mi": 45.06
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.3747541,
+          45.4718312
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "China Bar Rapid",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": "II",
+        "properties.description": null,
+        "distance_from_putin_mi": 45.89,
+        "river_mi": 45.89
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.38666744530765,
+          45.47679901289869
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Gaines Bar Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 46.1,
+        "river_mi": 46.1
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.3904933,
+          45.4754312
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Rhett Creek Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 46.36,
+        "river_mi": 46.36
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.3942859,
+          45.4724557
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Big Blowout Creek Rapid",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": "II",
+        "properties.description": "Reservable",
+        "distance_from_putin_mi": 48.27,
+        "river_mi": 48.27
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.42593751698803,
+          45.45865826879571
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Paine Creek Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 48.73,
+        "river_mi": 48.73
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.4330063,
+          45.4541477
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Boise Bar Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 49.47,
+        "river_mi": 49.47
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.44161611954357,
+          45.44539367703196
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Boise Bar Rapid",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": "II",
+        "properties.description": null,
+        "distance_from_putin_mi": 49.91,
+        "river_mi": 49.91
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.4445828336488,
+          45.439574471023896
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "No Man Beach Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 50.72,
+        "river_mi": 50.72
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.45843462239587,
+          45.43296932425241
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Teepee Creek Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": "Reservable",
+        "distance_from_putin_mi": 51.06,
+        "river_mi": 51.06
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.46134504565107,
+          45.42861269067867
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Painter Mine",
+        "properties.waterway": "note",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 51.44,
+        "river_mi": 51.44
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.46192173850872,
+          45.423162131694255
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Buckskin Bill Museum",
+        "properties.waterway": "note",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 52.33,
+        "river_mi": 52.33
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.46848008328077,
+          45.41201427681503
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Five Mile Creek Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 52.39,
+        "river_mi": 52.39
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.46995629796282,
+          45.41166622619896
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Pebble Beach Campsite 2",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 52.7,
+        "river_mi": 52.7
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.4762864,
+          45.410073
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Haynie Bar Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": "Reservable",
+        "distance_from_putin_mi": 53.11,
+        "river_mi": 53.11
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.4777777,
+          45.405708
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Bluebird Hole Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 53.47,
+        "river_mi": 53.47
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.4776114,
+          45.4006083
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Jackson Bar Rapid",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": "II",
+        "properties.description": null,
+        "distance_from_putin_mi": 53.82,
+        "river_mi": 53.82
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.48179132451803,
+          45.396750621318056
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Ludwig Rapid",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": "III",
+        "properties.description": null,
+        "distance_from_putin_mi": 54.35,
+        "river_mi": 54.35
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.49169392917516,
+          45.39389147738717
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Mackay Bar Bridge Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": "Reservable",
+        "distance_from_putin_mi": 55.18,
+        "river_mi": 55.18
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.5012688516651,
+          45.38451827814435
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Deadman's Hole Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 55.38,
+        "river_mi": 55.38
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.50475,
+          45.3834865
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "South Fork Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 56.12,
+        "river_mi": 56.12
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.5131024,
+          45.3750047
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "South Fork Island Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 56.29,
+        "river_mi": 56.29
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.5130139,
+          45.3777442
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Cove Creek Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 57.47,
+        "river_mi": 57.47
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.5336535,
+          45.3850011
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Red Harland Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 57.97,
+        "river_mi": 57.97
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.5438995,
+          45.3854306
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Upper Pine Tree Hole Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 58.62,
+        "river_mi": 58.62
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.5573535,
+          45.3847223
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Lower Pine Tree Hole Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 59.22,
+        "river_mi": 59.22
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.5678463,
+          45.3891717
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Hungry Bar Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": "Reservable",
+        "distance_from_putin_mi": 59.99,
+        "river_mi": 59.99
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.5820432,
+          45.3940201
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Mann Creek Rapid",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": "II",
+        "properties.description": null,
+        "distance_from_putin_mi": 60.19,
+        "river_mi": 60.19
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.5858628216646,
+          45.39504052578099
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Mann Creek Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": "Reservable",
+        "distance_from_putin_mi": 60.27,
+        "river_mi": 60.27
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.5875123,
+          45.3946906
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Warren Creek Rapid",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": "II",
+        "properties.description": "Reservable",
+        "distance_from_putin_mi": 60.69,
+        "river_mi": 60.69
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.59455029628603,
+          45.3977164549312
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Warren Creek Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": "Reservable",
+        "distance_from_putin_mi": 60.84,
+        "river_mi": 60.84
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.5968195,
+          45.3970073
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Swimming Hole Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": "Reservable",
+        "distance_from_putin_mi": 61.06,
+        "river_mi": 61.06
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.6014758,
+          45.3958471
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Indian Creek Bar",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 61.67,
+        "river_mi": 61.67
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.61237326985203,
+          45.39745440963887
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "James Creek Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 61.87,
+        "river_mi": 61.87
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.6163728,
+          45.3983445
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "James Ranch Rapid",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": "II",
+        "properties.description": null,
+        "distance_from_putin_mi": 62.34,
+        "river_mi": 62.34
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.62179875148344,
+          45.40390723973326
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Pete's Rock Rapid",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": "II",
+        "properties.description": null,
+        "distance_from_putin_mi": 62.76,
+        "river_mi": 62.76
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.62789900199029,
+          45.40737216973466
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Campbell's Rock Rapid",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": "II",
+        "properties.description": null,
+        "distance_from_putin_mi": 63.97,
+        "river_mi": 63.97
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.64472524210174,
+          45.42012076838944
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Rabbit Creek Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": "Reservable",
+        "distance_from_putin_mi": 64.56,
+        "river_mi": 64.56
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.6536448,
+          45.4256469
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Alex Meadows Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 66.53,
+        "river_mi": 66.53
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.6866521,
+          45.438465
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Basin Creek Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 67.27,
+        "river_mi": 67.27
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.6994999,
+          45.4434334
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Whiskey Bob Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 68.12,
+        "river_mi": 68.12
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.71650517378191,
+          45.4449760688934
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Upper Bull Creek Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": "Reservable",
+        "distance_from_putin_mi": 68.52,
+        "river_mi": 68.52
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.72519,
+          45.4445173
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Lower Bull Creek Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 68.65,
+        "river_mi": 68.65
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.7270891,
+          45.4433506
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Bull Creek Rapid",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": "II",
+        "properties.description": null,
+        "distance_from_putin_mi": 68.79,
+        "river_mi": 68.79
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.72959920328496,
+          45.44256959228105
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Cottontail Rapid",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": "II",
+        "properties.description": null,
+        "distance_from_putin_mi": 69.3,
+        "river_mi": 69.3
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.73966729663302,
+          45.44489715855503
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "California Creek Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": "Reservable",
+        "distance_from_putin_mi": 70.5,
+        "river_mi": 70.5
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.7612872,
+          45.4491916
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Can Opener Rapid",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": "II",
+        "properties.description": null,
+        "distance_from_putin_mi": 70.71,
+        "river_mi": 70.71
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.76426987151797,
+          45.45091130893371
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "T-Bone Creek Rapid",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 70.91,
+        "river_mi": 70.91
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.7680301,
+          45.452209
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "T-Bone Creek Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": "Reservable",
+        "distance_from_putin_mi": 70.92,
+        "river_mi": 70.92
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.76782977495384,
+          45.452543193256886
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Little Growler Rapid",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 71.15,
+        "river_mi": 71.15
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.7716401,
+          45.4544886
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Maxwell Bar Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": "Reservable",
+        "distance_from_putin_mi": 72.17,
+        "river_mi": 72.17
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.7874709,
+          45.4631444
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Upper Sheep Creek Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 73.19,
+        "river_mi": 73.19
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.8068097,
+          45.4681558
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Middle Sheep Creek Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 73.33,
+        "river_mi": 73.33
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.8100712,
+          45.4687013
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Lower Sheep Creek Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 73.49,
+        "river_mi": 73.49
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.813086,
+          45.4676178
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Dried Meat Rapid",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": "III",
+        "properties.description": null,
+        "distance_from_putin_mi": 74.45,
+        "river_mi": 74.45
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.83225970377718,
+          45.46659095529055
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Slide Beach Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 74.8,
+        "river_mi": 74.8
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.8387521,
+          45.4648206
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Johnson Creek Campsite",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": "Reservable",
+        "distance_from_putin_mi": 75.16,
+        "river_mi": 75.16
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.845589,
+          45.4632949
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Chittam Rapid",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": "III-IV",
+        "properties.description": null,
+        "distance_from_putin_mi": 77.31,
+        "river_mi": 77.31
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.8885797,
+          45.4590109
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Vinegar Creek Boat Ramp",
+        "properties.waterway": "slipway",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 77.46,
+        "river_mi": 77.46
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.8916202,
+          45.4594212
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": null,
+        "properties.waterway": "parking",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 77.55,
+        "river_mi": 77.55
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.8929831,
+          45.4596266
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Vinegar Creek Boat Ramp",
+        "properties.waterway": "slipway",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 77.58,
+        "river_mi": 77.58
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.8937453,
+          45.4597443
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Vinegar Creek Rapid",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": "III",
+        "properties.description": null,
+        "distance_from_putin_mi": 78.03,
+        "river_mi": 78.03
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.9028399,
+          45.4592659
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Boulders Rapid",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": "II",
+        "properties.description": null,
+        "distance_from_putin_mi": 78.39,
+        "river_mi": 78.39
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.91007528822327,
+          45.45856781959668
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Carey Falls Rapid",
+        "properties.waterway": "rapids",
+        "properties.rapids_class": "II-III",
+        "properties.description": null,
+        "distance_from_putin_mi": 79.77,
+        "river_mi": 79.77
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.9376661,
+          45.457661
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Wind River",
+        "properties.waterway": "campsite",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 80.16,
+        "river_mi": 80.16
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.94368931667208,
+          45.45451287415931
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": "Carey Creek Boat Ramp",
+        "properties.waterway": "slipway",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 80.27,
+        "river_mi": 80.27
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.945542,
+          45.4534033
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "properties.name": null,
+        "properties.waterway": "parking",
+        "properties.rapids_class": null,
+        "properties.description": null,
+        "distance_from_putin_mi": 80.27,
+        "river_mi": 80.27
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.94652460403697,
+          45.45300623816808
+        ]
+      }
+    }
+  ]
 }
