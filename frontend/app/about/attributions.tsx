@@ -70,6 +70,12 @@ const DATA_SOURCES: Credit[] = [
     blurb:
       "Used as a reference for rapid locations and campsite locations on the Green River — Desolation Canyon run.",
   },
+  {
+    title:
+      "Guide to the Middle Fork and Main Salmon Rivers, Idaho (Fifth Edition) — Duwain Whitis & Barbara Vinson (RiverMaps LLC)",
+    blurb:
+      "Used as a reference for rapid locations, rapid classifications, and campsite locations on the Main Salmon run.",
+  },
 ];
 
 const SOFTWARE: Credit[] = [
