@@ -35,7 +35,7 @@ LOCKED_RIVERS: set[str] = set()
 # Used to ship an initial 1-river launch (Green River — Desolation and
 # Gray Canyons) while the Middle Fork Salmon and Main Salmon runs stay
 # ready-but-parked. Clear this set once those runs are ready to go live.
-HIDDEN_RIVERS: set[str] = set()
+HIDDEN_RIVERS: set[str] = {"middle-fork-salmon"}
 
 
 def load_existing_bundle() -> dict:
