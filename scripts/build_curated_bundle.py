@@ -81,6 +81,7 @@ def poi_geojson_to_app_pois(poi_path: Path) -> list[dict]:
         "slipway":     "boat_ramp",
         "boat_ramp":   "boat_ramp",
         "access":      "access",
+        "access_point": "access",
         "note":        "note",
         "putin":       "putin",
         "put_in":      "putin",
