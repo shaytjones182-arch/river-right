@@ -179,3 +179,26 @@ export async function restoreRuns(): Promise<string[]> {
     return [];
   }
 }
+
+/**
+ * Present Apple's native offer-code redemption sheet (iOS 14+). When the
+ * user enters a valid App Store Connect offer code, StoreKit fires the
+ * same purchase-completed callback the normal buy flow uses, so the
+ * existing transaction listener installed in initStoreKit() will unlock
+ * the redeemed run automatically — no extra plumbing required.
+ *
+ * No-op on Android / web (returns false so the caller can surface a
+ * platform-appropriate message if it ever gets called there).
+ */
+export async function presentOfferCodeRedemption(): Promise<boolean> {
+  if (!IS_IOS) return false;
+  await initStoreKit();
+  try {
+    const ok = await ExpoIap.presentCodeRedemptionSheetIOS();
+    return !!ok;
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.warn("[storekit] presentCodeRedemptionSheetIOS failed", e);
+    return false;
+  }
+}

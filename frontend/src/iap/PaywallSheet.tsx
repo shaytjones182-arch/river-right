@@ -26,7 +26,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "../theme";
 import { productForRiver } from "./products";
 import { unlockRunLocally, restorePurchasesLocally } from "./useUnlocks";
-import { purchaseRun, restoreRuns, getStoreKitTrace } from "./storekit";
+import { purchaseRun, restoreRuns, getStoreKitTrace, presentOfferCodeRedemption } from "./storekit";
 
 type Props = {
   visible: boolean;
@@ -43,7 +43,7 @@ export default function PaywallSheet({
   riverName,
   onUnlocked,
 }: Props) {
-  const [busy, setBusy] = useState<"purchase" | "restore" | null>(null);
+  const [busy, setBusy] = useState<"purchase" | "restore" | "redeem" | null>(null);
   const insets = useSafeAreaInsets();
   const product = riverId ? productForRiver(riverId) : null;
 
@@ -114,6 +114,55 @@ export default function PaywallSheet({
     }
   };
 
+  // Opens Apple's native offer-code redemption sheet. If the user redeems
+  // a valid code for the current run's product ID, StoreKit fires the
+  // same purchase-completed transaction listener that initStoreKit()
+  // installed, so the unlock flow flows through the exact same path as
+  // a paid purchase — including the AsyncStorage cache write. We then
+  // just poll the local unlock cache for a couple of seconds so the UI
+  // can dismiss the paywall the instant Apple returns from the sheet.
+  const handleRedeemCode = async () => {
+    if (busy) return;
+    if (Platform.OS !== "ios") {
+      Alert.alert(
+        "iOS only",
+        "Apple offer codes are redeemed through the App Store. This feature is only available on iPhone or iPad."
+      );
+      return;
+    }
+    setBusy("redeem");
+    try {
+      // Present the native sheet. Resolves once the user dismisses it
+      // (either after entering a code or by tapping Cancel).
+      await presentOfferCodeRedemption();
+      // Give StoreKit's transaction listener a moment to process the
+      // redemption. If the current run got unlocked in that window, we
+      // dismiss the paywall.
+      if (riverId) {
+        // Static import would create a cycle with useUnlocks. This is
+        // the lightweight state read, not the persistence writer used
+        // above, so a dynamic import keeps the module graph clean.
+        const { isRunUnlocked } = await import("./useUnlocks");
+        for (let i = 0; i < 8; i++) {
+          if (isRunUnlocked(riverId)) {
+            onUnlocked?.(riverId);
+            onClose();
+            return;
+          }
+          await new Promise((res) => setTimeout(res, 400));
+        }
+      }
+    } catch (e: any) {
+      Alert.alert(
+        "Couldn't open the redemption sheet",
+        e?.message ||
+          "Please make sure you're signed in to the App Store, then try again."
+      );
+    } finally {
+      setBusy(null);
+    }
+  };
+
   return (
     <Modal
       visible={visible}
@@ -166,6 +215,34 @@ export default function PaywallSheet({
                     {product?.displayPrice ?? "$5.00"}
                   </Text>
                 </View>
+              </>
+            )}
+          </TouchableOpacity>
+
+          {/* Offer-code redemption — opens Apple's native sheet.
+              Business partners can hand out App Store Connect offer
+              codes (e.g. DESO26) that unlock the same non-consumable
+              IAP as a paid purchase without leaving the app. */}
+          <TouchableOpacity
+            testID="paywall-redeem-btn"
+            style={styles.redeemBtn}
+            onPress={handleRedeemCode}
+            disabled={busy !== null}
+            activeOpacity={0.75}
+          >
+            {busy === "redeem" ? (
+              <ActivityIndicator color={COLORS.primary} />
+            ) : (
+              <>
+                <Ionicons
+                  name="gift-outline"
+                  size={18}
+                  color={COLORS.primary}
+                  style={styles.redeemIcon}
+                />
+                <Text style={styles.redeemBtnText}>
+                  Redeem special offer code
+                </Text>
               </>
             )}
           </TouchableOpacity>
@@ -315,6 +392,31 @@ const styles = StyleSheet.create({
     gap: 10,
     marginTop: 14,
     marginBottom: 4,
+  },
+  // Redeem offer-code button — sits between the primary buy CTA and the
+  // Restore/Diagnostics/Not-now row. Styled as an outlined secondary
+  // action so it reads as available without competing with the paid
+  // purchase button for the user's eye.
+  redeemBtn: {
+    marginTop: 12,
+    minHeight: 48,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 16,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: COLORS.primary,
+    backgroundColor: "transparent",
+  },
+  redeemIcon: {
+    marginRight: 8,
+  },
+  redeemBtnText: {
+    color: COLORS.primary,
+    fontSize: 15,
+    fontWeight: "800",
+    letterSpacing: 0.2,
   },
   secondaryLink: {
     color: COLORS.primary,

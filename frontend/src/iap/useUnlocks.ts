@@ -95,6 +95,14 @@ function notify() {
   for (const l of listeners) l(new Set(memoryCache));
 }
 
+/** Synchronous check for whether a river ID is unlocked. Reads only from
+ *  the in-memory cache (populated on first read of the persisted store),
+ *  so it's safe to call from render-critical paths and polling loops
+ *  without triggering AsyncStorage round-trips. */
+export function isRunUnlocked(riverId: string): boolean {
+  return !!memoryCache && memoryCache.has(riverId);
+}
+
 /** Mark a river ID as unlocked locally. In production this is called AFTER
  *  StoreKit confirms a successful purchase. */
 export async function unlockRunLocally(riverId: string): Promise<void> {
