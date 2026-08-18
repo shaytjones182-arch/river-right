@@ -154,16 +154,38 @@ async function fetchUsgsLiveFlow(siteIds: string | string[] | null | undefined):
   const ids = Array.isArray(siteIds) ? siteIds : [siteIds];
   if (ids.length === 0) return null;
   const summing = ids.length > 1;
+
+  // React Native's fetch has NO built-in timeout — if USGS stalls (which
+  // happens on flaky cell service, LTE handoff, or transient DNS blips),
+  // the request hangs forever and the caller eventually surfaces a stale
+  // "no data" flow. Wrap fetch in an AbortController with an 8-second
+  // budget, and try up to twice: the first attempt catches most quick
+  // hiccups, and a fresh AbortController per attempt guarantees we
+  // don't hold a dead connection.
+  const url =
+    "https://waterservices.usgs.gov/nwis/iv/?format=json" +
+    `&sites=${encodeURIComponent(ids.join(","))}` +
+    "&parameterCd=00060,00065&siteStatus=active";
+  const fetchWithTimeout = async (): Promise<Response | null> => {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 8000);
+    try {
+      return await fetch(url, { signal: ctrl.signal });
+    } catch {
+      return null;
+    } finally {
+      clearTimeout(timer);
+    }
+  };
   try {
-    // USGS IV supports multiple sites as a comma-separated list in a
-    // SINGLE HTTP request. This keeps the summed reading atomic and
-    // halves round-trips vs. calling once per gauge.
-    const url =
-      "https://waterservices.usgs.gov/nwis/iv/?format=json" +
-      `&sites=${encodeURIComponent(ids.join(","))}` +
-      "&parameterCd=00060,00065&siteStatus=active";
-    const r = await fetch(url);
-    if (!r.ok) return null;
+    let r = await fetchWithTimeout();
+    if (!r || !r.ok) {
+      // Short pause, then one retry — bounces past transient network
+      // errors (5xx, mid-flight drops, TLS renegotiation stalls).
+      await new Promise((res) => setTimeout(res, 400));
+      r = await fetchWithTimeout();
+    }
+    if (!r || !r.ok) return null;
     const j = await r.json();
     const series: any[] = j?.value?.timeSeries || [];
     // Per-site accumulators keyed by USGS site code.
