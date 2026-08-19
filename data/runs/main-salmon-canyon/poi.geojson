@@ -137,7 +137,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Lunch Bar Campsite",
+        "properties.name": "Lunch Bar Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -155,7 +155,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Horse Creek Campsite",
+        "properties.name": "Horse Creek Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -245,7 +245,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Legend Creek Campsite",
+        "properties.name": "Legend Creek Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -263,7 +263,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Spindle Creek Campsite",
+        "properties.name": "Spindle Creek Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -281,7 +281,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Phantom Campsite",
+        "properties.name": "Phantom Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -317,7 +317,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Alder Creek Campsite",
+        "properties.name": "Alder Creek Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": "Reservable",
@@ -353,7 +353,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Otter Beach Campsite",
+        "properties.name": "Otter Beach Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -371,7 +371,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Fawn Creek Campsite",
+        "properties.name": "Fawn Creek Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -389,7 +389,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Upper Lantz Bar Campsite",
+        "properties.name": "Upper Lantz Bar Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": "Reservable",
@@ -407,7 +407,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Sohoagaiteka'a Naokwaide Campsite",
+        "properties.name": "Sohoagaitekaa Naokwaide Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -425,7 +425,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Lower Lantz Bar Campsite",
+        "properties.name": "Lower Lantz Bar Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -461,7 +461,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Tag Creek Campsite",
+        "properties.name": "Tag Creek Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -479,7 +479,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Disappointment Creek Campsite",
+        "properties.name": "Disappointment Creek Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -497,7 +497,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Upper Devil's Teeth Campsite",
+        "properties.name": "Upper Devils Teeth Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": "Reservable",
@@ -515,7 +515,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Devil's Teeth Rapid",
+        "properties.name": "Devils Teeth Rapid",
         "properties.waterway": "rapids",
         "properties.rapids_class": "III",
         "properties.description": null,
@@ -533,7 +533,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Lower Devil's Teeth Campsite",
+        "properties.name": "Lower Devils Teeth Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": "Reservable",
@@ -569,7 +569,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Overhang Campsite",
+        "properties.name": "Overhang Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -587,7 +587,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Elkhorn Creek Campsite",
+        "properties.name": "Elkhorn Creek Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -605,7 +605,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Chamberlain Creek Campsite",
+        "properties.name": "Chamberlain Creek Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": "Only available at low water",
@@ -623,7 +623,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Chukar Beach Campsite",
+        "properties.name": "Chukar Beach Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -659,7 +659,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Blackadar Hole Campsite",
+        "properties.name": "Blackadar Hole Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": "Reservable",
@@ -677,7 +677,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Motor Campsite",
+        "properties.name": "Motor Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": "Reservable",
@@ -695,7 +695,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Pia Natesu\u2019u Naokwaide Campsite",
+        "properties.name": "Pia Natesuu Naokwaide Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": "Reservable",
@@ -713,7 +713,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Upper Corey Bar Campsite",
+        "properties.name": "Upper Corey Bar Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -731,7 +731,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Lower Corey Bar Campsite",
+        "properties.name": "Lower Corey Bar Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -749,7 +749,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Pebble Beach Campsite 1",
+        "properties.name": "Pebble Beach Camp 1",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -785,7 +785,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Black Canyon Beach Campsite",
+        "properties.name": "Black Canyon Beach Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -821,7 +821,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Sunny Bar Campsite",
+        "properties.name": "Sunny Bar Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -839,7 +839,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Hot Springs Campsite",
+        "properties.name": "Hot Springs Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -875,7 +875,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Barth Campsite",
+        "properties.name": "Barth Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": "Reservable",
@@ -893,7 +893,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Sandy Hole Campsite",
+        "properties.name": "Sandy Hole Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -911,7 +911,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Poor Bar Campsite",
+        "properties.name": "Poor Bar Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -929,7 +929,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Bruin Bar Campsite",
+        "properties.name": "Bruin Bar Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": "Reservable",
@@ -965,7 +965,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Hancock Campsite",
+        "properties.name": "Hancock Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": "Reservable",
@@ -1001,7 +1001,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Magpie Campsite",
+        "properties.name": "Magpie Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": "Reservable",
@@ -1019,7 +1019,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Hida Creek Campsite",
+        "properties.name": "Hida Creek Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": "Reservable",
@@ -1037,7 +1037,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Bargamin Campsite",
+        "properties.name": "Bargamin Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -1073,7 +1073,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Bailey Bar Campsite",
+        "properties.name": "Bailey Bar Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": "Reservable",
@@ -1109,7 +1109,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Upper Allison Ranch Campsite",
+        "properties.name": "Upper Allison Ranch Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -1127,7 +1127,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Allison Ranch Campsite",
+        "properties.name": "Allison Ranch Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -1217,7 +1217,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Upper Yellow Pine Bar Campsite",
+        "properties.name": "Upper Yellow Pine Bar Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -1235,7 +1235,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Lower Yellow Pine Bar Campsite",
+        "properties.name": "Lower Yellow Pine Bar Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": "Reservable",
@@ -1271,7 +1271,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Big Mallard Campsite",
+        "properties.name": "Big Mallard Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": "Reservable",
@@ -1289,7 +1289,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Oakie Grogg's Campsite",
+        "properties.name": "Oakie Groggs Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -1307,7 +1307,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Boiler Hole Campsite",
+        "properties.name": "Boiler Hole Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -1379,7 +1379,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Little Trout Creek Campsite",
+        "properties.name": "Little Trout Creek Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -1415,7 +1415,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Easter Egg Campsite",
+        "properties.name": "Easter Egg Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -1451,7 +1451,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Jim Moore Campsite",
+        "properties.name": "Jim Moore Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": "Reservable",
@@ -1469,7 +1469,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Ruff Creek Campsite",
+        "properties.name": "Ruff Creek Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": "Reservable",
@@ -1487,7 +1487,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Groundhog Bar Campsite",
+        "properties.name": "Groundhog Bar Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": "Reservable",
@@ -1541,7 +1541,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Reed Creek Campsite",
+        "properties.name": "Reed Creek Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": "Reservable",
@@ -1577,7 +1577,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Gaines Bar Campsite",
+        "properties.name": "Gaines Bar Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -1595,7 +1595,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Rhett Creek Campsite",
+        "properties.name": "Rhett Creek Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -1631,7 +1631,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Paine Creek Campsite",
+        "properties.name": "Paine Creek Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -1649,7 +1649,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Boise Bar Campsite",
+        "properties.name": "Boise Bar Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -1685,7 +1685,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "No Man Beach Campsite",
+        "properties.name": "No Man Beach Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -1703,7 +1703,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Teepee Creek Campsite",
+        "properties.name": "Teepee Creek Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": "Reservable",
@@ -1757,7 +1757,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Five Mile Creek Campsite",
+        "properties.name": "Five Mile Creek Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -1775,7 +1775,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Pebble Beach Campsite 2",
+        "properties.name": "Pebble Beach Camp 2",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -1793,7 +1793,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Haynie Bar Campsite",
+        "properties.name": "Haynie Bar Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": "Reservable",
@@ -1811,7 +1811,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Bluebird Hole Campsite",
+        "properties.name": "Bluebird Hole Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -1865,7 +1865,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Mackay Bar Bridge Campsite",
+        "properties.name": "Mackay Bar Bridge Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": "Reservable",
@@ -1883,7 +1883,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Deadman's Hole Campsite",
+        "properties.name": "Deadmans Hole Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -1901,7 +1901,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "South Fork Campsite",
+        "properties.name": "South Fork Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -1919,7 +1919,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "South Fork Island Campsite",
+        "properties.name": "South Fork Island Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -1937,7 +1937,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Cove Creek Campsite",
+        "properties.name": "Cove Creek Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -1955,7 +1955,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Red Harland Campsite",
+        "properties.name": "Red Harland Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -1973,7 +1973,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Upper Pine Tree Hole Campsite",
+        "properties.name": "Upper Pine Tree Hole Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -1991,7 +1991,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Lower Pine Tree Hole Campsite",
+        "properties.name": "Lower Pine Tree Hole Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -2009,7 +2009,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Hungry Bar Campsite",
+        "properties.name": "Hungry Bar Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": "Reservable",
@@ -2045,7 +2045,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Mann Creek Campsite",
+        "properties.name": "Mann Creek Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": "Reservable",
@@ -2081,7 +2081,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Warren Creek Campsite",
+        "properties.name": "Warren Creek Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": "Reservable",
@@ -2099,7 +2099,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Swimming Hole Campsite",
+        "properties.name": "Swimming Hole Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": "Reservable",
@@ -2135,7 +2135,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "James Creek Campsite",
+        "properties.name": "James Creek Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -2171,7 +2171,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Pete's Rock Rapid",
+        "properties.name": "Petes Rock Rapid",
         "properties.waterway": "rapids",
         "properties.rapids_class": "II",
         "properties.description": null,
@@ -2189,7 +2189,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Campbell's Rock Rapid",
+        "properties.name": "Campbells Rock Rapid",
         "properties.waterway": "rapids",
         "properties.rapids_class": "II",
         "properties.description": null,
@@ -2207,7 +2207,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Rabbit Creek Campsite",
+        "properties.name": "Rabbit Creek Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": "Reservable",
@@ -2225,7 +2225,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Alex Meadows Campsite",
+        "properties.name": "Alex Meadows Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -2243,7 +2243,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Basin Creek Campsite",
+        "properties.name": "Basin Creek Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -2261,7 +2261,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Whiskey Bob Campsite",
+        "properties.name": "Whiskey Bob Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -2279,7 +2279,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Upper Bull Creek Campsite",
+        "properties.name": "Upper Bull Creek Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": "Reservable",
@@ -2297,7 +2297,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Lower Bull Creek Campsite",
+        "properties.name": "Lower Bull Creek Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -2351,7 +2351,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "California Creek Campsite",
+        "properties.name": "California Creek Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": "Reservable",
@@ -2405,7 +2405,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "T-Bone Creek Campsite",
+        "properties.name": "T-Bone Creek Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": "Reservable",
@@ -2441,7 +2441,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Maxwell Bar Campsite",
+        "properties.name": "Maxwell Bar Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": "Reservable",
@@ -2459,7 +2459,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Upper Sheep Creek Campsite",
+        "properties.name": "Upper Sheep Creek Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -2477,7 +2477,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Middle Sheep Creek Campsite",
+        "properties.name": "Middle Sheep Creek Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -2495,7 +2495,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Lower Sheep Creek Campsite",
+        "properties.name": "Lower Sheep Creek Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -2531,7 +2531,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Slide Beach Campsite",
+        "properties.name": "Slide Beach Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -2549,7 +2549,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Johnson Creek Campsite",
+        "properties.name": "Johnson Creek Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": "Reservable",
