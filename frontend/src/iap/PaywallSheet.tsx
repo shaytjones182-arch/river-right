@@ -44,6 +44,13 @@ export default function PaywallSheet({
   onUnlocked,
 }: Props) {
   const [busy, setBusy] = useState<"purchase" | "restore" | "redeem" | null>(null);
+  // When true, the paywall Modal is un-presented so iOS is free to
+  // display Apple's own SKPaymentQueue code-redemption sheet. Apple
+  // silently refuses to present that sheet over an already-active
+  // modal (both react-native-iap and expo-iap have long-standing
+  // issues confirming this), so we temporarily drop our Modal out of
+  // the view hierarchy for the duration of the redemption.
+  const [hiddenForRedemption, setHiddenForRedemption] = useState(false);
   const insets = useSafeAreaInsets();
   const product = riverId ? productForRiver(riverId) : null;
 
@@ -121,6 +128,14 @@ export default function PaywallSheet({
   // a paid purchase — including the AsyncStorage cache write. We then
   // just poll the local unlock cache for a couple of seconds so the UI
   // can dismiss the paywall the instant Apple returns from the sheet.
+  //
+  // CRITICAL: iOS's SKPaymentQueue.presentCodeRedemptionSheet() silently
+  // does nothing when another modal (like this paywall) is already on
+  // top. We work around that by dropping the paywall Modal out of the
+  // view hierarchy (`hiddenForRedemption=true`) for the duration of the
+  // native sheet, then either close the paywall for good (unlock
+  // succeeded) or re-show it (user cancelled or entered a code for a
+  // different run).
   const handleRedeemCode = async () => {
     if (busy) return;
     if (Platform.OS !== "ios") {
@@ -131,28 +146,39 @@ export default function PaywallSheet({
       return;
     }
     setBusy("redeem");
+    // Hide the paywall Modal BEFORE presenting the redemption sheet so
+    // iOS is willing to actually put the sheet on screen. A short delay
+    // gives the RN modal fade-out animation time to complete before
+    // Apple's sheet tries to attach to the root view controller.
+    setHiddenForRedemption(true);
+    await new Promise((res) => setTimeout(res, 350));
     try {
-      // Present the native sheet. Resolves once the user dismisses it
-      // (either after entering a code or by tapping Cancel).
       await presentOfferCodeRedemption();
       // Give StoreKit's transaction listener a moment to process the
-      // redemption. If the current run got unlocked in that window, we
-      // dismiss the paywall.
+      // redemption. If the current run got unlocked in that window,
+      // close the paywall entirely.
+      let unlocked = false;
       if (riverId) {
-        // Static import would create a cycle with useUnlocks. This is
-        // the lightweight state read, not the persistence writer used
-        // above, so a dynamic import keeps the module graph clean.
         const { isRunUnlocked } = await import("./useUnlocks");
-        for (let i = 0; i < 8; i++) {
+        for (let i = 0; i < 10; i++) {
           if (isRunUnlocked(riverId)) {
-            onUnlocked?.(riverId);
-            onClose();
-            return;
+            unlocked = true;
+            break;
           }
           await new Promise((res) => setTimeout(res, 400));
         }
       }
+      if (unlocked && riverId) {
+        onUnlocked?.(riverId);
+        onClose();
+      } else {
+        // No unlock for this run (user cancelled, or redeemed a code
+        // that belongs to a different run). Bring the paywall back so
+        // they can try again or complete a normal purchase.
+        setHiddenForRedemption(false);
+      }
     } catch (e: any) {
+      setHiddenForRedemption(false);
       Alert.alert(
         "Couldn't open the redemption sheet",
         e?.message ||
@@ -165,7 +191,7 @@ export default function PaywallSheet({
 
   return (
     <Modal
-      visible={visible}
+      visible={visible && !hiddenForRedemption}
       transparent
       animationType="fade"
       onRequestClose={onClose}
