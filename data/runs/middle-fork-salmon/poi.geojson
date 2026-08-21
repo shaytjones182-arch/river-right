@@ -12,7 +12,7 @@
       "type": "Feature",
       "properties": {
         "properties.name": "Boundary Creek Put-in",
-        "properties.waterway": "access_point",
+        "properties.waterway": "slipway",
         "properties.rapids_class": null,
         "properties.description": null,
         "distance_from_putin_mi": 0.0,
@@ -101,7 +101,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Cable Hole",
+        "properties.name": "Cable Hole Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -185,24 +185,6 @@
         "coordinates": [
           -115.300982,
           44.568611
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "properties.name": "Spring Camp",
-        "properties.waterway": "campsite",
-        "properties.rapids_class": null,
-        "properties.description": null,
-        "distance_from_putin_mi": 3.32,
-        "river_mi": 3.32
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -115.30299680634823,
-          44.57243722061807
         ]
       }
     },
@@ -320,7 +302,7 @@
         "properties.name": "Trail Flat Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
-        "properties.description": "Avoid disturbing the Native American pit house remains nearby.  This is also a hotsprings camp",
+        "properties.description": "Both a protected heritage site and hot springs camp",
         "distance_from_putin_mi": 7.23,
         "river_mi": 7.23
       },
@@ -371,36 +353,36 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Elkhorn Bar Camp",
+        "properties.name": "Rapid Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
-        "distance_from_putin_mi": 8.75,
-        "river_mi": 8.75
+        "distance_from_putin_mi": 8.79,
+        "river_mi": 8.79
       },
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -115.2503157,
-          44.6167063
+          -115.25051191896033,
+          44.617514191151976
         ]
       }
     },
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Rapid Camp",
+        "properties.name": "Elkhorn Bar Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
-        "distance_from_putin_mi": 8.96,
-        "river_mi": 8.96
+        "distance_from_putin_mi": 8.84,
+        "river_mi": 8.84
       },
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -115.2476066,
-          44.618688
+          -115.24930511340928,
+          44.61786481181172
         ]
       }
     },
@@ -500,7 +482,7 @@
         "properties.name": "Scout Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
-        "properties.description": "Hot springs campsite",
+        "properties.description": "Hot springs camp",
         "distance_from_putin_mi": 12.99,
         "river_mi": 12.99
       },
@@ -518,7 +500,7 @@
         "properties.name": "Sheepeater Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
-        "properties.description": "Hot springs campsite",
+        "properties.description": "Hot springs camp",
         "distance_from_putin_mi": 13.23,
         "river_mi": 13.23
       },
@@ -878,7 +860,7 @@
         "properties.name": "Pungo Creek Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
-        "properties.description": null,
+        "properties.description": "Heritage site restrictions apply here",
         "distance_from_putin_mi": 27.91,
         "river_mi": 27.91
       },
@@ -1022,7 +1004,7 @@
         "properties.name": "Sunflower Flat Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
-        "properties.description": null,
+        "properties.description": "Hot springs camp",
         "distance_from_putin_mi": 33.3,
         "river_mi": 33.3
       },
@@ -1091,7 +1073,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Little Creek",
+        "properties.name": "Little Creek Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -1181,10 +1163,10 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Lower Jackass Flat Camp",
+        "properties.name": "Lower Jackass Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
-        "properties.description": null,
+        "properties.description": "Has additional regulations due to being a heritage site",
         "distance_from_putin_mi": 38.14,
         "river_mi": 38.14
       },
@@ -1310,7 +1292,7 @@
         "properties.name": "Rock Island Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
-        "properties.description": null,
+        "properties.description": "Both heritage site and firewood gathering restrictions apply here",
         "distance_from_putin_mi": 46.55,
         "river_mi": 46.55
       },
@@ -1400,7 +1382,7 @@
         "properties.name": "Big Loon Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
-        "properties.description": null,
+        "properties.description": "Hot springs camp",
         "distance_from_putin_mi": 49.71,
         "river_mi": 49.71
       },
@@ -1418,7 +1400,7 @@
         "properties.name": "Cow Creek Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
-        "properties.description": null,
+        "properties.description": "Both heritage site and firewood gathering restrictions apply here",
         "distance_from_putin_mi": 50.2,
         "river_mi": 50.2
       },
@@ -1472,7 +1454,7 @@
         "properties.name": "Hospital Bar Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
-        "properties.description": null,
+        "properties.description": "Firewood gathering restrictions apply here.  Also a hot springs camp",
         "distance_from_putin_mi": 52.35,
         "river_mi": 52.35
       },
@@ -1688,7 +1670,7 @@
         "properties.name": "Camas Creek Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
-        "properties.description": null,
+        "properties.description": "Both heritage site and firewood gathering restrictions apply here",
         "distance_from_putin_mi": 59.97,
         "river_mi": 59.97
       },
@@ -1811,24 +1793,6 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Normandy Camp",
-        "properties.waterway": "campsite",
-        "properties.rapids_class": null,
-        "properties.description": null,
-        "distance_from_putin_mi": 63.31,
-        "river_mi": 63.31
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -114.734459,
-          44.928051
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
         "properties.name": "Trail Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
@@ -1850,7 +1814,7 @@
         "properties.name": "Sheep Creek Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
-        "properties.description": null,
+        "properties.description": "Firewood gathering restrictions apply here",
         "distance_from_putin_mi": 64.64,
         "river_mi": 64.64
       },
@@ -1955,7 +1919,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Bernard Creek Camp",
+        "properties.name": "Bernard Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -2027,7 +1991,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Little Pine",
+        "properties.name": "Little Pine Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -2045,7 +2009,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Driftwood Camp",
+        "properties.name": "Driftwood Flat Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -2084,7 +2048,7 @@
         "properties.name": "Grassy Flat Camp I",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
-        "properties.description": null,
+        "properties.description": "Firewood gathering restrictions apply here",
         "distance_from_putin_mi": 72.28,
         "river_mi": 72.28
       },
@@ -2135,10 +2099,10 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Survey Camp",
+        "properties.name": "Survey Creek Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
-        "properties.description": null,
+        "properties.description": "Firewood gathering restrictions apply here",
         "distance_from_putin_mi": 73.96,
         "river_mi": 73.96
       },
@@ -2153,10 +2117,10 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Wollard Camp",
+        "properties.name": "Woolard Creek Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
-        "properties.description": null,
+        "properties.description": "Firewood gathering restrictions apply here",
         "distance_from_putin_mi": 74.09,
         "river_mi": 74.09
       },
@@ -2711,7 +2675,7 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Parrots Cabin Camp",
+        "properties.name": "Parrot Cabin Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
         "properties.description": null,
@@ -2786,7 +2750,7 @@
         "properties.name": "Tumble Creek Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
-        "properties.description": null,
+        "properties.description": "Firewood gathering restrictions apply here",
         "distance_from_putin_mi": 88.03,
         "river_mi": 88.03
       },
@@ -2855,10 +2819,10 @@
     {
       "type": "Feature",
       "properties": {
-        "properties.name": "Stoddard Camp",
+        "properties.name": "Stoddard Bar Camp",
         "properties.waterway": "campsite",
         "properties.rapids_class": null,
-        "properties.description": null,
+        "properties.description": "Both a protected heritage site and hot springs camp",
         "distance_from_putin_mi": 89.35,
         "river_mi": 89.35
       },
