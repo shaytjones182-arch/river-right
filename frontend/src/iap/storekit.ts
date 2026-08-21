@@ -181,24 +181,40 @@ export async function restoreRuns(): Promise<string[]> {
 }
 
 /**
- * Present Apple's native offer-code redemption sheet (iOS 14+). When the
- * user enters a valid App Store Connect offer code, StoreKit fires the
- * same purchase-completed callback the normal buy flow uses, so the
- * existing transaction listener installed in initStoreKit() will unlock
- * the redeemed run automatically — no extra plumbing required.
+ * Present Apple's offer-code redemption UI.
  *
- * No-op on Android / web (returns false so the caller can surface a
- * platform-appropriate message if it ever gets called there).
+ * We deep-link into the App Store's own redemption sheet instead of using
+ * StoreKit's `SKPaymentQueue.presentCodeRedemptionSheet()` API. The
+ * in-app sheet is a fire-and-forget UIKit call that always returns
+ * success from native, but iOS silently refuses to present it when the
+ * host app is inside a modal-presented view controller (like our
+ * paywall Modal) — with no way for JS to detect the failure. Users see
+ * a brief spinner and nothing else. The App Store deep link is the
+ * approach used by most production RN apps for this reason: 100%
+ * reliable, and once the user completes redemption in the App Store,
+ * StoreKit fires the same purchase-completed transaction listener that
+ * a paid purchase would, so the unlock flow is identical.
+ *
+ * `ascAppId` MUST match `eas.json → submit.production.ios.ascAppId`.
  */
+const ASC_APP_ID = "6772459732";
+
 export async function presentOfferCodeRedemption(): Promise<boolean> {
   if (!IS_IOS) return false;
+  // Ensure the transaction listener is armed BEFORE the user leaves
+  // for the App Store, so an incoming redemption is caught the instant
+  // they return.
   await initStoreKit();
+  const { Linking } = await import("react-native");
+  const url = `itms-apps://apps.apple.com/redeem?ctx=offercodes&id=${ASC_APP_ID}`;
   try {
-    const ok = await ExpoIap.presentCodeRedemptionSheetIOS();
-    return !!ok;
+    const ok = await Linking.canOpenURL(url);
+    if (!ok) return false;
+    await Linking.openURL(url);
+    return true;
   } catch (e) {
     // eslint-disable-next-line no-console
-    console.warn("[storekit] presentCodeRedemptionSheetIOS failed", e);
+    console.warn("[storekit] offer-code deep link failed", e);
     return false;
   }
 }

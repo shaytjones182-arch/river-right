@@ -44,13 +44,6 @@ export default function PaywallSheet({
   onUnlocked,
 }: Props) {
   const [busy, setBusy] = useState<"purchase" | "restore" | "redeem" | null>(null);
-  // When true, the paywall Modal is un-presented so iOS is free to
-  // display Apple's own SKPaymentQueue code-redemption sheet. Apple
-  // silently refuses to present that sheet over an already-active
-  // modal (both react-native-iap and expo-iap have long-standing
-  // issues confirming this), so we temporarily drop our Modal out of
-  // the view hierarchy for the duration of the redemption.
-  const [hiddenForRedemption, setHiddenForRedemption] = useState(false);
   const insets = useSafeAreaInsets();
   const product = riverId ? productForRiver(riverId) : null;
 
@@ -121,21 +114,13 @@ export default function PaywallSheet({
     }
   };
 
-  // Opens Apple's native offer-code redemption sheet. If the user redeems
-  // a valid code for the current run's product ID, StoreKit fires the
-  // same purchase-completed transaction listener that initStoreKit()
-  // installed, so the unlock flow flows through the exact same path as
-  // a paid purchase — including the AsyncStorage cache write. We then
-  // just poll the local unlock cache for a couple of seconds so the UI
-  // can dismiss the paywall the instant Apple returns from the sheet.
-  //
-  // CRITICAL: iOS's SKPaymentQueue.presentCodeRedemptionSheet() silently
-  // does nothing when another modal (like this paywall) is already on
-  // top. We work around that by dropping the paywall Modal out of the
-  // view hierarchy (`hiddenForRedemption=true`) for the duration of the
-  // native sheet, then either close the paywall for good (unlock
-  // succeeded) or re-show it (user cancelled or entered a code for a
-  // different run).
+  // Kicks off Apple offer-code redemption. Deep-links into the App
+  // Store's redeem page — the user enters the code there, App Store
+  // validates it, and StoreKit fires the same purchase-completed
+  // transaction listener that initStoreKit() installed, unlocking the
+  // run through the exact same path as a paid purchase. We close the
+  // paywall right away so there's no stale modal in the way when the
+  // user returns to the app.
   const handleRedeemCode = async () => {
     if (busy) return;
     if (Platform.OS !== "ios") {
@@ -146,43 +131,22 @@ export default function PaywallSheet({
       return;
     }
     setBusy("redeem");
-    // Hide the paywall Modal BEFORE presenting the redemption sheet so
-    // iOS is willing to actually put the sheet on screen. A short delay
-    // gives the RN modal fade-out animation time to complete before
-    // Apple's sheet tries to attach to the root view controller.
-    setHiddenForRedemption(true);
-    await new Promise((res) => setTimeout(res, 350));
     try {
-      await presentOfferCodeRedemption();
-      // Give StoreKit's transaction listener a moment to process the
-      // redemption. If the current run got unlocked in that window,
-      // close the paywall entirely.
-      let unlocked = false;
-      if (riverId) {
-        const { isRunUnlocked } = await import("./useUnlocks");
-        for (let i = 0; i < 10; i++) {
-          if (isRunUnlocked(riverId)) {
-            unlocked = true;
-            break;
-          }
-          await new Promise((res) => setTimeout(res, 400));
-        }
-      }
-      if (unlocked && riverId) {
-        onUnlocked?.(riverId);
+      const ok = await presentOfferCodeRedemption();
+      if (ok) {
+        // Close the paywall — the transaction listener will unlock the
+        // run when the user finishes in the App Store and returns.
         onClose();
       } else {
-        // No unlock for this run (user cancelled, or redeemed a code
-        // that belongs to a different run). Bring the paywall back so
-        // they can try again or complete a normal purchase.
-        setHiddenForRedemption(false);
+        Alert.alert(
+          "Couldn't open the App Store",
+          "Please make sure the App Store app is installed and you're signed in, then try again."
+        );
       }
     } catch (e: any) {
-      setHiddenForRedemption(false);
       Alert.alert(
-        "Couldn't open the redemption sheet",
-        e?.message ||
-          "Please make sure you're signed in to the App Store, then try again."
+        "Couldn't open the App Store",
+        e?.message || "Please try again in a moment."
       );
     } finally {
       setBusy(null);
@@ -191,7 +155,7 @@ export default function PaywallSheet({
 
   return (
     <Modal
-      visible={visible && !hiddenForRedemption}
+      visible={visible}
       transparent
       animationType="fade"
       onRequestClose={onClose}
