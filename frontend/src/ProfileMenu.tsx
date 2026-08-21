@@ -53,7 +53,7 @@ export default function ProfileMenu({ testID }: ProfileMenuProps) {
         activeOpacity={0.8}
         hitSlop={8}
       >
-        <Ionicons name="person" size={18} color="#fff" />
+        <Ionicons name="menu" size={22} color="#fff" />
       </TouchableOpacity>
 
       <Modal
