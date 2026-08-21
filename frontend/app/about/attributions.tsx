@@ -74,7 +74,13 @@ const DATA_SOURCES: Credit[] = [
     title:
       "Guide to the Middle Fork and Main Salmon Rivers, Idaho (Fifth Edition) — Duwain Whitis & Barbara Vinson (RiverMaps LLC)",
     blurb:
-      "Used as a reference for rapid locations, rapid classifications, and campsite locations on the Main Salmon run.",
+      "Used as a reference for rapid locations, rapid classifications, and camp locations on the Main Salmon and Middle Fork Salmon runs.",
+  },
+  {
+    title:
+      "The Middle Fork of the Salmon River — A Comprehensive Guide (Fifth Edition) — Matt Leidecker (Idaho River Publications LLC)",
+    blurb:
+      "Used as a reference for rapid locations, rapid classifications, and camp locations on the Middle Fork Salmon run.",
   },
 ];
 
