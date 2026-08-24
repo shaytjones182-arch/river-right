@@ -30,3 +30,7 @@ Kayakers, rafters, canoeists, and casual paddlers in the U.S.
 
 ## Smart enhancement opportunity
 Add a "Trip Sharing" feature — generate a shareable link/QR of a completed GPS track + the day's river flow snapshot. Drives organic growth via paddling communities (Facebook groups, AW boater forums) and creates a content loop back into the app.
+
+## Update — June 2026 (build 8)
+- Fixed "Redeem special offer code" doing nothing in TestFlight: root cause was `Linking.canOpenURL("itms-apps://...")` always returning false on iOS because `itms-apps` was not declared in `LSApplicationQueriesSchemes`. Fix: removed the canOpenURL gate in `src/iap/storekit.ts` (openURL directly, with `https://apps.apple.com/redeem` universal-link fallback) and added `LSApplicationQueriesSchemes: ["itms-apps"]` to `app.json` ios.infoPlist.
+- Bumped versions per standing rules: 1.0.7 / iOS build 8 / Android versionCode 8.

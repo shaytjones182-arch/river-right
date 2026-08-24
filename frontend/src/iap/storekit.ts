@@ -6,7 +6,7 @@
 // because the RN-IAP native pod fights the current Nitro-Modules setup
 // during EAS iOS builds.
 
-import { Platform } from "react-native";
+import { Platform, Linking } from "react-native";
 import * as ExpoIap from "expo-iap";
 import {
   allKnownProductIds,
@@ -205,16 +205,28 @@ export async function presentOfferCodeRedemption(): Promise<boolean> {
   // for the App Store, so an incoming redemption is caught the instant
   // they return.
   await initStoreKit();
-  const { Linking } = await import("react-native");
-  const url = `itms-apps://apps.apple.com/redeem?ctx=offercodes&id=${ASC_APP_ID}`;
+  // NOTE: do NOT gate on Linking.canOpenURL() here. On iOS,
+  // canOpenURL("itms-apps://...") always returns false unless the
+  // scheme is declared in LSApplicationQueriesSchemes — which made
+  // this function silently bail before ever opening the store. We
+  // just attempt openURL directly, falling back to the equivalent
+  // https universal link (which iOS routes to the App Store app).
+  const itmsUrl = `itms-apps://apps.apple.com/redeem?ctx=offercodes&id=${ASC_APP_ID}`;
+  const httpsUrl = `https://apps.apple.com/redeem?ctx=offercodes&id=${ASC_APP_ID}`;
   try {
-    const ok = await Linking.canOpenURL(url);
-    if (!ok) return false;
-    await Linking.openURL(url);
+    trace(`offerCode: opening ${itmsUrl}`);
+    await Linking.openURL(itmsUrl);
+    trace("offerCode: itms-apps openURL OK");
     return true;
-  } catch (e) {
-    // eslint-disable-next-line no-console
-    console.warn("[storekit] offer-code deep link failed", e);
+  } catch (e: any) {
+    trace(`offerCode: itms-apps failed (${e?.message || e}), trying https`);
+  }
+  try {
+    await Linking.openURL(httpsUrl);
+    trace("offerCode: https openURL OK");
+    return true;
+  } catch (e: any) {
+    trace(`offerCode: https failed (${e?.message || e})`);
     return false;
   }
 }
