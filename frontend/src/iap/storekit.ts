@@ -6,7 +6,8 @@
 // because the RN-IAP native pod fights the current Nitro-Modules setup
 // during EAS iOS builds.
 
-import { Platform, Linking } from "react-native";
+import { Platform, Linking, AppState } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ExpoIap from "expo-iap";
 import {
   allKnownProductIds,
@@ -14,25 +15,54 @@ import {
   riverIdForProductId,
   setLivePrice,
 } from "./products";
+import { unlockRunLocally } from "./useUnlocks";
 
 const IS_IOS = Platform.OS === "ios";
 
 let _initialized = false;
 let _initInflight: Promise<void> | null = null;
 
-// In-memory trace of every StoreKit call we made this session. Surfaced
-// by the diagnostic Alert on the paywall when something silently fails.
+// ─── Trace log ──────────────────────────────────────────────────────────
+// In-memory trace of every StoreKit call/event this session, PLUS the
+// tail of the previous session (persisted to AsyncStorage). Critical for
+// offer-code debugging: redemption happens in the App Store app, and if
+// iOS kills us in the background we'd otherwise lose all evidence of
+// whether the transaction listener ever fired.
+const TRACE_PERSIST_KEY = "@riverright:storekit_trace_v1";
 const TRACE: string[] = [];
+let PREV_TRACE: string[] = [];
+let _prevTraceLoaded = false;
+
+async function loadPrevTrace() {
+  if (_prevTraceLoaded) return;
+  _prevTraceLoaded = true;
+  try {
+    const raw = await AsyncStorage.getItem(TRACE_PERSIST_KEY);
+    const arr = raw ? JSON.parse(raw) : null;
+    if (Array.isArray(arr)) PREV_TRACE = arr.filter((x) => typeof x === "string");
+  } catch {
+    /* best-effort */
+  }
+}
+
 function trace(msg: string) {
   const line = `[${new Date().toISOString().slice(11, 19)}] ${msg}`;
   TRACE.push(line);
-  if (TRACE.length > 50) TRACE.shift();
+  if (TRACE.length > 60) TRACE.shift();
+  // Persist fire-and-forget so the trace survives an app kill while the
+  // user is off redeeming a code in the App Store.
+  AsyncStorage.setItem(TRACE_PERSIST_KEY, JSON.stringify(TRACE)).catch(() => {});
   // Also dump to console for `react-native log-ios`.
   // eslint-disable-next-line no-console
   console.log("[storekit]", msg);
 }
 export function getStoreKitTrace(): string {
-  return TRACE.length ? TRACE.join("\n") : "(no events)";
+  const parts: string[] = [];
+  if (PREV_TRACE.length) {
+    parts.push("── previous session ──", ...PREV_TRACE.slice(-20));
+  }
+  parts.push("── this session ──", ...(TRACE.length ? TRACE : ["(no events)"]));
+  return parts.join("\n");
 }
 
 /** Map riverId → App Store product ID for the reverse lookup we need
@@ -46,6 +76,78 @@ function riverIdForProduct(productId: string): string | null {
   return riverIdForProductId(productId);
 }
 
+// ─── Transaction listeners ──────────────────────────────────────────────
+// THE critical piece for offer-code redemption: when a user redeems a
+// code in the App Store app, StoreKit delivers the resulting transaction
+// to us through purchaseUpdatedListener — there is no other callback.
+// Every event is traced, and the unlock logic is wrapped in try/catch so
+// a failure is LOGGED instead of silently swallowed.
+let _listenersArmed = false;
+function armTransactionListeners() {
+  if (_listenersArmed || !IS_IOS) return;
+  _listenersArmed = true;
+  trace("listeners: arming purchaseUpdated + purchaseError");
+  try {
+    ExpoIap.purchaseUpdatedListener(async (purchase: any) => {
+      const pid = purchase?.productId || purchase?.id;
+      trace(
+        `purchaseUpdated: FIRED pid=${pid} txId=${
+          purchase?.transactionId ?? purchase?.transactionIdentifier ?? "?"
+        } state=${purchase?.purchaseState ?? purchase?.transactionState ?? "?"}`
+      );
+      try {
+        const rid = riverIdForProduct(String(pid || ""));
+        if (rid) {
+          await unlockRunLocally(rid);
+          trace(`purchaseUpdated: unlocked river=${rid}`);
+        } else {
+          trace(`purchaseUpdated: NO river mapped for pid=${pid} — NOT unlocking`);
+        }
+      } catch (e: any) {
+        trace(`purchaseUpdated: UNLOCK ERROR ${e?.message || e}`);
+      }
+      try {
+        await ExpoIap.finishTransaction({ purchase, isConsumable: false } as any);
+        trace("purchaseUpdated: finishTransaction OK");
+      } catch (e: any) {
+        trace(`purchaseUpdated: finishTransaction FAILED ${e?.message || e}`);
+      }
+    });
+    ExpoIap.purchaseErrorListener((err: any) => {
+      trace(`purchaseError: FIRED code=${err?.code} msg=${err?.message || err}`);
+    });
+    trace("listeners: armed OK");
+  } catch (e: any) {
+    trace(`listeners: FAILED to arm ${e?.message || e}`);
+  }
+}
+
+// ─── Foreground re-sync ─────────────────────────────────────────────────
+// Safety net for offer codes: when the user comes back from the App
+// Store, ask Apple directly for the owned-products list and mirror it
+// into the local unlock cache. Catches redemptions even if the
+// transaction listener missed the event for any reason.
+let _appStateHooked = false;
+function armForegroundResync() {
+  if (_appStateHooked || !IS_IOS) return;
+  _appStateHooked = true;
+  AppState.addEventListener("change", (state) => {
+    if (state !== "active") return;
+    trace("appState: active — resyncing owned products from Apple");
+    (async () => {
+      try {
+        const owned = await restoreRuns();
+        trace(`resync: Apple says owned=[${owned.join(",") || "none"}]`);
+        for (const id of owned) {
+          await unlockRunLocally(id);
+        }
+      } catch (e: any) {
+        trace(`resync: FAILED ${e?.message || e}`);
+      }
+    })();
+  });
+}
+
 /** Connects to StoreKit and primes product prices. Safe to call many
  *  times — only the first call actually does work. */
 export async function initStoreKit(): Promise<void> {
@@ -54,6 +156,12 @@ export async function initStoreKit(): Promise<void> {
   if (_initInflight) return _initInflight;
   _initInflight = (async () => {
     try {
+      await loadPrevTrace();
+      // Arm listeners BEFORE opening the connection so any transactions
+      // StoreKit queued while we were dead (e.g. an offer code redeemed
+      // just before an app kill) are delivered the moment we connect.
+      armTransactionListeners();
+      armForegroundResync();
       trace("initConnection: calling");
       await ExpoIap.initConnection();
       _initialized = true;
@@ -159,6 +267,11 @@ export async function restoreRuns(): Promise<string[]> {
   await initStoreKit();
   try {
     const purchases: any[] = await ExpoIap.getAvailablePurchases();
+    trace(
+      `getAvailablePurchases: ${purchases?.length || 0} items [${(purchases || [])
+        .map((p: any) => p?.productId || p?.id)
+        .join(",")}]`
+    );
     const riverIds = new Set<string>();
     for (const p of purchases || []) {
       const pid = p?.productId || p?.id;
@@ -173,9 +286,8 @@ export async function restoreRuns(): Promise<string[]> {
       }
     }
     return Array.from(riverIds);
-  } catch (e) {
-    // eslint-disable-next-line no-console
-    console.warn("[storekit] restoreRuns failed", e);
+  } catch (e: any) {
+    trace(`getAvailablePurchases: FAILED ${e?.message || e}`);
     return [];
   }
 }

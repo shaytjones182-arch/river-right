@@ -34,3 +34,12 @@ Add a "Trip Sharing" feature — generate a shareable link/QR of a completed GPS
 ## Update — June 2026 (build 8)
 - Fixed "Redeem special offer code" doing nothing in TestFlight: root cause was `Linking.canOpenURL("itms-apps://...")` always returning false on iOS because `itms-apps` was not declared in `LSApplicationQueriesSchemes`. Fix: removed the canOpenURL gate in `src/iap/storekit.ts` (openURL directly, with `https://apps.apple.com/redeem` universal-link fallback) and added `LSApplicationQueriesSchemes: ["itms-apps"]` to `app.json` ios.infoPlist.
 - Bumped versions per standing rules: 1.0.7 / iOS build 8 / Android versionCode 8.
+
+## Update — June 2026 (build 9): offer-code transactions never delivered into app
+- Root cause: NO `purchaseUpdatedListener` was ever registered (comments claimed initStoreKit installed one, but it didn't). Offer-code redemptions completed at Apple but the app had no callback receiving the transaction. Paid purchases only worked because purchaseRun() polls getAvailablePurchases() afterwards.
+- Fix in `src/iap/storekit.ts`:
+  - `armTransactionListeners()`: registers `purchaseUpdatedListener` + `purchaseErrorListener` BEFORE `initConnection()` so queued transactions are delivered on connect. Every event traced; unlock + finishTransaction each wrapped in try/catch that traces errors.
+  - `armForegroundResync()`: on AppState "active", calls restoreRuns() and unlocks all Apple-owned rivers (safety net when returning from App Store).
+  - Trace log now persisted to AsyncStorage (`@riverright:storekit_trace_v1`); Diagnostics alert shows previous-session tail + current session.
+  - restoreRuns() now traces getAvailablePurchases results/failures instead of silent console.warn.
+- Versions bumped: 1.0.8 / iOS build 9 / Android versionCode 9.
