@@ -76,6 +76,58 @@ function riverIdForProduct(productId: string): string | null {
   return riverIdForProductId(productId);
 }
 
+// ─── StoreKit call serializer ───────────────────────────────────────────
+// iOS StoreKit operations through expo-iap are NOT safe to run
+// concurrently — overlapping native calls can lock the StoreKit queue and
+// leave every promise unresolved forever (hyochan/expo-iap#130). Build 9
+// hit exactly this: each foreground resync stacked another
+// getAvailablePurchases on top of a still-pending one, and NONE of them
+// ever came back — the trace showed the calls starting but never a
+// result. All native calls now flow one-at-a-time through this queue,
+// and each gets a hard timeout so a hung call is TRACED as evidence
+// instead of hanging silently.
+let _iapQueue: Promise<void> = Promise.resolve();
+function iapCall<T>(
+  label: string,
+  fn: () => Promise<T>,
+  timeoutMs = 15000
+): Promise<T> {
+  const run = _iapQueue.then(async () => {
+    trace(`${label}: calling`);
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      const result = await Promise.race([
+        fn(),
+        new Promise<never>((_, reject) => {
+          timer = setTimeout(
+            () =>
+              reject(
+                new Error(
+                  `TIMEOUT after ${timeoutMs / 1000}s — native call never resolved`
+                )
+              ),
+            timeoutMs
+          );
+        }),
+      ]);
+      trace(`${label}: resolved`);
+      return result;
+    } catch (e: any) {
+      trace(`${label}: FAILED ${e?.message || e}`);
+      throw e;
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+  });
+  // Keep the chain alive even when this call fails so the next queued
+  // call still runs.
+  _iapQueue = run.then(
+    () => undefined,
+    () => undefined
+  );
+  return run;
+}
+
 // ─── Transaction listeners ──────────────────────────────────────────────
 // THE critical piece for offer-code redemption: when a user redeems a
 // code in the App Store app, StoreKit delivers the resulting transaction
@@ -107,10 +159,11 @@ function armTransactionListeners() {
         trace(`purchaseUpdated: UNLOCK ERROR ${e?.message || e}`);
       }
       try {
-        await ExpoIap.finishTransaction({ purchase, isConsumable: false } as any);
-        trace("purchaseUpdated: finishTransaction OK");
-      } catch (e: any) {
-        trace(`purchaseUpdated: finishTransaction FAILED ${e?.message || e}`);
+        await iapCall("finishTransaction(listener)", () =>
+          ExpoIap.finishTransaction({ purchase, isConsumable: false } as any)
+        );
+      } catch {
+        /* already traced by iapCall */
       }
     });
     ExpoIap.purchaseErrorListener((err: any) => {
@@ -128,11 +181,17 @@ function armTransactionListeners() {
 // into the local unlock cache. Catches redemptions even if the
 // transaction listener missed the event for any reason.
 let _appStateHooked = false;
+let _resyncInflight = false;
 function armForegroundResync() {
   if (_appStateHooked || !IS_IOS) return;
   _appStateHooked = true;
   AppState.addEventListener("change", (state) => {
     if (state !== "active") return;
+    if (_resyncInflight) {
+      trace("appState: active — resync SKIPPED (previous still in flight)");
+      return;
+    }
+    _resyncInflight = true;
     trace("appState: active — resyncing owned products from Apple");
     (async () => {
       try {
@@ -143,6 +202,8 @@ function armForegroundResync() {
         }
       } catch (e: any) {
         trace(`resync: FAILED ${e?.message || e}`);
+      } finally {
+        _resyncInflight = false;
       }
     })();
   });
@@ -162,13 +223,11 @@ export async function initStoreKit(): Promise<void> {
       // just before an app kill) are delivered the moment we connect.
       armTransactionListeners();
       armForegroundResync();
-      trace("initConnection: calling");
-      await ExpoIap.initConnection();
+      await iapCall("initConnection", () => ExpoIap.initConnection());
       _initialized = true;
-      trace("initConnection: OK");
       await primeProductPrices();
     } catch (e: any) {
-      trace(`initConnection: FAILED ${e?.message || e}`);
+      trace(`initStoreKit: FAILED ${e?.message || e}`);
     } finally {
       _initInflight = null;
     }
@@ -190,10 +249,12 @@ export async function primeProductPrices(): Promise<void> {
     // expo-iap's canonical product-fetch. `type: "in-app"` (with dash)
     // is the modern arg per the OpenIAP spec — the legacy `"inapp"`
     // string is still accepted but deprecated.
-    const products: any[] = await ExpoIap.fetchProducts({
-      skus,
-      type: "in-app",
-    } as any);
+    const products: any[] = (await iapCall("fetchProducts", () =>
+      ExpoIap.fetchProducts({
+        skus,
+        type: "in-app",
+      } as any)
+    )) as any[];
     trace(`fetchProducts: returned ${products?.length || 0} products`);
     for (const p of products || []) {
       const id = p?.productId || p?.id;
@@ -225,17 +286,22 @@ export async function purchaseRun(riverId: string): Promise<void> {
   // signed into Settings → App Store → Sandbox Account.)
   await primeProductPrices();
   try {
-    trace("requestPurchase: calling");
     // expo-iap uses `request.apple` / `request.google` keys under the
     // OpenIAP spec (not `request.ios` like the old RN-IAP shape).
-    await ExpoIap.requestPurchase({
-      request: {
-        apple: { sku },
-        google: { skus: [sku] },
-      },
-      type: "in-app",
-    } as any);
-    trace("requestPurchase: resolved");
+    // Generous timeout — the promise stays pending while the user
+    // interacts with Apple's payment sheet.
+    await iapCall(
+      "requestPurchase",
+      () =>
+        ExpoIap.requestPurchase({
+          request: {
+            apple: { sku },
+            google: { skus: [sku] },
+          },
+          type: "in-app",
+        } as any),
+      120000
+    );
   } catch (e: any) {
     const code = e?.code || e?.errorCode;
     trace(`requestPurchase: threw code=${code} msg=${e?.message || e}`);
@@ -266,7 +332,9 @@ export async function restoreRuns(): Promise<string[]> {
   if (!IS_IOS) return [];
   await initStoreKit();
   try {
-    const purchases: any[] = await ExpoIap.getAvailablePurchases();
+    const purchases: any[] = (await iapCall("getAvailablePurchases", () =>
+      ExpoIap.getAvailablePurchases()
+    )) as any[];
     trace(
       `getAvailablePurchases: ${purchases?.length || 0} items [${(purchases || [])
         .map((p: any) => p?.productId || p?.id)
@@ -280,14 +348,16 @@ export async function restoreRuns(): Promise<string[]> {
       // Best-effort: finish any lingering non-consumable transactions so
       // they don't keep getting redelivered to listeners.
       try {
-        await ExpoIap.finishTransaction({ purchase: p, isConsumable: false } as any);
+        await iapCall("finishTransaction(restore)", () =>
+          ExpoIap.finishTransaction({ purchase: p, isConsumable: false } as any)
+        );
       } catch {
-        /* ignore */
+        /* already traced by iapCall */
       }
     }
     return Array.from(riverIds);
   } catch (e: any) {
-    trace(`getAvailablePurchases: FAILED ${e?.message || e}`);
+    trace(`restoreRuns: FAILED ${e?.message || e}`);
     return [];
   }
 }

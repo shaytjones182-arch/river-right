@@ -43,3 +43,11 @@ Add a "Trip Sharing" feature — generate a shareable link/QR of a completed GPS
   - Trace log now persisted to AsyncStorage (`@riverright:storekit_trace_v1`); Diagnostics alert shows previous-session tail + current session.
   - restoreRuns() now traces getAvailablePurchases results/failures instead of silent console.warn.
 - Versions bumped: 1.0.8 / iOS build 9 / Android versionCode 9.
+
+## Update — June 2026 (build 10): StoreKit native calls were deadlocking
+- Evidence from user's build-9 trace: "resyncing owned products" lines appeared but the result lines (`getAvailablePurchases: N items`, `fetchProducts: returned`) NEVER did — the native expo-iap promises were hanging, not returning empty.
+- Root cause: iOS StoreKit ops via expo-iap must not run concurrently (hyochan/expo-iap#130). App fired them concurrently (startup init + _layout restore + AppState resync on every foreground), locking the queue so no promise ever resolved.
+- Fix in `src/iap/storekit.ts`:
+  - `iapCall(label, fn, timeoutMs)`: serializes ALL native calls (initConnection, fetchProducts, getAvailablePurchases, requestPurchase, finishTransaction) through a single promise chain; each call has a hard timeout (15s default, 120s for requestPurchase) that traces "TIMEOUT — native call never resolved" instead of silent hang.
+  - Foreground resync now single-flight (`_resyncInflight` guard) — skips + traces if previous resync still pending.
+- Versions bumped: 1.0.9 / iOS build 10 / Android versionCode 10.
