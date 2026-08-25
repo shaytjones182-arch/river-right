@@ -57,3 +57,11 @@ Add a "Trip Sharing" feature — generate a shareable link/QR of a completed GPS
 - Added `drainZombieTransactions()` in storekit.ts: runs right after initConnection — `getAvailablePurchases({ onlyIncludeActiveItemsIOS: false, alsoPublishToEventListenerIOS: true })` to fetch ALL (incl. unfinished/inactive) transactions, unlocks mapped rivers, finishes every transaction. All through the serialized+timeout queue with full tracing (`drain:` prefixed lines).
 - NOTE: user has only field-tested build 9. Build 10 (queue serialization + timeouts) and build 11 (drain) are both untested on device — build 11 contains everything.
 - Versions bumped: 1.0.10 / iOS build 11 / Android versionCode 11.
+
+## Update — June 2026 (build 12): passive drain + AppStore.sync kick
+- Build-11 trace was definitive: calls now run SERIALIZED and ALONE, yet every StoreKit query (getAvailablePurchases, fetchProducts) still times out at 15s while initConnection resolves instantly, and purchaseUpdated has NEVER fired in any session. => Not a JS concurrency issue; the device's StoreKit daemon appears wedged (purchases worked on this same iPad in earlier builds).
+- Changes in storekit.ts:
+  - Removed active drainZombieTransactions (was burning 15s in the same jammed pipe). Replaced with passive probe: after initConnection, logs "drain: passive — listening..." then after 3s logs how many purchaseUpdated events iOS pushed (`_purchaseEventCount` counter in listener). Answers Claude's key diagnostic: does purchaseUpdated fire at all post-init.
+  - New `restoreRunsWithSync()`: calls ExpoIap.syncIOS() (Apple AppStore.sync(), 30s timeout, traced) before getAvailablePurchases — the one in-app call that can un-wedge a stuck daemon; may prompt App Store sign-in, so only used on explicit Restore tap. PaywallSheet handleRestore now uses it.
+- USER GUIDANCE GIVEN: reboot the iPad fully + check Settings→App Store sandbox account before testing build 12 (classic fix for wedged storekitd).
+- Versions bumped: 1.0.11 / iOS build 12 / Android versionCode 12.

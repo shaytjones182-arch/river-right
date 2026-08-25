@@ -26,7 +26,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "../theme";
 import { productForRiver } from "./products";
 import { unlockRunLocally, restorePurchasesLocally } from "./useUnlocks";
-import { purchaseRun, restoreRuns, getStoreKitTrace, presentOfferCodeRedemption } from "./storekit";
+import { purchaseRun, restoreRunsWithSync, getStoreKitTrace, presentOfferCodeRedemption } from "./storekit";
 
 type Props = {
   visible: boolean;
@@ -85,9 +85,10 @@ export default function PaywallSheet({
     try {
       let count = 0;
       if (Platform.OS === "ios") {
-        // Ask Apple for the owned product list, then mirror each into
-        // the local AsyncStorage unlock cache.
-        const ownedRiverIds = await restoreRuns();
+        // Ask Apple for the owned product list (with an AppStore.sync()
+        // kick first to force the device to resync with Apple's servers),
+        // then mirror each into the local AsyncStorage unlock cache.
+        const ownedRiverIds = await restoreRunsWithSync();
         for (const id of ownedRiverIds) {
           await unlockRunLocally(id);
         }

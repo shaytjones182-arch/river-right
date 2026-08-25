@@ -141,6 +141,7 @@ function armTransactionListeners() {
   trace("listeners: arming purchaseUpdated + purchaseError");
   try {
     ExpoIap.purchaseUpdatedListener(async (purchase: any) => {
+      _purchaseEventCount += 1;
       const pid = purchase?.productId || purchase?.id;
       trace(
         `purchaseUpdated: FIRED pid=${pid} txId=${
@@ -209,50 +210,27 @@ function armForegroundResync() {
   });
 }
 
-// ─── Startup zombie-transaction drain ───────────────────────────────────
-// If a prior session crashed / was killed before finishTransaction ran
-// (classic symptom: Apple says "you've already purchased this but it
-// hasn't been downloaded"), an unfinished transaction sits in the queue
-// forever. On connect we fetch EVERYTHING — including inactive and
-// unfinished items (`onlyIncludeActiveItemsIOS: false`) — republish each
-// to the purchaseUpdated listener, unlock what we can, and finish every
-// one so the queue is clean.
-async function drainZombieTransactions(): Promise<void> {
-  try {
-    const purchases: any[] = (await iapCall("drain:getAvailablePurchases", () =>
-      ExpoIap.getAvailablePurchases({
-        onlyIncludeActiveItemsIOS: false,
-        alsoPublishToEventListenerIOS: true,
-      } as any)
-    )) as any[];
+// ─── Passive startup drain probe ─────────────────────────────────────────
+// iOS pushes any pending unfinished transactions straight to the
+// purchaseUpdated listener within moments of the observer arming +
+// connection opening — no query call needed. The previous ACTIVE drain
+// called getAvailablePurchases, which goes through the same StoreKit
+// query pipe that is hanging on this device, so it just burned 15s.
+// (Build-11 evidence: every query times out even when run ALONE, while
+// initConnection resolves instantly — so now we listen instead of ask.)
+// This probe answers the key diagnostic question: does purchaseUpdated
+// fire at all right after init?
+let _purchaseEventCount = 0;
+function armPassiveDrainProbe() {
+  trace("drain: passive — listening for iOS-pushed pending transactions");
+  const baseline = _purchaseEventCount;
+  setTimeout(() => {
+    const delivered = _purchaseEventCount - baseline;
     trace(
-      `drain: ${purchases?.length || 0} transactions [${(purchases || [])
-        .map((p: any) => p?.productId || p?.id)
-        .join(",")}]`
+      `drain: ${delivered} purchaseUpdated event(s) within 3s of init` +
+        (delivered === 0 ? " — iOS pushed NO pending transactions" : "")
     );
-    for (const p of purchases || []) {
-      const pid = String(p?.productId || p?.id || "");
-      try {
-        const rid = riverIdForProduct(pid);
-        if (rid) {
-          await unlockRunLocally(rid);
-          trace(`drain: unlocked river=${rid}`);
-        }
-      } catch (e: any) {
-        trace(`drain: unlock ERROR pid=${pid} ${e?.message || e}`);
-      }
-      try {
-        await iapCall("drain:finishTransaction", () =>
-          ExpoIap.finishTransaction({ purchase: p, isConsumable: false } as any)
-        );
-      } catch {
-        /* already traced by iapCall — likely already finished */
-      }
-    }
-    trace("drain: complete");
-  } catch (e: any) {
-    trace(`drain: FAILED ${e?.message || e}`);
-  }
+  }, 3000);
 }
 
 /** Connects to StoreKit and primes product prices. Safe to call many
@@ -271,9 +249,9 @@ export async function initStoreKit(): Promise<void> {
       armForegroundResync();
       await iapCall("initConnection", () => ExpoIap.initConnection());
       _initialized = true;
-      // Clear any zombie unfinished transactions from prior sessions
-      // BEFORE anything else touches StoreKit.
-      await drainZombieTransactions();
+      // Passive drain: iOS delivers pending transactions to the armed
+      // listener on its own — we just log whether any arrive.
+      armPassiveDrainProbe();
       await primeProductPrices();
     } catch (e: any) {
       trace(`initStoreKit: FAILED ${e?.message || e}`);
@@ -374,6 +352,24 @@ export async function purchaseRun(riverId: string): Promise<void> {
       "Purchase didn't complete. Tap Restore Purchases, or try again."
     );
   }
+}
+
+/** User-initiated restore: kicks Apple's `AppStore.sync()` FIRST — this
+ *  forces the device's StoreKit daemon to resync transaction state with
+ *  Apple's servers, and is the one in-app call that can un-wedge a stuck
+ *  daemon (the likely culprit when every query hangs while
+ *  initConnection succeeds). It may show an App Store sign-in prompt,
+ *  which is why we only run it on an explicit Restore tap, per Apple's
+ *  own guidance. Then reads the owned-products list as usual. */
+export async function restoreRunsWithSync(): Promise<string[]> {
+  if (!IS_IOS) return [];
+  await initStoreKit();
+  try {
+    await iapCall("syncIOS(AppStore.sync)", () => (ExpoIap as any).syncIOS(), 30000);
+  } catch {
+    /* traced by iapCall — still attempt the read below */
+  }
+  return restoreRuns();
 }
 
 /** Returns the list of river IDs the current Apple ID owns. */
