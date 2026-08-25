@@ -209,6 +209,52 @@ function armForegroundResync() {
   });
 }
 
+// ─── Startup zombie-transaction drain ───────────────────────────────────
+// If a prior session crashed / was killed before finishTransaction ran
+// (classic symptom: Apple says "you've already purchased this but it
+// hasn't been downloaded"), an unfinished transaction sits in the queue
+// forever. On connect we fetch EVERYTHING — including inactive and
+// unfinished items (`onlyIncludeActiveItemsIOS: false`) — republish each
+// to the purchaseUpdated listener, unlock what we can, and finish every
+// one so the queue is clean.
+async function drainZombieTransactions(): Promise<void> {
+  try {
+    const purchases: any[] = (await iapCall("drain:getAvailablePurchases", () =>
+      ExpoIap.getAvailablePurchases({
+        onlyIncludeActiveItemsIOS: false,
+        alsoPublishToEventListenerIOS: true,
+      } as any)
+    )) as any[];
+    trace(
+      `drain: ${purchases?.length || 0} transactions [${(purchases || [])
+        .map((p: any) => p?.productId || p?.id)
+        .join(",")}]`
+    );
+    for (const p of purchases || []) {
+      const pid = String(p?.productId || p?.id || "");
+      try {
+        const rid = riverIdForProduct(pid);
+        if (rid) {
+          await unlockRunLocally(rid);
+          trace(`drain: unlocked river=${rid}`);
+        }
+      } catch (e: any) {
+        trace(`drain: unlock ERROR pid=${pid} ${e?.message || e}`);
+      }
+      try {
+        await iapCall("drain:finishTransaction", () =>
+          ExpoIap.finishTransaction({ purchase: p, isConsumable: false } as any)
+        );
+      } catch {
+        /* already traced by iapCall — likely already finished */
+      }
+    }
+    trace("drain: complete");
+  } catch (e: any) {
+    trace(`drain: FAILED ${e?.message || e}`);
+  }
+}
+
 /** Connects to StoreKit and primes product prices. Safe to call many
  *  times — only the first call actually does work. */
 export async function initStoreKit(): Promise<void> {
@@ -225,6 +271,9 @@ export async function initStoreKit(): Promise<void> {
       armForegroundResync();
       await iapCall("initConnection", () => ExpoIap.initConnection());
       _initialized = true;
+      // Clear any zombie unfinished transactions from prior sessions
+      // BEFORE anything else touches StoreKit.
+      await drainZombieTransactions();
       await primeProductPrices();
     } catch (e: any) {
       trace(`initStoreKit: FAILED ${e?.message || e}`);

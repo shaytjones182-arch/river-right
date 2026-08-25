@@ -51,3 +51,9 @@ Add a "Trip Sharing" feature — generate a shareable link/QR of a completed GPS
   - `iapCall(label, fn, timeoutMs)`: serializes ALL native calls (initConnection, fetchProducts, getAvailablePurchases, requestPurchase, finishTransaction) through a single promise chain; each call has a hard timeout (15s default, 120s for requestPurchase) that traces "TIMEOUT — native call never resolved" instead of silent hang.
   - Foreground resync now single-flight (`_resyncInflight` guard) — skips + traces if previous resync still pending.
 - Versions bumped: 1.0.9 / iOS build 10 / Android versionCode 10.
+
+## Update — June 2026 (build 11): startup zombie-transaction drain
+- User's build-9 trace confirmed native calls hanging (fetchProducts never returned even solo at launch); Apple's "already purchased but hasn't been downloaded" suggests a stuck unfinished transaction from a prior session.
+- Added `drainZombieTransactions()` in storekit.ts: runs right after initConnection — `getAvailablePurchases({ onlyIncludeActiveItemsIOS: false, alsoPublishToEventListenerIOS: true })` to fetch ALL (incl. unfinished/inactive) transactions, unlocks mapped rivers, finishes every transaction. All through the serialized+timeout queue with full tracing (`drain:` prefixed lines).
+- NOTE: user has only field-tested build 9. Build 10 (queue serialization + timeouts) and build 11 (drain) are both untested on device — build 11 contains everything.
+- Versions bumped: 1.0.10 / iOS build 11 / Android versionCode 11.
