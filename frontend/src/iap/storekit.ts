@@ -183,6 +183,16 @@ function armTransactionListeners() {
 // transaction listener missed the event for any reason.
 let _appStateHooked = false;
 let _resyncInflight = false;
+// Set when the user is sent to the App Store to redeem an offer code.
+// PRODUCTION FINDING: offer-code transactions are NOT pushed to
+// purchaseUpdated when the user returns — they only become visible after
+// an explicit AppStore.sync(). So the next foreground resync after a
+// redemption upgrades itself to the sync-then-restore path (the same one
+// behind the Restore Purchases button, which the user confirmed works).
+let _pendingOfferCodeSync = false;
+export function markOfferCodeRedemptionStarted() {
+  _pendingOfferCodeSync = true;
+}
 function armForegroundResync() {
   if (_appStateHooked || !IS_IOS) return;
   _appStateHooked = true;
@@ -193,10 +203,16 @@ function armForegroundResync() {
       return;
     }
     _resyncInflight = true;
-    trace("appState: active — resyncing owned products from Apple");
+    const useSync = _pendingOfferCodeSync;
+    _pendingOfferCodeSync = false;
+    trace(
+      useSync
+        ? "appState: active — back from offer-code redemption, running AppStore.sync() + restore"
+        : "appState: active — resyncing owned products from Apple"
+    );
     (async () => {
       try {
-        const owned = await restoreRuns();
+        const owned = useSync ? await restoreRunsWithSync() : await restoreRuns();
         trace(`resync: Apple says owned=[${owned.join(",") || "none"}]`);
         for (const id of owned) {
           await unlockRunLocally(id);
@@ -444,6 +460,10 @@ export async function presentOfferCodeRedemption(): Promise<boolean> {
     trace(`offerCode: opening ${itmsUrl}`);
     await Linking.openURL(itmsUrl);
     trace("offerCode: itms-apps openURL OK");
+    // Offer-code transactions only surface after an explicit
+    // AppStore.sync() — flag the next foreground resync to run it
+    // automatically so the unlock appears without any user action.
+    markOfferCodeRedemptionStarted();
     return true;
   } catch (e: any) {
     trace(`offerCode: itms-apps failed (${e?.message || e}), trying https`);
@@ -451,6 +471,7 @@ export async function presentOfferCodeRedemption(): Promise<boolean> {
   try {
     await Linking.openURL(httpsUrl);
     trace("offerCode: https openURL OK");
+    markOfferCodeRedemptionStarted();
     return true;
   } catch (e: any) {
     trace(`offerCode: https failed (${e?.message || e})`);

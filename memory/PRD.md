@@ -65,3 +65,8 @@ Add a "Trip Sharing" feature — generate a shareable link/QR of a completed GPS
   - New `restoreRunsWithSync()`: calls ExpoIap.syncIOS() (Apple AppStore.sync(), 30s timeout, traced) before getAvailablePurchases — the one in-app call that can un-wedge a stuck daemon; may prompt App Store sign-in, so only used on explicit Restore tap. PaywallSheet handleRestore now uses it.
 - USER GUIDANCE GIVEN: reboot the iPad fully + check Settings→App Store sandbox account before testing build 12 (classic fix for wedged storekitd).
 - Versions bumped: 1.0.11 / iOS build 12 / Android versionCode 12.
+
+## Update — June 2026 (build 13): auto-sync after offer-code redemption
+- PRODUCTION CONFIRMED (user's iPhone, published app): purchases/restore fully work; offer codes redeem at Apple but the unlock only appears after tapping Restore Purchases — offer-code transactions are NOT pushed to purchaseUpdated on return; they require AppStore.sync() to surface.
+- Fix: `markOfferCodeRedemptionStarted()` sets `_pendingOfferCodeSync` when the offer-code deep link opens; the next foreground resync automatically uses `restoreRunsWithSync()` (AppStore.sync + getAvailablePurchases — same path as the working Restore button) instead of plain restoreRuns. Seamless: redeem → return → unlock appears.
+- Versions bumped: 1.0.12 / iOS build 13 / Android versionCode 13.
